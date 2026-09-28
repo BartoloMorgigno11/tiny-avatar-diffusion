@@ -1,0 +1,309 @@
+{
+  "schema": "tiny_avatar_diffusion.dr01_ui_prompt_contract",
+  "version": "dr01_v1",
+  "generation_timestamp_utc": "2026-09-28T16:14:36.906200+00:00",
+  "supported_attributes": [
+    "face_shape",
+    "glasses",
+    "hair_color",
+    "face_color"
+  ],
+  "canonical_caption_order": [
+    "avatar",
+    "face_shape",
+    "glasses",
+    "hair_color",
+    "face_color"
+  ],
+  "synonym_aliases": [],
+  "values": {
+    "face_shape": [
+      {
+        "raw_id": 0,
+        "canonical_model_token": "face_shape_pointed",
+        "human_display_label": "pointed",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 1,
+        "canonical_model_token": "face_shape_1",
+        "human_display_label": "face_shape_1",
+        "label_kind": "NEUTRAL",
+        "provenance_status": "NEUTRAL_TOKEN"
+      },
+      {
+        "raw_id": 2,
+        "canonical_model_token": "face_shape_oval",
+        "human_display_label": "oval",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 3,
+        "canonical_model_token": "face_shape_long",
+        "human_display_label": "long",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 4,
+        "canonical_model_token": "face_shape_round",
+        "human_display_label": "round",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 5,
+        "canonical_model_token": "face_shape_wide",
+        "human_display_label": "wide",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 6,
+        "canonical_model_token": "face_shape_rectangular",
+        "human_display_label": "rectangular",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      }
+    ],
+    "glasses": [
+      {
+        "raw_id": 0,
+        "canonical_model_token": "glasses_oversized_glasses",
+        "human_display_label": "oversized glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 1,
+        "canonical_model_token": "glasses_aviator_sunglasses",
+        "human_display_label": "aviator sunglasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 2,
+        "canonical_model_token": "glasses_cat_eye_glasses",
+        "human_display_label": "cat eye glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 3,
+        "canonical_model_token": "glasses_rimless_glasses",
+        "human_display_label": "rimless glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 4,
+        "canonical_model_token": "glasses_rectangular_glasses",
+        "human_display_label": "rectangular glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 5,
+        "canonical_model_token": "glasses_round_glasses",
+        "human_display_label": "round glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 6,
+        "canonical_model_token": "glasses_thick_rectangular_glasses",
+        "human_display_label": "thick rectangular glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 7,
+        "canonical_model_token": "glasses_oval_glasses",
+        "human_display_label": "oval glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 8,
+        "canonical_model_token": "glasses_narrow_sunglasses",
+        "human_display_label": "narrow sunglasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 9,
+        "canonical_model_token": "glasses_round_sunglasses",
+        "human_display_label": "round sunglasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 10,
+        "canonical_model_token": "glasses_heart_glasses",
+        "human_display_label": "heart glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 11,
+        "canonical_model_token": "glasses_no_glasses",
+        "human_display_label": "no glasses",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "OFFICIAL"
+      }
+    ],
+    "hair_color": [
+      {
+        "raw_id": 0,
+        "canonical_model_token": "hair_color_light_blond",
+        "human_display_label": "light blond",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 1,
+        "canonical_model_token": "hair_color_golden_blond",
+        "human_display_label": "golden blond",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 2,
+        "canonical_model_token": "hair_color_orange",
+        "human_display_label": "orange",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 3,
+        "canonical_model_token": "hair_color_red",
+        "human_display_label": "red",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 4,
+        "canonical_model_token": "hair_color_golden_brown",
+        "human_display_label": "golden brown",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 5,
+        "canonical_model_token": "hair_color_medium_brown",
+        "human_display_label": "medium brown",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 6,
+        "canonical_model_token": "hair_color_dark_brown",
+        "human_display_label": "dark brown",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 7,
+        "canonical_model_token": "hair_color_black",
+        "human_display_label": "black",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 8,
+        "canonical_model_token": "hair_color_blue_gray",
+        "human_display_label": "blue gray",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 9,
+        "canonical_model_token": "hair_color_silver",
+        "human_display_label": "silver",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      }
+    ],
+    "face_color": [
+      {
+        "raw_id": 0,
+        "canonical_model_token": "face_color_deep_brown",
+        "human_display_label": "deep brown",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 1,
+        "canonical_model_token": "face_color_dark_brown",
+        "human_display_label": "dark brown",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 2,
+        "canonical_model_token": "face_color_medium_brown",
+        "human_display_label": "medium brown",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 3,
+        "canonical_model_token": "face_color_warm_brown",
+        "human_display_label": "warm brown",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 4,
+        "canonical_model_token": "face_color_golden_tan",
+        "human_display_label": "golden tan",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 5,
+        "canonical_model_token": "face_color_light_tan",
+        "human_display_label": "light tan",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 6,
+        "canonical_model_token": "face_color_rose_tan",
+        "human_display_label": "rose tan",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 7,
+        "canonical_model_token": "face_color_peach_tan",
+        "human_display_label": "peach tan",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 8,
+        "canonical_model_token": "face_color_light_beige",
+        "human_display_label": "light beige",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 9,
+        "canonical_model_token": "face_color_light_peach",
+        "human_display_label": "light peach",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 10,
+        "canonical_model_token": "face_color_pale_pink",
+        "human_display_label": "pale pink",
+        "label_kind": "SEMANTIC",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      }
+    ]
+  }
+}

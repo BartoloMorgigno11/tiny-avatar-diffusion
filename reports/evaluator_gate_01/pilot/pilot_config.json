@@ -1,0 +1,900 @@
+{
+  "status": "COMPLETE",
+  "purpose": "EVALUATOR GATE 01B pilot only; not a generator split or final evaluator benchmark",
+  "environment": {
+    "python": "3.11.16",
+    "torch": "2.4.0+cu121",
+    "torchvision": "0.19.0+cu121",
+    "pillow": "12.3.0",
+    "numpy": "1.26.4",
+    "torch_cuda_runtime": "12.1",
+    "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "gpu_vram_mib": 8188,
+    "driver_version": "595.79",
+    "nvidia_smi_cuda": "13.2",
+    "os": "Windows-10-10.0.26200-SP0"
+  },
+  "sources": {
+    "100k": "data\\raw\\cartoonset\\archives\\cartoonset100k.tgz",
+    "10k": "data\\raw\\cartoonset\\archives\\cartoonset10k.tgz"
+  },
+  "preprocessing": {
+    "order": [
+      "native RGBA",
+      "alpha composite on pure white RGB=(255,255,255)",
+      "RGB",
+      "resize"
+    ],
+    "resize": "torchvision PIL resize; InterpolationMode.BILINEAR; antialias=True",
+    "pilot_only": true,
+    "augmentation": null
+  },
+  "split": {
+    "seed": 2026,
+    "algorithm": "numpy.default_rng(seed).permutation over lexicographically sorted basenames",
+    "counts": {
+      "train": 80000,
+      "validation": 10000,
+      "internal_test": 10000
+    },
+    "external_10k_count": 10000,
+    "image_disjoint": true,
+    "per_class_counts": {
+      "train": {
+        "face_shape": [
+          11507,
+          11409,
+          11440,
+          11308,
+          11379,
+          11439,
+          11518
+        ],
+        "glasses": [
+          3672,
+          3669,
+          3580,
+          3668,
+          3623,
+          3645,
+          3636,
+          3756,
+          3669,
+          3564,
+          3654,
+          39864
+        ],
+        "hair_color": [
+          7954,
+          8075,
+          7986,
+          8056,
+          8125,
+          7969,
+          8000,
+          7926,
+          8008,
+          7901
+        ],
+        "face_color": [
+          7329,
+          7162,
+          7374,
+          7219,
+          7222,
+          7355,
+          7223,
+          7411,
+          7243,
+          7191,
+          7271
+        ],
+        "facial_hair": [
+          2763,
+          2883,
+          2937,
+          2850,
+          2791,
+          2897,
+          2884,
+          2985,
+          2933,
+          2762,
+          2922,
+          2821,
+          3013,
+          2848,
+          39711
+        ]
+      },
+      "validation": {
+        "face_shape": [
+          1403,
+          1461,
+          1431,
+          1373,
+          1451,
+          1414,
+          1467
+        ],
+        "glasses": [
+          464,
+          462,
+          428,
+          471,
+          463,
+          451,
+          497,
+          443,
+          429,
+          470,
+          454,
+          4968
+        ],
+        "hair_color": [
+          1084,
+          1009,
+          1018,
+          989,
+          962,
+          957,
+          994,
+          1010,
+          1035,
+          942
+        ],
+        "face_color": [
+          857,
+          957,
+          966,
+          847,
+          957,
+          889,
+          947,
+          886,
+          921,
+          902,
+          871
+        ],
+        "facial_hair": [
+          332,
+          341,
+          389,
+          367,
+          348,
+          390,
+          384,
+          323,
+          350,
+          355,
+          342,
+          341,
+          363,
+          340,
+          5035
+        ]
+      },
+      "internal_test": {
+        "face_shape": [
+          1396,
+          1446,
+          1485,
+          1421,
+          1372,
+          1450,
+          1430
+        ],
+        "glasses": [
+          422,
+          467,
+          430,
+          468,
+          478,
+          447,
+          448,
+          467,
+          425,
+          513,
+          439,
+          4996
+        ],
+        "hair_color": [
+          1011,
+          942,
+          1042,
+          1042,
+          1023,
+          1052,
+          975,
+          1000,
+          955,
+          958
+        ],
+        "face_color": [
+          901,
+          939,
+          877,
+          901,
+          957,
+          886,
+          950,
+          890,
+          900,
+          891,
+          908
+        ],
+        "facial_hair": [
+          359,
+          380,
+          345,
+          356,
+          341,
+          377,
+          351,
+          334,
+          338,
+          356,
+          369,
+          374,
+          369,
+          354,
+          4997
+        ]
+      },
+      "external_test": {
+        "face_shape": [
+          1340,
+          1407,
+          1468,
+          1439,
+          1496,
+          1393,
+          1457
+        ],
+        "glasses": [
+          490,
+          459,
+          443,
+          453,
+          451,
+          453,
+          466,
+          445,
+          440,
+          439,
+          475,
+          4986
+        ],
+        "hair_color": [
+          998,
+          1007,
+          1013,
+          994,
+          967,
+          984,
+          982,
+          1030,
+          1021,
+          1004
+        ],
+        "face_color": [
+          897,
+          910,
+          908,
+          893,
+          926,
+          885,
+          894,
+          931,
+          898,
+          889,
+          969
+        ],
+        "facial_hair": [
+          354,
+          393,
+          356,
+          374,
+          358,
+          369,
+          351,
+          335,
+          360,
+          324,
+          317,
+          353,
+          344,
+          368,
+          5044
+        ]
+      }
+    }
+  },
+  "architecture": {
+    "name": "small_shared_cnn_five_heads",
+    "conv_channels": [
+      3,
+      32,
+      64,
+      128,
+      256
+    ],
+    "kernel_size": 3,
+    "stride": 2,
+    "padding": 1,
+    "conv_bias": true,
+    "groupnorm_groups": 8,
+    "groupnorm_affine": true,
+    "activation": "SiLU",
+    "pool": "AdaptiveAvgPool2d(1)",
+    "heads": {
+      "face_shape": 7,
+      "glasses": 12,
+      "hair_color": 10,
+      "face_color": 11,
+      "facial_hair": 15
+    },
+    "parameter_count": 403511,
+    "pretrained": false,
+    "pilot_only": true
+  },
+  "training": {
+    "resolutions": [
+      32,
+      64
+    ],
+    "seeds": [
+      2026,
+      2027,
+      2028
+    ],
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "scheduler": null,
+    "precision": "FP32",
+    "physical_batch": 128,
+    "maximum_epochs": 30,
+    "early_stopping_patience_complete_epochs": 5,
+    "checkpoint_selection": "highest validation mean macro-F1 across five heads",
+    "loss": "unweighted cross entropy per head; equal mean of five head losses",
+    "batch_check": {
+      "32": {
+        "batch": 128,
+        "peak_bytes": 101749248
+      },
+      "64": {
+        "batch": 128,
+        "peak_bytes": 186054656
+      }
+    }
+  },
+  "gates": {
+    "data_preprocessing": {
+      "data_gate": "PASS",
+      "preprocessing_gate": "PASS",
+      "split_counts": {
+        "train": 80000,
+        "validation": 10000,
+        "internal_test": 10000
+      },
+      "external_count": 10000,
+      "tiny_count": 256,
+      "cache_checks": {
+        "100k_32": {
+          "shape_hwc": [
+            32,
+            32,
+            3
+          ],
+          "shape_chw": [
+            3,
+            32,
+            32
+          ],
+          "dtype": "uint8",
+          "channels": 3
+        },
+        "100k_64": {
+          "shape_hwc": [
+            64,
+            64,
+            3
+          ],
+          "shape_chw": [
+            3,
+            64,
+            64
+          ],
+          "dtype": "uint8",
+          "channels": 3
+        },
+        "10k_32": {
+          "shape_hwc": [
+            32,
+            32,
+            3
+          ],
+          "shape_chw": [
+            3,
+            32,
+            32
+          ],
+          "dtype": "uint8",
+          "channels": 3
+        },
+        "10k_64": {
+          "shape_hwc": [
+            64,
+            64,
+            3
+          ],
+          "shape_chw": [
+            3,
+            64,
+            64
+          ],
+          "dtype": "uint8",
+          "channels": 3
+        }
+      }
+    },
+    "forward_backward": {
+      "forward_backward_gate": "PASS",
+      "resolutions": {
+        "32": {
+          "outputs": {
+            "face_shape": [
+              8,
+              7
+            ],
+            "glasses": [
+              8,
+              12
+            ],
+            "hair_color": [
+              8,
+              10
+            ],
+            "face_color": [
+              8,
+              11
+            ],
+            "facial_hair": [
+              8,
+              15
+            ]
+          },
+          "finite_loss": true,
+          "backbone_gradients": true,
+          "head_gradients": {
+            "face_shape": true,
+            "glasses": true,
+            "hair_color": true,
+            "face_color": true,
+            "facial_hair": true
+          }
+        },
+        "64": {
+          "outputs": {
+            "face_shape": [
+              8,
+              7
+            ],
+            "glasses": [
+              8,
+              12
+            ],
+            "hair_color": [
+              8,
+              10
+            ],
+            "face_color": [
+              8,
+              11
+            ],
+            "facial_hair": [
+              8,
+              15
+            ]
+          },
+          "finite_loss": true,
+          "backbone_gradients": true,
+          "head_gradients": {
+            "face_shape": true,
+            "glasses": true,
+            "hair_color": true,
+            "face_color": true,
+            "facial_hair": true
+          }
+        }
+      }
+    },
+    "tiny_overfit": {
+      "32": {
+        "resolution": 32,
+        "status": "PASS",
+        "pass_step": 200,
+        "checkpoints": [
+          {
+            "step": 50,
+            "loss": 1.6679390668869019,
+            "accuracies": {
+              "face_shape": 0.25,
+              "glasses": 0.54296875,
+              "hair_color": 0.77734375,
+              "face_color": 0.35546875,
+              "facial_hair": 0.46875
+            },
+            "consecutive_passes": 0,
+            "finite_gradients": true
+          },
+          {
+            "step": 100,
+            "loss": 0.8941164016723633,
+            "accuracies": {
+              "face_shape": 0.66015625,
+              "glasses": 0.7734375,
+              "hair_color": 0.9765625,
+              "face_color": 0.83984375,
+              "facial_hair": 0.7421875
+            },
+            "consecutive_passes": 0,
+            "finite_gradients": true
+          },
+          {
+            "step": 150,
+            "loss": 0.26624423265457153,
+            "accuracies": {
+              "face_shape": 0.9921875,
+              "glasses": 1.0,
+              "hair_color": 1.0,
+              "face_color": 1.0,
+              "facial_hair": 1.0
+            },
+            "consecutive_passes": 1,
+            "finite_gradients": true
+          },
+          {
+            "step": 200,
+            "loss": 0.06387065351009369,
+            "accuracies": {
+              "face_shape": 1.0,
+              "glasses": 1.0,
+              "hair_color": 1.0,
+              "face_color": 1.0,
+              "facial_hair": 1.0
+            },
+            "consecutive_passes": 2,
+            "finite_gradients": true
+          }
+        ]
+      },
+      "64": {
+        "resolution": 64,
+        "status": "PASS",
+        "pass_step": 300,
+        "checkpoints": [
+          {
+            "step": 50,
+            "loss": 2.077174425125122,
+            "accuracies": {
+              "face_shape": 0.16015625,
+              "glasses": 0.47265625,
+              "hair_color": 0.21875,
+              "face_color": 0.1640625,
+              "facial_hair": 0.46484375
+            },
+            "consecutive_passes": 0,
+            "finite_gradients": true
+          },
+          {
+            "step": 100,
+            "loss": 1.6505054235458374,
+            "accuracies": {
+              "face_shape": 0.2578125,
+              "glasses": 0.5390625,
+              "hair_color": 0.671875,
+              "face_color": 0.3671875,
+              "facial_hair": 0.46484375
+            },
+            "consecutive_passes": 0,
+            "finite_gradients": true
+          },
+          {
+            "step": 150,
+            "loss": 1.183224081993103,
+            "accuracies": {
+              "face_shape": 0.5,
+              "glasses": 0.6328125,
+              "hair_color": 0.89453125,
+              "face_color": 0.62890625,
+              "facial_hair": 0.515625
+            },
+            "consecutive_passes": 0,
+            "finite_gradients": true
+          },
+          {
+            "step": 200,
+            "loss": 0.5934507250785828,
+            "accuracies": {
+              "face_shape": 0.90234375,
+              "glasses": 0.890625,
+              "hair_color": 0.98046875,
+              "face_color": 0.89453125,
+              "facial_hair": 0.84375
+            },
+            "consecutive_passes": 0,
+            "finite_gradients": true
+          },
+          {
+            "step": 250,
+            "loss": 0.2267168015241623,
+            "accuracies": {
+              "face_shape": 0.9921875,
+              "glasses": 1.0,
+              "hair_color": 1.0,
+              "face_color": 0.9921875,
+              "facial_hair": 1.0
+            },
+            "consecutive_passes": 1,
+            "finite_gradients": true
+          },
+          {
+            "step": 300,
+            "loss": 0.08182906359434128,
+            "accuracies": {
+              "face_shape": 1.0,
+              "glasses": 1.0,
+              "hair_color": 1.0,
+              "face_color": 1.0,
+              "facial_hair": 1.0
+            },
+            "consecutive_passes": 2,
+            "finite_gradients": true
+          }
+        ]
+      }
+    }
+  },
+  "normal_runs": [
+    {
+      "resolution": 32,
+      "seed": 2026,
+      "epochs_completed": 21,
+      "best_epoch": 16,
+      "best_validation_mean_macro_f1": 0.9908984050932265,
+      "total_seconds": 89.06523069995455,
+      "peak_cuda_bytes": 105248256,
+      "checkpoint": "checkpoints\\evaluator_gate_01\\pilot\\eval32_seed2026_best.pt"
+    },
+    {
+      "resolution": 32,
+      "seed": 2027,
+      "epochs_completed": 13,
+      "best_epoch": 8,
+      "best_validation_mean_macro_f1": 0.9895892501228474,
+      "total_seconds": 93.13883029995486,
+      "peak_cuda_bytes": 105248256,
+      "checkpoint": "checkpoints\\evaluator_gate_01\\pilot\\eval32_seed2027_best.pt"
+    },
+    {
+      "resolution": 32,
+      "seed": 2028,
+      "epochs_completed": 22,
+      "best_epoch": 17,
+      "best_validation_mean_macro_f1": 0.9909801158276371,
+      "total_seconds": 110.37345309997909,
+      "peak_cuda_bytes": 105248256,
+      "checkpoint": "checkpoints\\evaluator_gate_01\\pilot\\eval32_seed2028_best.pt"
+    },
+    {
+      "resolution": 64,
+      "seed": 2026,
+      "epochs_completed": 19,
+      "best_epoch": 14,
+      "best_validation_mean_macro_f1": 0.998354408667726,
+      "total_seconds": 114.25763550004922,
+      "peak_cuda_bytes": 190471168,
+      "checkpoint": "checkpoints\\evaluator_gate_01\\pilot\\eval64_seed2026_best.pt"
+    },
+    {
+      "resolution": 64,
+      "seed": 2027,
+      "epochs_completed": 21,
+      "best_epoch": 16,
+      "best_validation_mean_macro_f1": 0.9986749511834228,
+      "total_seconds": 204.55993849993683,
+      "peak_cuda_bytes": 190045696,
+      "checkpoint": "checkpoints\\evaluator_gate_01\\pilot\\eval64_seed2027_best.pt"
+    },
+    {
+      "resolution": 64,
+      "seed": 2028,
+      "epochs_completed": 15,
+      "best_epoch": 10,
+      "best_validation_mean_macro_f1": 0.9981406320453591,
+      "total_seconds": 169.44316649995744,
+      "peak_cuda_bytes": 190045696,
+      "checkpoint": "checkpoints\\evaluator_gate_01\\pilot\\eval64_seed2028_best.pt"
+    }
+  ],
+  "label_shuffle": {
+    "epochs": 5,
+    "seed": 2026,
+    "resolution": 32,
+    "labels_shuffled_independently_per_head": true,
+    "last_epoch": {
+      "epoch": 5,
+      "train_loss": 2.1144056499481203,
+      "validation_loss": 2.1113465492248533,
+      "validation_mean_accuracy": 0.26633999999999997,
+      "validation_mean_macro_f1": 0.03367473817072811,
+      "per_attribute": {
+        "face_shape": {
+          "accuracy": 0.1373,
+          "macro_f1": 0.03449272085515821,
+          "balanced_accuracy": 0.14285714285714285,
+          "per_class_recall": [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "support": [
+            1403,
+            1461,
+            1431,
+            1373,
+            1451,
+            1414,
+            1467
+          ]
+        },
+        "glasses": {
+          "accuracy": 0.4968,
+          "macro_f1": 0.05531801175841797,
+          "balanced_accuracy": 0.08333333333333333,
+          "per_class_recall": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "support": [
+            464,
+            462,
+            428,
+            471,
+            463,
+            451,
+            497,
+            443,
+            429,
+            470,
+            454,
+            4968
+          ]
+        },
+        "hair_color": {
+          "accuracy": 0.1084,
+          "macro_f1": 0.019559725730783108,
+          "balanced_accuracy": 0.1,
+          "per_class_recall": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "support": [
+            1084,
+            1009,
+            1018,
+            989,
+            962,
+            957,
+            994,
+            1010,
+            1035,
+            942
+          ]
+        },
+        "face_color": {
+          "accuracy": 0.0857,
+          "macro_f1": 0.01435186348145729,
+          "balanced_accuracy": 0.09090909090909091,
+          "per_class_recall": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "support": [
+            857,
+            957,
+            966,
+            847,
+            957,
+            889,
+            947,
+            886,
+            921,
+            902,
+            871
+          ]
+        },
+        "facial_hair": {
+          "accuracy": 0.5035,
+          "macro_f1": 0.04465136902782397,
+          "balanced_accuracy": 0.06666666666666667,
+          "per_class_recall": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "support": [
+            332,
+            341,
+            389,
+            367,
+            348,
+            390,
+            384,
+            323,
+            350,
+            355,
+            342,
+            341,
+            363,
+            340,
+            5035
+          ]
+        }
+      }
+    },
+    "train_majority_ids": {
+      "face_shape": 6,
+      "glasses": 11,
+      "hair_color": 4,
+      "face_color": 7,
+      "facial_hair": 14
+    }
+  },
+  "wall_seconds_including_cache_and_gates": 932.1953467000276
+}

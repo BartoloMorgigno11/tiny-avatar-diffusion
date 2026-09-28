@@ -1,0 +1,98 @@
+{
+  "schema": "tiny_avatar_diffusion.dr01_heldout_combinations",
+  "version": "dr01_v1",
+  "selected_attributes": [
+    "face_shape",
+    "glasses",
+    "hair_color",
+    "face_color"
+  ],
+  "comp_val_definitions": [
+    {
+      "name": "CV1",
+      "attribute_a": "face_shape",
+      "value_a": 0,
+      "attribute_b": "glasses",
+      "value_b": 0
+    },
+    {
+      "name": "CV2",
+      "attribute_a": "face_shape",
+      "value_a": 2,
+      "attribute_b": "hair_color",
+      "value_b": 3
+    },
+    {
+      "name": "CV3",
+      "attribute_a": "glasses",
+      "value_a": 7,
+      "attribute_b": "face_color",
+      "value_b": 2
+    },
+    {
+      "name": "CV4",
+      "attribute_a": "hair_color",
+      "value_a": 2,
+      "attribute_b": "face_color",
+      "value_b": 9
+    }
+  ],
+  "final_ood_definitions": [
+    {
+      "name": "OOD1",
+      "attribute_a": "face_shape",
+      "value_a": 2,
+      "attribute_b": "glasses",
+      "value_b": 3
+    },
+    {
+      "name": "OOD2",
+      "attribute_a": "face_shape",
+      "value_a": 4,
+      "attribute_b": "hair_color",
+      "value_b": 6
+    },
+    {
+      "name": "OOD3",
+      "attribute_a": "glasses",
+      "value_a": 10,
+      "attribute_b": "face_color",
+      "value_b": 10
+    },
+    {
+      "name": "OOD4",
+      "attribute_a": "hair_color",
+      "value_a": 0,
+      "attribute_b": "face_color",
+      "value_b": 0
+    }
+  ],
+  "precedence": [
+    "FINAL_OOD",
+    "COMP_VAL",
+    "ID_POOL"
+  ],
+  "split_seed": 2026,
+  "id_split_proportions": {
+    "TRAIN": 0.9,
+    "ID_VAL": 0.05,
+    "ID_TEST": 0.05
+  },
+  "id_split_count_allocation": "largest remainder; ties ordered TRAIN, ID_VAL, ID_TEST",
+  "id_split_method": "sorted image IDs followed by Python random.Random(seed).shuffle, independently per dataset",
+  "dataset_variants": {
+    "10k": "data/raw/cartoonset/archives/cartoonset10k.tgz",
+    "100k": "data/raw/cartoonset/archives/cartoonset100k.tgz"
+  },
+  "main_resolution": [
+    32,
+    32
+  ],
+  "preprocessing": "native RGBA -> alpha composite on RGB(255,255,255) -> RGB -> resize",
+  "generation_timestamp_utc": "2026-09-28T15:59:40.456059+00:00",
+  "provenance": {
+    "generator": "src/tiny_avatar_diffusion/dr01_split.py",
+    "generator_sha256": "a533826086e95d272210c055c8116074da168412d335a300af508b305d6c664a",
+    "git_commit": "38fac9d50a736da3629780845c91cb7702af492b"
+  }
+}

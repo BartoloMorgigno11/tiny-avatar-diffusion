@@ -1,0 +1,256 @@
+{
+  "schema": "tiny_avatar_diffusion.dr01_semantic_mapping",
+  "version": "dr01_v1",
+  "generation_timestamp_utc": "2026-09-28T16:14:36.906200+00:00",
+  "note": "Only glasses=11 is an official Google label. Other semantic labels are project-defined canonical labels from visual audit; face_color labels describe graphical colors, not demographic categories.",
+  "attributes": {
+    "face_shape": [
+      {
+        "raw_id": 0,
+        "canonical_label": "pointed",
+        "canonical_model_token": "face_shape_pointed",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 1,
+        "canonical_label": "face_shape_1",
+        "canonical_model_token": "face_shape_1",
+        "provenance_status": "NEUTRAL_TOKEN"
+      },
+      {
+        "raw_id": 2,
+        "canonical_label": "oval",
+        "canonical_model_token": "face_shape_oval",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 3,
+        "canonical_label": "long",
+        "canonical_model_token": "face_shape_long",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 4,
+        "canonical_label": "round",
+        "canonical_model_token": "face_shape_round",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 5,
+        "canonical_label": "wide",
+        "canonical_model_token": "face_shape_wide",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 6,
+        "canonical_label": "rectangular",
+        "canonical_model_token": "face_shape_rectangular",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      }
+    ],
+    "glasses": [
+      {
+        "raw_id": 0,
+        "canonical_label": "oversized_glasses",
+        "canonical_model_token": "glasses_oversized_glasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 1,
+        "canonical_label": "aviator_sunglasses",
+        "canonical_model_token": "glasses_aviator_sunglasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 2,
+        "canonical_label": "cat_eye_glasses",
+        "canonical_model_token": "glasses_cat_eye_glasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 3,
+        "canonical_label": "rimless_glasses",
+        "canonical_model_token": "glasses_rimless_glasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 4,
+        "canonical_label": "rectangular_glasses",
+        "canonical_model_token": "glasses_rectangular_glasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 5,
+        "canonical_label": "round_glasses",
+        "canonical_model_token": "glasses_round_glasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 6,
+        "canonical_label": "thick_rectangular_glasses",
+        "canonical_model_token": "glasses_thick_rectangular_glasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 7,
+        "canonical_label": "oval_glasses",
+        "canonical_model_token": "glasses_oval_glasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 8,
+        "canonical_label": "narrow_sunglasses",
+        "canonical_model_token": "glasses_narrow_sunglasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 9,
+        "canonical_label": "round_sunglasses",
+        "canonical_model_token": "glasses_round_sunglasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 10,
+        "canonical_label": "heart_glasses",
+        "canonical_model_token": "glasses_heart_glasses",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 11,
+        "canonical_label": "no_glasses",
+        "canonical_model_token": "glasses_no_glasses",
+        "provenance_status": "OFFICIAL"
+      }
+    ],
+    "hair_color": [
+      {
+        "raw_id": 0,
+        "canonical_label": "light_blond",
+        "canonical_model_token": "hair_color_light_blond",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 1,
+        "canonical_label": "golden_blond",
+        "canonical_model_token": "hair_color_golden_blond",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 2,
+        "canonical_label": "orange",
+        "canonical_model_token": "hair_color_orange",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 3,
+        "canonical_label": "red",
+        "canonical_model_token": "hair_color_red",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 4,
+        "canonical_label": "golden_brown",
+        "canonical_model_token": "hair_color_golden_brown",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 5,
+        "canonical_label": "medium_brown",
+        "canonical_model_token": "hair_color_medium_brown",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 6,
+        "canonical_label": "dark_brown",
+        "canonical_model_token": "hair_color_dark_brown",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 7,
+        "canonical_label": "black",
+        "canonical_model_token": "hair_color_black",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 8,
+        "canonical_label": "blue_gray",
+        "canonical_model_token": "hair_color_blue_gray",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 9,
+        "canonical_label": "silver",
+        "canonical_model_token": "hair_color_silver",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      }
+    ],
+    "face_color": [
+      {
+        "raw_id": 0,
+        "canonical_label": "deep_brown",
+        "canonical_model_token": "face_color_deep_brown",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 1,
+        "canonical_label": "dark_brown",
+        "canonical_model_token": "face_color_dark_brown",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 2,
+        "canonical_label": "medium_brown",
+        "canonical_model_token": "face_color_medium_brown",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 3,
+        "canonical_label": "warm_brown",
+        "canonical_model_token": "face_color_warm_brown",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 4,
+        "canonical_label": "golden_tan",
+        "canonical_model_token": "face_color_golden_tan",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 5,
+        "canonical_label": "light_tan",
+        "canonical_model_token": "face_color_light_tan",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 6,
+        "canonical_label": "rose_tan",
+        "canonical_model_token": "face_color_rose_tan",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 7,
+        "canonical_label": "peach_tan",
+        "canonical_model_token": "face_color_peach_tan",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 8,
+        "canonical_label": "light_beige",
+        "canonical_model_token": "face_color_light_beige",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      },
+      {
+        "raw_id": 9,
+        "canonical_label": "light_peach",
+        "canonical_model_token": "face_color_light_peach",
+        "provenance_status": "PROJECT_DEFINED_AMBIGUOUS"
+      },
+      {
+        "raw_id": 10,
+        "canonical_label": "pale_pink",
+        "canonical_model_token": "face_color_pale_pink",
+        "provenance_status": "PROJECT_DEFINED_VISUALLY_CLEAR"
+      }
+    ]
+  }
+}

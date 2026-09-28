@@ -1,0 +1,27 @@
+{
+  "schema": "tiny_avatar_diffusion.dr01_tokenizer_config",
+  "version": "dr01_v1",
+  "dataset_variant": "10k",
+  "tokenizer_type": "whitespace_word_level",
+  "normalization": [
+    "lowercase",
+    "normalize_surrounding_and_repeated_whitespace"
+  ],
+  "split_rule": "whitespace_only",
+  "underscores_are_atomic": true,
+  "special_tokens": {
+    "<pad>": 0,
+    "<bos>": 1,
+    "<eos>": 2,
+    "<unk>": 3
+  },
+  "serialization": [
+    "<bos>",
+    "five_caption_tokens",
+    "<eos>"
+  ],
+  "padding_side": "right",
+  "max_length": 7,
+  "max_length_rationale": "5 fixed lexical tokens + <bos> + <eos>; no padding required",
+  "vocabulary_source": "TRAIN captions only"
+}

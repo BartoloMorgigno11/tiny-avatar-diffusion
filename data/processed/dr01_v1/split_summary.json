@@ -1,0 +1,775 @@
+{
+  "schema": "tiny_avatar_diffusion.dr01_split_summary",
+  "version": "dr01_v1",
+  "generation_timestamp_utc": "2026-09-28T15:59:40.456059+00:00",
+  "cross_dataset_consistency": {
+    "selected_attributes_identical": true,
+    "heldout_definitions_identical": true,
+    "precedence_identical": true,
+    "id_split_policy_identical": true,
+    "split_seed_identical": true,
+    "all_checks_passed": true
+  },
+  "datasets": {
+    "10k": {
+      "source_count": 10000,
+      "role_counts_before_id_split": {
+        "FINAL_OOD": 342,
+        "COMP_VAL": 338,
+        "ID_POOL": 9320
+      },
+      "pair_counts_before_precedence": {
+        "CV1": 68,
+        "CV2": 147,
+        "CV3": 54,
+        "CV4": 82,
+        "OOD1": 72,
+        "OOD2": 137,
+        "OOD3": 47,
+        "OOD4": 86
+      },
+      "pair_counts_after_precedence": {
+        "CV1": 66,
+        "CV2": 139,
+        "CV3": 52,
+        "CV4": 82,
+        "OOD1": 72,
+        "OOD2": 137,
+        "OOD3": 47,
+        "OOD4": 86
+      },
+      "overlap_counts": {
+        "multiple_final_ood_definitions": 0,
+        "multiple_comp_val_definitions": 1,
+        "both_final_ood_and_comp_val": 12
+      },
+      "post_holdout_marginals": {
+        "face_shape": {
+          "0": 1234,
+          "1": 1374,
+          "2": 1223,
+          "3": 1399,
+          "4": 1312,
+          "5": 1355,
+          "6": 1423
+        },
+        "glasses": {
+          "0": 402,
+          "1": 446,
+          "2": 428,
+          "3": 366,
+          "4": 428,
+          "5": 437,
+          "6": 445,
+          "7": 373,
+          "8": 422,
+          "9": 415,
+          "10": 414,
+          "11": 4744
+        },
+        "hair_color": {
+          "0": 881,
+          "1": 982,
+          "2": 917,
+          "3": 828,
+          "4": 946,
+          "5": 967,
+          "6": 822,
+          "7": 1000,
+          "8": 991,
+          "9": 986
+        },
+        "face_color": {
+          "0": 766,
+          "1": 881,
+          "2": 826,
+          "3": 847,
+          "4": 888,
+          "5": 845,
+          "6": 855,
+          "7": 891,
+          "8": 866,
+          "9": 776,
+          "10": 879
+        }
+      },
+      "post_holdout_marginal_minimum": 366,
+      "heldout_primitive_support": {
+        "face_shape": {
+          "0": 1234,
+          "2": 1223,
+          "4": 1312
+        },
+        "glasses": {
+          "0": 402,
+          "7": 373,
+          "3": 366,
+          "10": 414
+        },
+        "hair_color": {
+          "3": 828,
+          "2": 917,
+          "6": 822,
+          "0": 881
+        },
+        "face_color": {
+          "2": 826,
+          "9": 776,
+          "10": 879,
+          "0": 766
+        }
+      },
+      "post_holdout_partner_diversity": {
+        "minimum": 6,
+        "minimum_locations": [
+          {
+            "source_attribute": "glasses",
+            "source_value": 0,
+            "partner_attribute": "face_shape"
+          },
+          {
+            "source_attribute": "glasses",
+            "source_value": 3,
+            "partner_attribute": "face_shape"
+          },
+          {
+            "source_attribute": "hair_color",
+            "source_value": 3,
+            "partner_attribute": "face_shape"
+          },
+          {
+            "source_attribute": "hair_color",
+            "source_value": 6,
+            "partner_attribute": "face_shape"
+          }
+        ],
+        "details": {
+          "face_shape": {
+            "0": {
+              "glasses": 11,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "1": {
+              "glasses": 12,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "2": {
+              "glasses": 11,
+              "hair_color": 9,
+              "face_color": 11
+            },
+            "3": {
+              "glasses": 12,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "4": {
+              "glasses": 12,
+              "hair_color": 9,
+              "face_color": 11
+            },
+            "5": {
+              "glasses": 12,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "6": {
+              "glasses": 12,
+              "hair_color": 10,
+              "face_color": 11
+            }
+          },
+          "glasses": {
+            "0": {
+              "face_shape": 6,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "1": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "2": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "3": {
+              "face_shape": 6,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "4": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "5": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "6": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "7": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 10
+            },
+            "8": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "9": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "10": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 10
+            },
+            "11": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            }
+          },
+          "hair_color": {
+            "0": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 10
+            },
+            "1": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "2": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 10
+            },
+            "3": {
+              "face_shape": 6,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "4": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "5": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "6": {
+              "face_shape": 6,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "7": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "8": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "9": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            }
+          },
+          "face_color": {
+            "0": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 9
+            },
+            "1": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "2": {
+              "face_shape": 7,
+              "glasses": 11,
+              "hair_color": 10
+            },
+            "3": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "4": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "5": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "6": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "7": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "8": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "9": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 9
+            },
+            "10": {
+              "face_shape": 7,
+              "glasses": 11,
+              "hair_color": 10
+            }
+          }
+        }
+      },
+      "unintended_absent_pair_count": 0,
+      "structural_invariants_passed": true,
+      "id_split_distribution_check": {
+        "TRAIN": {
+          "count": 8388,
+          "all_selected_values_present": true,
+          "maximum_absolute_marginal_percentage_point_delta_from_id_pool": 0.28850739151168314
+        },
+        "ID_VAL": {
+          "count": 466,
+          "all_selected_values_present": true,
+          "maximum_absolute_marginal_percentage_point_delta_from_id_pool": 3.13304721030043
+        },
+        "ID_TEST": {
+          "count": 466,
+          "all_selected_values_present": true,
+          "maximum_absolute_marginal_percentage_point_delta_from_id_pool": 3.3905579399141628
+        }
+      },
+      "final_split_counts": {
+        "TRAIN": 8388,
+        "ID_VAL": 466,
+        "ID_TEST": 466,
+        "COMP_VAL": 338,
+        "FINAL_OOD": 342
+      },
+      "integrity_assertions": {
+        "partition_pairwise_disjoint": true,
+        "partition_union_equals_source": true,
+        "every_source_image_appears_once": true,
+        "heldout_pairs_absent_from_train": true,
+        "heldout_primitives_present_in_train": true,
+        "train_partner_diversity_minimum": 6,
+        "exact_image_hashes_crossing_roles": 0,
+        "all_assertions_passed": true
+      }
+    },
+    "100k": {
+      "source_count": 100000,
+      "role_counts_before_id_split": {
+        "FINAL_OOD": 3344,
+        "COMP_VAL": 3311,
+        "ID_POOL": 93345
+      },
+      "pair_counts_before_precedence": {
+        "CV1": 659,
+        "CV2": 1448,
+        "CV3": 420,
+        "CV4": 873,
+        "OOD1": 665,
+        "OOD2": 1373,
+        "OOD3": 411,
+        "OOD4": 900
+      },
+      "pair_counts_after_precedence": {
+        "CV1": 653,
+        "CV2": 1386,
+        "CV3": 413,
+        "CV4": 869,
+        "OOD1": 665,
+        "OOD2": 1373,
+        "OOD3": 411,
+        "OOD4": 900
+      },
+      "overlap_counts": {
+        "multiple_final_ood_definitions": 5,
+        "multiple_comp_val_definitions": 10,
+        "both_final_ood_and_comp_val": 79
+      },
+      "post_holdout_marginals": {
+        "face_shape": {
+          "0": 13285,
+          "1": 13946,
+          "2": 11945,
+          "3": 13718,
+          "4": 12460,
+          "5": 13943,
+          "6": 14048
+        },
+        "glasses": {
+          "0": 3723,
+          "1": 4383,
+          "2": 4240,
+          "3": 3802,
+          "4": 4347,
+          "5": 4323,
+          "6": 4387,
+          "7": 4035,
+          "8": 4305,
+          "9": 4330,
+          "10": 3945,
+          "11": 47525
+        },
+        "hair_color": {
+          "0": 8944,
+          "1": 9806,
+          "2": 8970,
+          "3": 8490,
+          "4": 9896,
+          "5": 9748,
+          "6": 8431,
+          "7": 9693,
+          "8": 9759,
+          "9": 9608
+        },
+        "face_color": {
+          "0": 7809,
+          "1": 8667,
+          "2": 8394,
+          "3": 8602,
+          "4": 8767,
+          "5": 8763,
+          "6": 8740,
+          "7": 8858,
+          "8": 8705,
+          "9": 7739,
+          "10": 8301
+        }
+      },
+      "post_holdout_marginal_minimum": 3723,
+      "heldout_primitive_support": {
+        "face_shape": {
+          "0": 13285,
+          "2": 11945,
+          "4": 12460
+        },
+        "glasses": {
+          "0": 3723,
+          "7": 4035,
+          "3": 3802,
+          "10": 3945
+        },
+        "hair_color": {
+          "3": 8490,
+          "2": 8970,
+          "6": 8431,
+          "0": 8944
+        },
+        "face_color": {
+          "2": 8394,
+          "9": 7739,
+          "10": 8301,
+          "0": 7809
+        }
+      },
+      "post_holdout_partner_diversity": {
+        "minimum": 6,
+        "minimum_locations": [
+          {
+            "source_attribute": "glasses",
+            "source_value": 0,
+            "partner_attribute": "face_shape"
+          },
+          {
+            "source_attribute": "glasses",
+            "source_value": 3,
+            "partner_attribute": "face_shape"
+          },
+          {
+            "source_attribute": "hair_color",
+            "source_value": 3,
+            "partner_attribute": "face_shape"
+          },
+          {
+            "source_attribute": "hair_color",
+            "source_value": 6,
+            "partner_attribute": "face_shape"
+          }
+        ],
+        "details": {
+          "face_shape": {
+            "0": {
+              "glasses": 11,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "1": {
+              "glasses": 12,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "2": {
+              "glasses": 11,
+              "hair_color": 9,
+              "face_color": 11
+            },
+            "3": {
+              "glasses": 12,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "4": {
+              "glasses": 12,
+              "hair_color": 9,
+              "face_color": 11
+            },
+            "5": {
+              "glasses": 12,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "6": {
+              "glasses": 12,
+              "hair_color": 10,
+              "face_color": 11
+            }
+          },
+          "glasses": {
+            "0": {
+              "face_shape": 6,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "1": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "2": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "3": {
+              "face_shape": 6,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "4": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "5": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "6": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "7": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 10
+            },
+            "8": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "9": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            },
+            "10": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 10
+            },
+            "11": {
+              "face_shape": 7,
+              "hair_color": 10,
+              "face_color": 11
+            }
+          },
+          "hair_color": {
+            "0": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 10
+            },
+            "1": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "2": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 10
+            },
+            "3": {
+              "face_shape": 6,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "4": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "5": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "6": {
+              "face_shape": 6,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "7": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "8": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            },
+            "9": {
+              "face_shape": 7,
+              "glasses": 12,
+              "face_color": 11
+            }
+          },
+          "face_color": {
+            "0": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 9
+            },
+            "1": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "2": {
+              "face_shape": 7,
+              "glasses": 11,
+              "hair_color": 10
+            },
+            "3": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "4": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "5": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "6": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "7": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "8": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 10
+            },
+            "9": {
+              "face_shape": 7,
+              "glasses": 12,
+              "hair_color": 9
+            },
+            "10": {
+              "face_shape": 7,
+              "glasses": 11,
+              "hair_color": 10
+            }
+          }
+        }
+      },
+      "unintended_absent_pair_count": 0,
+      "structural_invariants_passed": true,
+      "id_split_distribution_check": {
+        "TRAIN": {
+          "count": 84011,
+          "all_selected_values_present": true,
+          "maximum_absolute_marginal_percentage_point_delta_from_id_pool": 0.08898187903190191
+        },
+        "ID_VAL": {
+          "count": 4667,
+          "all_selected_values_present": true,
+          "maximum_absolute_marginal_percentage_point_delta_from_id_pool": 1.1330037110937052
+        },
+        "ID_TEST": {
+          "count": 4667,
+          "all_selected_values_present": true,
+          "maximum_absolute_marginal_percentage_point_delta_from_id_pool": 0.65403950680826
+        }
+      },
+      "final_split_counts": {
+        "TRAIN": 84011,
+        "ID_VAL": 4667,
+        "ID_TEST": 4667,
+        "COMP_VAL": 3311,
+        "FINAL_OOD": 3344
+      },
+      "integrity_assertions": {
+        "partition_pairwise_disjoint": true,
+        "partition_union_equals_source": true,
+        "every_source_image_appears_once": true,
+        "heldout_pairs_absent_from_train": true,
+        "heldout_primitives_present_in_train": true,
+        "train_partner_diversity_minimum": 6,
+        "exact_image_hashes_crossing_roles": 0,
+        "all_assertions_passed": true
+      }
+    }
+  }
+}
