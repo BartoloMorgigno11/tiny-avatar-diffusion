@@ -279,3 +279,112 @@ def test_reverse_deterministic_operations_reject_incompatible_shapes() -> None:
         schedule.q_posterior_mean(torch.zeros(2, 1, 3, 3), x_t, timesteps)
     with pytest.raises(ValueError, match="one value per batch"):
         schedule.q_posterior_mean(x_t, x_t, torch.tensor([0], dtype=torch.long))
+
+
+@pytest.mark.parametrize("timestep", (0, 500, 999))
+def test_p_mean_variance_from_noise_reuses_reverse_primitives(timestep: int) -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.linspace(-1.5, 1.5, 48).reshape(2, 3, 4, 2)
+    predicted_noise = torch.linspace(0.75, -0.75, x_t.numel()).reshape_as(x_t)
+    timesteps = torch.full((x_t.shape[0],), timestep, dtype=torch.long)
+
+    result = schedule.p_mean_variance_from_noise(x_t, timesteps, predicted_noise)
+    expected_x_start = schedule.predict_x_start_from_noise(
+        x_t, timesteps, predicted_noise
+    )
+    expected_model_mean = schedule.q_posterior_mean(expected_x_start, x_t, timesteps)
+    expected_variance = schedule.posterior_variance[timesteps].reshape(2, 1, 1, 1)
+
+    assert set(result) == {"model_mean", "posterior_variance", "predicted_x_start"}
+    assert torch.allclose(result["predicted_x_start"], expected_x_start)
+    assert torch.allclose(result["model_mean"], expected_model_mean)
+    assert torch.allclose(result["posterior_variance"], expected_variance)
+    assert result["model_mean"].shape == x_t.shape
+    assert result["posterior_variance"].shape == (2, 1, 1, 1)
+    assert torch.isfinite(result["model_mean"]).all()
+    assert torch.isfinite(result["predicted_x_start"]).all()
+    assert torch.isfinite(result["posterior_variance"]).all()
+
+
+def test_p_mean_variance_from_noise_supports_heterogeneous_timesteps() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.zeros(3, 2, 4, 5)
+    predicted_noise = torch.ones_like(x_t)
+    timesteps = torch.tensor([0, 500, 999], dtype=torch.long)
+
+    result = schedule.p_mean_variance_from_noise(x_t, timesteps, predicted_noise)
+
+    assert result["predicted_x_start"].shape == x_t.shape
+    assert result["model_mean"].shape == x_t.shape
+    assert result["posterior_variance"].shape == (3, 1, 1, 1)
+    assert result["posterior_variance"][0] == 0.0
+    assert not torch.isclose(
+        result["posterior_variance"][1, 0, 0, 0],
+        result["posterior_variance"][2, 0, 0, 0],
+    )
+
+
+def test_p_mean_variance_from_noise_matches_an_independent_formula() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.linspace(-2.0, 2.0, 36).reshape(3, 1, 3, 4)
+    predicted_noise = torch.linspace(-0.5, 0.5, x_t.numel()).reshape_as(x_t)
+    timesteps = torch.tensor([0, 500, 999], dtype=torch.long)
+    betas, alphas, alphas_cumprod = _independent_schedule()
+    alphas_cumprod_prev = torch.cat((torch.ones(1), alphas_cumprod[:-1]))
+    selected = timesteps.reshape(3, 1, 1, 1)
+    alpha_bar = alphas_cumprod[selected]
+    denominator = 1.0 - alpha_bar
+    predicted_x_start = (
+        x_t - torch.sqrt(1.0 - alpha_bar) * predicted_noise
+    ) / torch.sqrt(alpha_bar)
+    coef1 = betas[selected] * torch.sqrt(alphas_cumprod_prev[selected]) / denominator
+    coef2 = torch.sqrt(alphas[selected]) * (1.0 - alphas_cumprod_prev[selected]) / denominator
+    expected_model_mean = coef1 * predicted_x_start + coef2 * x_t
+    expected_variance = betas[selected] * (1.0 - alphas_cumprod_prev[selected]) / denominator
+
+    result = schedule.p_mean_variance_from_noise(x_t, timesteps, predicted_noise)
+
+    assert torch.allclose(result["predicted_x_start"], predicted_x_start)
+    assert torch.allclose(result["model_mean"], expected_model_mean)
+    assert torch.allclose(result["posterior_variance"], expected_variance)
+
+
+def test_p_mean_variance_from_noise_does_not_clip_predicted_x_start() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.full((1, 1, 2, 2), 2.0)
+    predicted_noise = torch.zeros_like(x_t)
+    timesteps = torch.tensor([999], dtype=torch.long)
+
+    result = schedule.p_mean_variance_from_noise(x_t, timesteps, predicted_noise)
+
+    assert torch.all(result["predicted_x_start"] > 1.0)
+
+
+def test_p_mean_variance_from_noise_preserves_gradient_paths() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.full((2, 1, 3, 4), 0.5, requires_grad=True)
+    predicted_noise = torch.full_like(x_t, 0.25, requires_grad=True)
+    timesteps = torch.tensor([0, 500], dtype=torch.long)
+
+    result = schedule.p_mean_variance_from_noise(x_t, timesteps, predicted_noise)
+    (result["model_mean"].square().mean() + result["predicted_x_start"].square().mean()).backward()
+
+    assert x_t.grad is not None
+    assert predicted_noise.grad is not None
+    assert torch.isfinite(x_t.grad).all()
+    assert torch.isfinite(predicted_noise.grad).all()
+
+
+def test_p_mean_variance_from_noise_rejects_incompatible_inputs() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.zeros(2, 1, 3, 4)
+    timesteps = torch.tensor([0, 1], dtype=torch.long)
+
+    with pytest.raises(ValueError, match="same shape as x_t"):
+        schedule.p_mean_variance_from_noise(
+            x_t, timesteps, torch.zeros(2, 1, 3, 3)
+        )
+    with pytest.raises(ValueError, match="one value per batch"):
+        schedule.p_mean_variance_from_noise(
+            x_t, torch.tensor([0], dtype=torch.long), torch.zeros_like(x_t)
+        )

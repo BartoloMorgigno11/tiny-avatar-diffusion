@@ -128,3 +128,21 @@ class LinearDDPMSchedule(nn.Module):
         coef1 = _extract(self.posterior_mean_coef1, timesteps, x_t)
         coef2 = _extract(self.posterior_mean_coef2, timesteps, x_t)
         return coef1 * x_start + coef2 * x_t
+
+    def p_mean_variance_from_noise(
+        self,
+        x_t: torch.Tensor,
+        timesteps: torch.Tensor,
+        predicted_noise: torch.Tensor,
+    ) -> dict[str, torch.Tensor]:
+        """Compose deterministic reverse-process quantities from predicted noise."""
+        predicted_x_start = self.predict_x_start_from_noise(
+            x_t, timesteps, predicted_noise
+        )
+        model_mean = self.q_posterior_mean(predicted_x_start, x_t, timesteps)
+        posterior_variance = _extract(self.posterior_variance, timesteps, x_t)
+        return {
+            "model_mean": model_mean,
+            "posterior_variance": posterior_variance,
+            "predicted_x_start": predicted_x_start,
+        }
