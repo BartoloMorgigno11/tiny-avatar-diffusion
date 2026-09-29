@@ -98,3 +98,33 @@ class LinearDDPMSchedule(nn.Module):
             self.sqrt_one_minus_alphas_cumprod, timesteps, x_start
         )
         return sqrt_alphas_cumprod * x_start + sqrt_one_minus_alphas_cumprod * noise
+
+    def predict_x_start_from_noise(
+        self,
+        x_t: torch.Tensor,
+        timesteps: torch.Tensor,
+        noise: torch.Tensor,
+    ) -> torch.Tensor:
+        """Reconstruct ``x_0`` from ``x_t`` and the forward-process noise."""
+        if noise.shape != x_t.shape:
+            raise ValueError("noise must have the same shape as x_t")
+
+        sqrt_alphas_cumprod = _extract(self.sqrt_alphas_cumprod, timesteps, x_t)
+        sqrt_one_minus_alphas_cumprod = _extract(
+            self.sqrt_one_minus_alphas_cumprod, timesteps, x_t
+        )
+        return (x_t - sqrt_one_minus_alphas_cumprod * noise) / sqrt_alphas_cumprod
+
+    def q_posterior_mean(
+        self,
+        x_start: torch.Tensor,
+        x_t: torch.Tensor,
+        timesteps: torch.Tensor,
+    ) -> torch.Tensor:
+        """Return the DDPM posterior mean ``q(x_{t-1} | x_t, x_0)``."""
+        if x_start.shape != x_t.shape:
+            raise ValueError("x_start and x_t must have the same shape")
+
+        coef1 = _extract(self.posterior_mean_coef1, timesteps, x_t)
+        coef2 = _extract(self.posterior_mean_coef2, timesteps, x_t)
+        return coef1 * x_start + coef2 * x_t

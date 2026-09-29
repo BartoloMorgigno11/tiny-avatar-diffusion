@@ -17,6 +17,12 @@ COEFFICIENT_NAMES = (
 )
 
 
+def _independent_schedule() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    betas = torch.linspace(1e-4, 0.02, 1_000, dtype=torch.float32)
+    alphas = 1.0 - betas
+    return betas, alphas, torch.cumprod(alphas, dim=0)
+
+
 def test_linear_ddpm_schedule_shapes_and_endpoints() -> None:
     schedule = LinearDDPMSchedule()
 
@@ -181,3 +187,95 @@ def test_q_sample_rejects_evidently_invalid_inputs() -> None:
         schedule.q_sample(x_start, torch.tensor([0, 1_000], dtype=torch.long))
     with pytest.raises(ValueError, match="same shape"):
         schedule.q_sample(x_start, timesteps, torch.zeros(2, 3, 4, 4))
+
+
+@pytest.mark.parametrize("timestep", (0, 500, 999))
+def test_q_sample_round_trips_through_x_start_reconstruction(timestep: int) -> None:
+    schedule = LinearDDPMSchedule()
+    x_start = torch.linspace(-1.5, 1.5, 48).reshape(2, 3, 4, 2)
+    noise = torch.linspace(1.0, -1.0, x_start.numel()).reshape_as(x_start)
+    timesteps = torch.full((x_start.shape[0],), timestep, dtype=torch.long)
+
+    x_t = schedule.q_sample(x_start, timesteps, noise)
+    reconstructed = schedule.predict_x_start_from_noise(x_t, timesteps, noise)
+
+    assert reconstructed.shape == x_start.shape
+    assert torch.isfinite(reconstructed).all()
+    assert torch.allclose(reconstructed, x_start, atol=1e-5, rtol=1e-5)
+
+
+def test_predict_x_start_from_noise_matches_an_independent_formula() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.linspace(-2.0, 2.0, 36).reshape(3, 1, 3, 4)
+    noise = torch.linspace(0.75, -0.75, x_t.numel()).reshape_as(x_t)
+    timesteps = torch.tensor([0, 500, 999], dtype=torch.long)
+    _, _, alphas_cumprod = _independent_schedule()
+    alpha_bar = alphas_cumprod[timesteps].reshape(3, 1, 1, 1)
+
+    result = schedule.predict_x_start_from_noise(x_t, timesteps, noise)
+    expected = (x_t - torch.sqrt(1.0 - alpha_bar) * noise) / torch.sqrt(alpha_bar)
+
+    assert result.shape == x_t.shape
+    assert torch.isfinite(result).all()
+    assert torch.allclose(result, expected)
+
+
+def test_q_posterior_mean_matches_an_independent_formula_for_heterogeneous_batch() -> None:
+    schedule = LinearDDPMSchedule()
+    x_start = torch.linspace(-1.0, 1.0, 36).reshape(3, 1, 3, 4)
+    x_t = torch.linspace(2.0, -2.0, x_start.numel()).reshape_as(x_start)
+    timesteps = torch.tensor([0, 500, 999], dtype=torch.long)
+    betas, alphas, alphas_cumprod = _independent_schedule()
+    alphas_cumprod_prev = torch.cat((torch.ones(1), alphas_cumprod[:-1]))
+    selected = timesteps.reshape(3, 1, 1, 1)
+    denominator = 1.0 - alphas_cumprod[selected]
+    coef1 = betas[selected] * torch.sqrt(alphas_cumprod_prev[selected]) / denominator
+    coef2 = torch.sqrt(alphas[selected]) * (1.0 - alphas_cumprod_prev[selected]) / denominator
+
+    result = schedule.q_posterior_mean(x_start, x_t, timesteps)
+    expected = coef1 * x_start + coef2 * x_t
+
+    assert result.shape == x_start.shape
+    assert torch.isfinite(result).all()
+    assert torch.allclose(result, expected)
+
+
+def test_predict_x_start_from_noise_does_not_clip() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.full((1, 1, 2, 2), 2.0)
+    noise = torch.zeros_like(x_t)
+    timesteps = torch.tensor([999], dtype=torch.long)
+
+    reconstructed = schedule.predict_x_start_from_noise(x_t, timesteps, noise)
+
+    assert torch.all(reconstructed > 1.0)
+
+
+def test_reverse_deterministic_operations_preserve_gradient_paths() -> None:
+    schedule = LinearDDPMSchedule()
+    x_start = torch.ones(2, 1, 3, 4, requires_grad=True)
+    x_t = torch.full_like(x_start, 0.5, requires_grad=True)
+    noise = torch.zeros_like(x_t)
+    timesteps = torch.tensor([0, 500], dtype=torch.long)
+
+    reconstructed = schedule.predict_x_start_from_noise(x_t, timesteps, noise)
+    posterior_mean = schedule.q_posterior_mean(x_start, x_t, timesteps)
+    (reconstructed.square().mean() + posterior_mean.square().mean()).backward()
+
+    assert x_start.grad is not None
+    assert x_t.grad is not None
+    assert torch.isfinite(x_start.grad).all()
+    assert torch.isfinite(x_t.grad).all()
+
+
+def test_reverse_deterministic_operations_reject_incompatible_shapes() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.zeros(2, 1, 3, 4)
+    timesteps = torch.tensor([0, 1], dtype=torch.long)
+
+    with pytest.raises(ValueError, match="same shape as x_t"):
+        schedule.predict_x_start_from_noise(x_t, timesteps, torch.zeros(2, 1, 3, 3))
+    with pytest.raises(ValueError, match="same shape"):
+        schedule.q_posterior_mean(torch.zeros(2, 1, 3, 3), x_t, timesteps)
+    with pytest.raises(ValueError, match="one value per batch"):
+        schedule.q_posterior_mean(x_t, x_t, torch.tensor([0], dtype=torch.long))
