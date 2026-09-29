@@ -6,6 +6,7 @@ from tiny_avatar_diffusion.unet import (
     Downsample,
     ResBlock,
     TimeEmbedding,
+    TinyUNet,
     Upsample,
     sinusoidal_timestep_embedding,
 )
@@ -350,3 +351,188 @@ def test_sampling_modules_reject_invalid_inputs(module: nn.Module) -> None:
         module(torch.randn(2, 64, 8))
     with pytest.raises(ValueError, match="channel count"):
         module(torch.randn(2, 32, 8, 8))
+
+
+@pytest.mark.parametrize("batch_size", (1, 2))
+def test_tiny_unet_predicts_noise_with_input_shape(batch_size: int) -> None:
+    model = TinyUNet()
+    x_t = torch.randn(batch_size, 3, 32, 32)
+    timesteps = torch.arange(batch_size, dtype=torch.long)
+
+    epsilon_hat = model(x_t, timesteps)
+
+    assert epsilon_hat.shape == x_t.shape
+    assert torch.isfinite(epsilon_hat).all()
+
+
+def test_tiny_unet_matches_the_frozen_internal_shape_contract() -> None:
+    model = TinyUNet()
+    observed_outputs: dict[str, tuple[int, ...]] = {}
+    observed_inputs: dict[str, tuple[int, ...]] = {}
+
+    def record_output(name: str):
+        def hook(_: nn.Module, __: tuple[torch.Tensor, ...], output: torch.Tensor) -> None:
+            observed_outputs[name] = tuple(output.shape)
+
+        return hook
+
+    def record_input(name: str):
+        def hook(_: nn.Module, inputs: tuple[torch.Tensor, ...]) -> None:
+            observed_inputs[name] = tuple(inputs[0].shape)
+
+        return hook
+
+    hooks = [
+        model.input_projection.register_forward_hook(record_output("input")),
+        model.encoder32_block2.register_forward_hook(record_output("s32")),
+        model.downsample32.register_forward_hook(record_output("down32")),
+        model.encoder16_block2.register_forward_hook(record_output("s16")),
+        model.downsample16.register_forward_hook(record_output("down16")),
+        model.encoder8_block2.register_forward_hook(record_output("s8")),
+        model.bottleneck_block2.register_forward_hook(record_output("bottleneck")),
+        model.decoder8_block1.register_forward_pre_hook(record_input("concat8")),
+        model.decoder8_block2.register_forward_hook(record_output("decoder8")),
+        model.upsample8.register_forward_hook(record_output("up8")),
+        model.decoder16_block1.register_forward_pre_hook(record_input("concat16")),
+        model.decoder16_block2.register_forward_hook(record_output("decoder16")),
+        model.upsample16.register_forward_hook(record_output("up16")),
+        model.decoder32_block1.register_forward_pre_hook(record_input("concat32")),
+        model.decoder32_block2.register_forward_hook(record_output("decoder32")),
+        model.output_projection.register_forward_hook(record_output("final")),
+    ]
+    try:
+        output = model(torch.randn(2, 3, 32, 32), torch.tensor([0, 999]))
+    finally:
+        for hook in hooks:
+            hook.remove()
+
+    assert observed_outputs == {
+        "input": (2, 64, 32, 32),
+        "s32": (2, 64, 32, 32),
+        "down32": (2, 64, 16, 16),
+        "s16": (2, 128, 16, 16),
+        "down16": (2, 128, 8, 8),
+        "s8": (2, 128, 8, 8),
+        "bottleneck": (2, 128, 8, 8),
+        "decoder8": (2, 128, 8, 8),
+        "up8": (2, 128, 16, 16),
+        "decoder16": (2, 128, 16, 16),
+        "up16": (2, 128, 32, 32),
+        "decoder32": (2, 64, 32, 32),
+        "final": (2, 3, 32, 32),
+    }
+    assert observed_inputs == {
+        "concat8": (2, 256, 8, 8),
+        "concat16": (2, 256, 16, 16),
+        "concat32": (2, 192, 32, 32),
+    }
+    assert output.shape == (2, 3, 32, 32)
+
+
+def test_tiny_unet_time_embedding_changes_the_prediction() -> None:
+    model = TinyUNet()
+    model.eval()
+    x_t = torch.randn(1, 3, 32, 32)
+
+    first = model(x_t, torch.tensor([0]))
+    second = model(x_t, torch.tensor([999]))
+
+    assert not torch.equal(first, second)
+
+
+def test_tiny_unet_has_the_frozen_output_head_without_final_activation() -> None:
+    model = TinyUNet()
+
+    assert isinstance(model.output_norm, nn.GroupNorm)
+    assert model.output_norm.num_groups == 32
+    assert model.output_norm.num_channels == 64
+    assert isinstance(model.output_activation, nn.SiLU)
+    assert isinstance(model.output_projection, nn.Conv2d)
+    assert model.output_projection.in_channels == 64
+    assert model.output_projection.out_channels == 3
+    assert model.output_projection.kernel_size == (3, 3)
+    assert model.output_projection.stride == (1, 1)
+    assert model.output_projection.padding == (1, 1)
+
+
+def test_tiny_unet_is_deterministic_with_zero_dropout_in_train_mode() -> None:
+    model = TinyUNet(dropout=0.0)
+    model.train()
+    x_t = torch.randn(1, 3, 32, 32)
+    timesteps = torch.tensor([500])
+
+    first = model(x_t, timesteps)
+    second = model(x_t, timesteps)
+
+    assert torch.equal(first, second)
+
+
+def test_tiny_unet_preserves_finite_forward_and_backward_connectivity() -> None:
+    model = TinyUNet()
+    x_t = torch.randn(1, 3, 32, 32)
+    timesteps = torch.tensor([500])
+    target_noise = torch.randn_like(x_t)
+
+    epsilon_hat = model(x_t, timesteps)
+    loss = torch.nn.functional.mse_loss(epsilon_hat, target_noise)
+    loss.backward()
+
+    assert torch.isfinite(loss)
+    assert torch.isfinite(epsilon_hat).all()
+    for parameter in (
+        model.time_embedding.mlp[0].weight,
+        model.input_projection.weight,
+        model.encoder32_block1.conv1.weight,
+        model.bottleneck_block1.conv1.weight,
+        model.decoder8_block1.conv1.weight,
+        model.output_projection.weight,
+    ):
+        assert parameter.grad is not None
+        assert torch.isfinite(parameter.grad).all()
+
+
+def test_tiny_unet_long_skip_receives_gradient_from_the_decoder() -> None:
+    model = TinyUNet()
+    skip_gradient: list[torch.Tensor] = []
+
+    def capture_concat_gradient(
+        _: nn.Module, inputs: tuple[torch.Tensor, ...]
+    ) -> None:
+        inputs[0].register_hook(lambda gradient: skip_gradient.append(gradient))
+
+    hook = model.decoder32_block1.register_forward_pre_hook(capture_concat_gradient)
+    try:
+        output = model(torch.randn(1, 3, 32, 32), torch.tensor([500]))
+        output.square().mean().backward()
+    finally:
+        hook.remove()
+
+    assert len(skip_gradient) == 1
+    assert torch.isfinite(skip_gradient[0]).all()
+    assert torch.count_nonzero(skip_gradient[0][:, 128:]) > 0
+
+
+def test_tiny_unet_produces_finite_values_at_representative_timesteps() -> None:
+    model = TinyUNet()
+    x_t = torch.randn(3, 3, 32, 32)
+
+    output = model(x_t, torch.tensor([0, 500, 999]))
+
+    assert torch.isfinite(output).all()
+
+
+def test_tiny_unet_rejects_invalid_inputs() -> None:
+    model = TinyUNet()
+    x_t = torch.randn(2, 3, 32, 32)
+    timesteps = torch.tensor([0, 1])
+
+    with pytest.raises(ValueError, match=r"\[B, 3, H, W\]"):
+        model(torch.randn(2, 3, 32), timesteps)
+    with pytest.raises(ValueError, match="three channels"):
+        model(torch.randn(2, 1, 32, 32), timesteps)
+    with pytest.raises(ValueError, match="one-dimensional"):
+        model(x_t, torch.tensor([[0, 1]]))
+    with pytest.raises(ValueError, match="batch size"):
+        model(x_t, torch.tensor([0]))
+    with pytest.raises(ValueError, match="divisible by four"):
+        model(torch.randn(2, 3, 30, 32), timesteps)

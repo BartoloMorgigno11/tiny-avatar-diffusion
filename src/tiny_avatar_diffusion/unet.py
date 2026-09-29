@@ -138,3 +138,87 @@ class Upsample(nn.Module):
         if x.shape[1] != self.channels:
             raise ValueError("x has an incompatible channel count")
         return self.conv(F.interpolate(x, scale_factor=2, mode="nearest"))
+
+
+class TinyUNet(nn.Module):
+    """Frozen unconditional Tiny U-Net V1 for pixel-space epsilon prediction."""
+
+    def __init__(self, *, dropout: float = 0.0) -> None:
+        super().__init__()
+        self.time_embedding = TimeEmbedding()
+        self.input_projection = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+
+        self.encoder32_block1 = ResBlock(64, 64, dropout=dropout)
+        self.encoder32_block2 = ResBlock(64, 64, dropout=dropout)
+        self.downsample32 = Downsample(64)
+
+        self.encoder16_block1 = ResBlock(64, 128, dropout=dropout)
+        self.encoder16_block2 = ResBlock(128, 128, dropout=dropout)
+        self.downsample16 = Downsample(128)
+
+        self.encoder8_block1 = ResBlock(128, 128, dropout=dropout)
+        self.encoder8_block2 = ResBlock(128, 128, dropout=dropout)
+
+        self.bottleneck_block1 = ResBlock(128, 128, dropout=dropout)
+        self.bottleneck_block2 = ResBlock(128, 128, dropout=dropout)
+
+        self.decoder8_block1 = ResBlock(256, 128, dropout=dropout)
+        self.decoder8_block2 = ResBlock(128, 128, dropout=dropout)
+        self.upsample8 = Upsample(128)
+
+        self.decoder16_block1 = ResBlock(256, 128, dropout=dropout)
+        self.decoder16_block2 = ResBlock(128, 128, dropout=dropout)
+        self.upsample16 = Upsample(128)
+
+        self.decoder32_block1 = ResBlock(192, 64, dropout=dropout)
+        self.decoder32_block2 = ResBlock(64, 64, dropout=dropout)
+
+        self.output_norm = nn.GroupNorm(32, 64)
+        self.output_activation = nn.SiLU()
+        self.output_projection = nn.Conv2d(64, 3, kernel_size=3, padding=1)
+
+    def forward(self, x_t: torch.Tensor, timesteps: torch.Tensor) -> torch.Tensor:
+        """Predict epsilon for a batch of noisy RGB images."""
+        if x_t.ndim != 4:
+            raise ValueError("x_t must have shape [B, 3, H, W]")
+        if x_t.shape[1] != 3:
+            raise ValueError("x_t must have three channels")
+        if timesteps.ndim != 1:
+            raise ValueError("timesteps must be one-dimensional")
+        if timesteps.shape[0] != x_t.shape[0]:
+            raise ValueError("x_t and timesteps must have the same batch size")
+        if x_t.shape[2] % 4 != 0 or x_t.shape[3] % 4 != 0:
+            raise ValueError("spatial dimensions must be divisible by four")
+
+        time_emb = self.time_embedding(timesteps)
+        h = self.input_projection(x_t)
+
+        h = self.encoder32_block1(h, time_emb)
+        s32 = self.encoder32_block2(h, time_emb)
+        h = self.downsample32(s32)
+
+        h = self.encoder16_block1(h, time_emb)
+        s16 = self.encoder16_block2(h, time_emb)
+        h = self.downsample16(s16)
+
+        h = self.encoder8_block1(h, time_emb)
+        s8 = self.encoder8_block2(h, time_emb)
+
+        h = self.bottleneck_block1(s8, time_emb)
+        h = self.bottleneck_block2(h, time_emb)
+
+        h = torch.cat((h, s8), dim=1)
+        h = self.decoder8_block1(h, time_emb)
+        h = self.decoder8_block2(h, time_emb)
+        h = self.upsample8(h)
+
+        h = torch.cat((h, s16), dim=1)
+        h = self.decoder16_block1(h, time_emb)
+        h = self.decoder16_block2(h, time_emb)
+        h = self.upsample16(h)
+
+        h = torch.cat((h, s32), dim=1)
+        h = self.decoder32_block1(h, time_emb)
+        h = self.decoder32_block2(h, time_emb)
+
+        return self.output_projection(self.output_activation(self.output_norm(h)))
