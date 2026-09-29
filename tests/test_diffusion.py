@@ -552,3 +552,91 @@ def test_p_sample_from_noise_rejects_incompatible_inputs() -> None:
         schedule.p_sample_from_noise(
             x_t, torch.tensor([0, 1_000], dtype=torch.long), predicted_noise
         )
+
+
+def test_sample_loop_runs_all_timesteps_and_propagates_each_sample(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    schedule = LinearDDPMSchedule(num_timesteps=4)
+    x_T = torch.zeros(2, 1, 2, 2)
+    predictor_calls: list[tuple[torch.Tensor, torch.Tensor]] = []
+    reverse_calls: list[torch.Tensor] = []
+
+    def noise_predictor(x_t: torch.Tensor, timesteps: torch.Tensor) -> torch.Tensor:
+        predictor_calls.append((x_t.clone(), timesteps.clone()))
+        return torch.zeros_like(x_t)
+
+    def controlled_reverse_step(
+        x_t: torch.Tensor,
+        timesteps: torch.Tensor,
+        predicted_noise: torch.Tensor,
+    ) -> dict[str, torch.Tensor]:
+        del predicted_noise
+        reverse_calls.append(timesteps.clone())
+        return {"sample": x_t + timesteps.reshape(-1, 1, 1, 1) + 1.0}
+
+    monkeypatch.setattr(schedule, "p_sample_from_noise", controlled_reverse_step)
+    final_sample = schedule.sample_loop_from_noise_predictor(x_T, noise_predictor)
+
+    assert [call[1][0].item() for call in predictor_calls] == [3, 2, 1, 0]
+    assert len(predictor_calls) == schedule.betas.shape[0]
+    assert len(reverse_calls) == schedule.betas.shape[0]
+    for _, timesteps in predictor_calls:
+        assert timesteps.shape == (x_T.shape[0],)
+        assert torch.equal(timesteps, torch.full_like(timesteps, timesteps[0]))
+    assert [call[0].item() for call in reverse_calls] == [3, 2, 1, 0]
+    assert torch.equal(predictor_calls[0][0], x_T)
+    assert torch.equal(predictor_calls[1][0], torch.full_like(x_T, 4.0))
+    assert torch.equal(predictor_calls[2][0], torch.full_like(x_T, 7.0))
+    assert torch.equal(predictor_calls[3][0], torch.full_like(x_T, 9.0))
+    assert torch.equal(final_sample, torch.full_like(x_T, 10.0))
+
+
+def test_sample_loop_uses_no_grad_and_real_reverse_primitives() -> None:
+    schedule = LinearDDPMSchedule(num_timesteps=4)
+    x_T = torch.ones(2, 1, 2, 2, requires_grad=True)
+    predictor_grad_enabled: list[bool] = []
+
+    def noise_predictor(x_t: torch.Tensor, timesteps: torch.Tensor) -> torch.Tensor:
+        del timesteps
+        predictor_grad_enabled.append(torch.is_grad_enabled())
+        return x_t * 0.0
+
+    final_sample = schedule.sample_loop_from_noise_predictor(x_T, noise_predictor)
+
+    assert len(predictor_grad_enabled) == 4
+    assert not any(predictor_grad_enabled)
+    assert final_sample.shape == x_T.shape
+    assert torch.isfinite(final_sample).all()
+    assert not final_sample.requires_grad
+
+
+@pytest.mark.parametrize(
+    ("predictor", "error_type", "message"),
+    (
+        (lambda x_t, timesteps: torch.zeros(1), ValueError, "same shape"),
+        (lambda x_t, timesteps: "not a tensor", TypeError, "torch.Tensor"),
+    ),
+)
+def test_sample_loop_rejects_invalid_predictor_outputs(
+    predictor: object,
+    error_type: type[Exception],
+    message: str,
+) -> None:
+    schedule = LinearDDPMSchedule(num_timesteps=4)
+    x_T = torch.zeros(2, 1, 2, 2)
+
+    with pytest.raises(error_type, match=message):
+        schedule.sample_loop_from_noise_predictor(x_T, predictor)  # type: ignore[arg-type]
+
+
+def test_sample_loop_rejects_invalid_initial_inputs() -> None:
+    schedule = LinearDDPMSchedule(num_timesteps=4)
+    predictor = lambda x_t, timesteps: torch.zeros_like(x_t)
+
+    with pytest.raises(ValueError, match="batch dimension"):
+        schedule.sample_loop_from_noise_predictor(torch.tensor(1.0), predictor)
+    with pytest.raises(ValueError, match="non-empty"):
+        schedule.sample_loop_from_noise_predictor(torch.empty(0, 1, 2, 2), predictor)
+    with pytest.raises(TypeError, match="callable"):
+        schedule.sample_loop_from_noise_predictor(torch.zeros(1, 1, 2, 2), None)  # type: ignore[arg-type]

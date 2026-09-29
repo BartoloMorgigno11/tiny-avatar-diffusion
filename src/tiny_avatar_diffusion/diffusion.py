@@ -6,6 +6,8 @@ Python indices ``t = 0, ..., T - 1`` represent mathematical DDPM steps
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import torch
 from torch import nn
 
@@ -170,3 +172,41 @@ class LinearDDPMSchedule(nn.Module):
             + nonzero_mask * torch.sqrt(mean_variance["posterior_variance"]) * noise
         )
         return {"sample": sample, **mean_variance}
+
+    def sample_loop_from_noise_predictor(
+        self,
+        x_T: torch.Tensor,
+        noise_predictor: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+    ) -> torch.Tensor:
+        """Run the complete DDPM reverse process from a provided ``x_T`` tensor."""
+        if not isinstance(x_T, torch.Tensor):
+            raise TypeError("x_T must be a torch.Tensor")
+        if x_T.ndim < 1:
+            raise ValueError("x_T must have a batch dimension")
+        if x_T.shape[0] == 0:
+            raise ValueError("x_T must have a non-empty batch dimension")
+        if not callable(noise_predictor):
+            raise TypeError("noise_predictor must be callable")
+
+        x_t = x_T
+        with torch.no_grad():
+            for timestep in range(self.betas.shape[0] - 1, -1, -1):
+                timesteps = torch.full(
+                    (x_t.shape[0],),
+                    timestep,
+                    dtype=torch.long,
+                    device=x_t.device,
+                )
+                predicted_noise = noise_predictor(x_t, timesteps)
+                if not isinstance(predicted_noise, torch.Tensor):
+                    raise TypeError("noise_predictor must return a torch.Tensor")
+                if predicted_noise.shape != x_t.shape:
+                    raise ValueError(
+                        "noise_predictor output must have the same shape as x_t"
+                    )
+
+                x_t = self.p_sample_from_noise(
+                    x_t, timesteps, predicted_noise
+                )["sample"]
+
+        return x_t
