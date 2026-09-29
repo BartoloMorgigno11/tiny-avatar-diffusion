@@ -10,6 +10,25 @@ import torch
 from torch import nn
 
 
+def _extract(coefficients: torch.Tensor, timesteps: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    """Select per-sample coefficients and reshape them for batch-first broadcasting."""
+    if x.ndim < 1:
+        raise ValueError("x must have a batch dimension")
+    if timesteps.ndim != 1:
+        raise ValueError("timesteps must be one-dimensional")
+    if timesteps.shape[0] != x.shape[0]:
+        raise ValueError("timesteps must have one value per batch element")
+    if timesteps.dtype != torch.long:
+        raise TypeError("timesteps must have dtype torch.long")
+    if torch.any(timesteps < 0) or torch.any(timesteps >= coefficients.shape[0]):
+        raise ValueError("timesteps must be within the schedule range")
+
+    values = coefficients.to(device=x.device, dtype=x.dtype).gather(
+        0, timesteps.to(device=x.device)
+    )
+    return values.reshape(x.shape[0], *((1,) * (x.ndim - 1)))
+
+
 class LinearDDPMSchedule(nn.Module):
     """Store the fixed linear DDPM schedule and its derived coefficients.
 
@@ -61,3 +80,21 @@ class LinearDDPMSchedule(nn.Module):
             "posterior_mean_coef2",
             torch.sqrt(alphas) * (1.0 - alphas_cumprod_prev) / denominator,
         )
+
+    def q_sample(
+        self,
+        x_start: torch.Tensor,
+        timesteps: torch.Tensor,
+        noise: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Sample ``x_t`` from ``q(x_t | x_0)`` for one timestep per sample."""
+        if noise is None:
+            noise = torch.randn_like(x_start)
+        elif noise.shape != x_start.shape:
+            raise ValueError("noise must have the same shape as x_start")
+
+        sqrt_alphas_cumprod = _extract(self.sqrt_alphas_cumprod, timesteps, x_start)
+        sqrt_one_minus_alphas_cumprod = _extract(
+            self.sqrt_one_minus_alphas_cumprod, timesteps, x_start
+        )
+        return sqrt_alphas_cumprod * x_start + sqrt_one_minus_alphas_cumprod * noise
