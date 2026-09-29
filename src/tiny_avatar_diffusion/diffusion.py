@@ -146,3 +146,27 @@ class LinearDDPMSchedule(nn.Module):
             "posterior_variance": posterior_variance,
             "predicted_x_start": predicted_x_start,
         }
+
+    def p_sample_from_noise(
+        self,
+        x_t: torch.Tensor,
+        timesteps: torch.Tensor,
+        predicted_noise: torch.Tensor,
+        noise: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        """Take one DDPM reverse step from an already predicted noise tensor."""
+        if noise is None:
+            noise = torch.randn_like(x_t)
+        elif noise.shape != x_t.shape:
+            raise ValueError("noise must have the same shape as x_t")
+
+        mean_variance = self.p_mean_variance_from_noise(
+            x_t, timesteps, predicted_noise
+        )
+        nonzero_mask = (timesteps != 0).to(device=x_t.device, dtype=x_t.dtype)
+        nonzero_mask = nonzero_mask.reshape(x_t.shape[0], *((1,) * (x_t.ndim - 1)))
+        sample = (
+            mean_variance["model_mean"]
+            + nonzero_mask * torch.sqrt(mean_variance["posterior_variance"]) * noise
+        )
+        return {"sample": sample, **mean_variance}
