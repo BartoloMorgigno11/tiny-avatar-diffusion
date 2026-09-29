@@ -2,7 +2,11 @@ import pytest
 import torch
 from torch import nn
 
-from tiny_avatar_diffusion.unet import TimeEmbedding, sinusoidal_timestep_embedding
+from tiny_avatar_diffusion.unet import (
+    ResBlock,
+    TimeEmbedding,
+    sinusoidal_timestep_embedding,
+)
 
 
 @pytest.mark.parametrize("batch_size", (1, 4))
@@ -99,3 +103,143 @@ def test_sinusoidal_timestep_embedding_rejects_invalid_inputs() -> None:
         sinusoidal_timestep_embedding(torch.zeros(2, 1, dtype=torch.long), 64)
     with pytest.raises(ValueError, match="positive even"):
         sinusoidal_timestep_embedding(torch.zeros(2, dtype=torch.long), 63)
+
+
+def test_res_block_uses_an_identity_shortcut_and_preserves_spatial_resolution() -> None:
+    block = ResBlock(64, 64)
+    x = torch.randn(2, 64, 7, 9)
+    time_emb = torch.randn(2, 256)
+
+    output = block(x, time_emb)
+
+    assert isinstance(block.shortcut, nn.Identity)
+    assert output.shape == x.shape
+    assert torch.isfinite(output).all()
+
+
+def test_res_block_uses_a_projection_shortcut_for_channel_change() -> None:
+    block = ResBlock(64, 128)
+    x = torch.randn(2, 64, 7, 9)
+
+    output = block(x, torch.randn(2, 256))
+
+    assert isinstance(block.shortcut, nn.Conv2d)
+    assert block.shortcut.kernel_size == (1, 1)
+    assert block.shortcut.stride == (1, 1)
+    assert output.shape == (2, 128, 7, 9)
+
+
+@pytest.mark.parametrize(
+    ("in_channels", "out_channels"),
+    ((256, 128), (192, 64)),
+)
+def test_res_block_supports_frozen_decoder_channel_transitions(
+    in_channels: int, out_channels: int
+) -> None:
+    block = ResBlock(in_channels, out_channels)
+    x = torch.randn(2, in_channels, 5, 6)
+
+    output = block(x, torch.randn(2, 256))
+
+    assert output.shape == (2, out_channels, 5, 6)
+    assert torch.isfinite(output).all()
+
+
+def test_res_block_has_frozen_time_projection_and_group_norm_contract() -> None:
+    block = ResBlock(64, 128, dropout=0.25)
+
+    assert isinstance(block.time_projection, nn.Linear)
+    assert block.time_projection.in_features == 256
+    assert block.time_projection.out_features == 128
+    assert block.norm1.num_groups == 32
+    assert block.norm1.num_channels == 64
+    assert block.norm2.num_groups == 32
+    assert block.norm2.num_channels == 128
+    assert block.dropout.p == 0.25
+
+
+def test_res_block_applies_time_after_the_first_convolution() -> None:
+    block = ResBlock(64, 64)
+    block.eval()
+    x = torch.randn(1, 64, 4, 5).expand(2, -1, -1, -1).clone()
+    time_emb = torch.zeros(2, 256)
+    time_emb[1, 0] = 1.0
+
+    with torch.no_grad():
+        block.conv1.weight.zero_()
+        block.conv1.bias.zero_()
+        block.conv2.weight.zero_()
+        block.conv2.bias.zero_()
+        channel_indices = torch.arange(64)
+        block.conv2.weight[channel_indices, channel_indices, 1, 1] = 1.0
+        block.time_projection.weight.zero_()
+        block.time_projection.bias.zero_()
+        block.time_projection.weight[:, 0] = torch.linspace(-2.0, 2.0, 64)
+
+    output = block(x, time_emb)
+    first_convolution = block.conv1(block.activation1(block.norm1(x)))
+    projected_time = block.time_projection(time_emb)[:, :, None, None]
+    expected = block.conv2(
+        block.dropout(block.activation2(block.norm2(first_convolution + projected_time)))
+    ) + block.shortcut(x)
+
+    assert torch.allclose(output, expected)
+    assert not torch.equal(output[0], output[1])
+
+
+def test_res_block_with_zero_dropout_is_deterministic_in_train_mode() -> None:
+    block = ResBlock(64, 64, dropout=0.0)
+    block.train()
+    x = torch.randn(2, 64, 4, 5)
+    time_emb = torch.randn(2, 256)
+
+    first = block(x, time_emb)
+    second = block(x, time_emb)
+
+    assert torch.equal(first, second)
+
+
+def test_res_block_preserves_finite_gradient_paths() -> None:
+    block = ResBlock(64, 128)
+    x = torch.randn(2, 64, 4, 5, requires_grad=True)
+    time_emb = torch.randn(2, 256, requires_grad=True)
+
+    output = block(x, time_emb)
+    output.square().mean().backward()
+
+    assert x.grad is not None
+    assert time_emb.grad is not None
+    assert block.conv1.weight.grad is not None
+    assert block.conv2.weight.grad is not None
+    assert block.time_projection.weight.grad is not None
+    for gradient in (
+        x.grad,
+        time_emb.grad,
+        block.conv1.weight.grad,
+        block.conv2.weight.grad,
+        block.time_projection.weight.grad,
+    ):
+        assert torch.isfinite(gradient).all()
+
+
+def test_res_block_rejects_invalid_inputs_and_configuration() -> None:
+    with pytest.raises(ValueError, match="positive"):
+        ResBlock(64, 64, num_groups=0)
+    with pytest.raises(ValueError, match="divisible"):
+        ResBlock(48, 64)
+    with pytest.raises(ValueError, match="dropout"):
+        ResBlock(64, 64, dropout=1.0)
+
+    block = ResBlock(64, 64)
+    x = torch.randn(2, 64, 4, 5)
+    time_emb = torch.randn(2, 256)
+    with pytest.raises(ValueError, match=r"\[B, C, H, W\]"):
+        block(torch.randn(2, 64, 4), time_emb)
+    with pytest.raises(ValueError, match="channel count"):
+        block(torch.randn(2, 32, 4, 5), time_emb)
+    with pytest.raises(ValueError, match=r"\[B, time_embedding_dim\]"):
+        block(x, torch.randn(2, 1, 256))
+    with pytest.raises(ValueError, match="batch size"):
+        block(x, torch.randn(1, 256))
+    with pytest.raises(ValueError, match="embedding dimension"):
+        block(x, torch.randn(2, 128))
