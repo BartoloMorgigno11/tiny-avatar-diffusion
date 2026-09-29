@@ -3,8 +3,10 @@ import torch
 from torch import nn
 
 from tiny_avatar_diffusion.unet import (
+    Downsample,
     ResBlock,
     TimeEmbedding,
+    Upsample,
     sinusoidal_timestep_embedding,
 )
 
@@ -243,3 +245,108 @@ def test_res_block_rejects_invalid_inputs_and_configuration() -> None:
         block(x, torch.randn(1, 256))
     with pytest.raises(ValueError, match="embedding dimension"):
         block(x, torch.randn(2, 128))
+
+
+@pytest.mark.parametrize(
+    ("batch_size", "channels", "spatial_size", "expected_spatial_size"),
+    ((1, 64, 32, 16), (2, 128, 16, 8)),
+)
+def test_downsample_preserves_channels_and_halves_spatial_resolution(
+    batch_size: int,
+    channels: int,
+    spatial_size: int,
+    expected_spatial_size: int,
+) -> None:
+    module = Downsample(channels)
+    x = torch.randn(batch_size, channels, spatial_size, spatial_size)
+
+    output = module(x)
+
+    assert output.shape == (
+        batch_size,
+        channels,
+        expected_spatial_size,
+        expected_spatial_size,
+    )
+    assert torch.isfinite(output).all()
+
+
+@pytest.mark.parametrize(
+    ("batch_size", "spatial_size"),
+    ((1, 8), (2, 8), (2, 16)),
+)
+def test_upsample_preserves_channels_and_doubles_spatial_resolution(
+    batch_size: int, spatial_size: int
+) -> None:
+    module = Upsample(128)
+    x = torch.randn(batch_size, 128, spatial_size, spatial_size)
+
+    output = module(x)
+
+    assert output.shape == (
+        batch_size,
+        128,
+        spatial_size * 2,
+        spatial_size * 2,
+    )
+    assert torch.isfinite(output).all()
+
+
+def test_downsample_has_the_frozen_convolution_contract() -> None:
+    module = Downsample(64)
+
+    assert set(dict(module.named_parameters())) == {"conv.weight", "conv.bias"}
+    assert module.conv.in_channels == 64
+    assert module.conv.out_channels == 64
+    assert module.conv.kernel_size == (3, 3)
+    assert module.conv.stride == (2, 2)
+    assert module.conv.padding == (1, 1)
+
+
+def test_upsample_uses_nearest_resize_before_the_frozen_convolution() -> None:
+    module = Upsample(1)
+    with torch.no_grad():
+        module.conv.weight.zero_()
+        module.conv.bias.zero_()
+        module.conv.weight[0, 0, 0, 0] = 1.0
+    x = torch.tensor([[[[1.0, 2.0], [3.0, 4.0]]]])
+
+    output = module(x)
+    expected = torch.tensor(
+        [[[[0.0, 0.0, 0.0, 0.0], [0.0, 1.0, 1.0, 2.0],
+           [0.0, 1.0, 1.0, 2.0], [0.0, 3.0, 3.0, 4.0]]]]
+    )
+
+    assert output.shape == (1, 1, 4, 4)
+    assert torch.equal(output, expected)
+    assert set(dict(module.named_parameters())) == {"conv.weight", "conv.bias"}
+    assert module.conv.in_channels == module.conv.out_channels == 1
+    assert module.conv.kernel_size == (3, 3)
+    assert module.conv.stride == (1, 1)
+    assert module.conv.padding == (1, 1)
+    assert not any(isinstance(layer, nn.ConvTranspose2d) for layer in module.modules())
+
+
+@pytest.mark.parametrize(
+    "module",
+    (Downsample(64), Upsample(64)),
+)
+def test_sampling_modules_preserve_finite_gradient_paths(module: nn.Module) -> None:
+    x = torch.randn(2, 64, 8, 8, requires_grad=True)
+
+    output = module(x)
+    output.square().mean().backward()
+
+    assert x.grad is not None
+    assert torch.isfinite(x.grad).all()
+    convolution = module.conv  # type: ignore[attr-defined]
+    assert convolution.weight.grad is not None
+    assert torch.isfinite(convolution.weight.grad).all()
+
+
+@pytest.mark.parametrize("module", (Downsample(64), Upsample(64)))
+def test_sampling_modules_reject_invalid_inputs(module: nn.Module) -> None:
+    with pytest.raises(ValueError, match=r"\[B, C, H, W\]"):
+        module(torch.randn(2, 64, 8))
+    with pytest.raises(ValueError, match="channel count"):
+        module(torch.randn(2, 32, 8, 8))

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 
 def sinusoidal_timestep_embedding(
@@ -103,3 +104,37 @@ class ResBlock(nn.Module):
         h = h + projected_time
         h = self.conv2(self.dropout(self.activation2(self.norm2(h))))
         return h + self.shortcut(x)
+
+
+class Downsample(nn.Module):
+    """Halve spatial resolution while preserving the channel count."""
+
+    def __init__(self, channels: int) -> None:
+        super().__init__()
+        self.channels = channels
+        self.conv = nn.Conv2d(channels, channels, kernel_size=3, stride=2, padding=1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the frozen stride-two convolution."""
+        if x.ndim != 4:
+            raise ValueError("x must have shape [B, C, H, W]")
+        if x.shape[1] != self.channels:
+            raise ValueError("x has an incompatible channel count")
+        return self.conv(x)
+
+
+class Upsample(nn.Module):
+    """Double spatial resolution by nearest interpolation followed by convolution."""
+
+    def __init__(self, channels: int) -> None:
+        super().__init__()
+        self.channels = channels
+        self.conv = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply nearest-neighbor resize followed by the frozen convolution."""
+        if x.ndim != 4:
+            raise ValueError("x must have shape [B, C, H, W]")
+        if x.shape[1] != self.channels:
+            raise ValueError("x has an incompatible channel count")
+        return self.conv(F.interpolate(x, scale_factor=2, mode="nearest"))
