@@ -136,5 +136,5 @@ def main() -> None:
         results[step]=item; print(f"milestone {step} complete",flush=True)
     except Exception as error:
       progress["status"]="FAILED"; progress["last_error"]=str(error); write_atomic(progress_path,progress); raise
-    payload={"identity":identity,"results":results}; write_atomic(args.output_root/"validation_quality_results.json",payload); decision=select(results); write_atomic(args.output_root/"selection.json",decision); write_selection_markdown(args.output_root/"selection.md",decision,identity=identity,results=results); progress["status"]="COMPLETE"; write_atomic(progress_path,progress); print(json.dumps(decision),flush=True)
+    payload={"identity":identity,"results":results}; write_atomic(args.output_root/"validation_quality_results.json",payload); decision=select(results); decision["selected_checkpoint"]=str(checkpoints[20000]) if decision["status"]=="PASS" else None; write_atomic(args.output_root/"selection.json",decision); write_selection_markdown(args.output_root/"selection.md",decision,identity=identity,results=results); progress["status"]="COMPLETE"; write_atomic(progress_path,progress); print(json.dumps(decision),flush=True)
 if __name__=="__main__": main()

@@ -2,6 +2,8 @@ from __future__ import annotations
 import json
 import pytest
 import torch
+import sys
+import tiny_avatar_diffusion.checkpoint_selection as selector
 from tiny_avatar_diffusion.checkpoint_selection import ALLOWED_SPLITS, build_manifest, image_name, select, write_atomic, load_or_initialize_progress, write_selection_markdown, execution_identity, expected_complete, tensor_to_png, compute_kid, sample_per_seed, generate_split, load_ema_checkpoint
 from tiny_avatar_diffusion.text_conditioning import TextConditioningEncoder
 from tiny_avatar_diffusion.unet import ConditionalTinyUNet
@@ -90,3 +92,32 @@ def test_production_ema_loader_never_uses_raw(tmp_path):
     assert torch.equal(loaded_text.token_embedding.weight,ema_text['token_embedding.weight']) and not torch.equal(loaded_text.token_embedding.weight,raw_text['token_embedding.weight'])
     assert torch.equal(next(loaded_unet.parameters()),ema_unet[next(iter(dict(unet.named_parameters())))])
     with pytest.raises(ValueError): load_ema_checkpoint(path,expected_step=10000,device=torch.device('cpu'))
+
+def _mock_cli(monkeypatch,tmp_path,kids,fail=False):
+    run=tmp_path/'r'; run.mkdir(exist_ok=True)
+    for step in (5000,10000,15000,20000): (run/f'milestone_{step:05d}.pt').write_bytes(str(step).encode())
+    monkeypatch.setattr(selector,'load_ema_checkpoint',lambda *a,**k:(object(),object()))
+    calls=[]
+    monkeypatch.setattr(selector,'export_real',lambda *a,**k:None)
+    def gen(*a,**k): calls.append(('gen',str(k['directory'])))
+    monkeypatch.setattr(selector,'generate_split',gen)
+    def kid(real,generated,**k):
+        step=int(generated.parts[-2].split('_')[1]); split=generated.name; calls.append(('kid',step,split))
+        if fail and step==10000 and split=='comp_val': raise RuntimeError('mock failure')
+        return {'kid':kids[(step,split)]}
+    monkeypatch.setattr(selector,'compute_kid',kid)
+    monkeypatch.setattr(sys,'argv',['selector','--run-id','r','--run-root',str(tmp_path),'--output-root',str(tmp_path/'out'),'--execute'])
+    return tmp_path/'out',calls
+
+@pytest.mark.parametrize('conflict',[False,True])
+def test_cli_mock_pass_and_conflict(monkeypatch,tmp_path,conflict):
+    kids={(s,split):.2 for s in (5000,10000,15000,20000) for split in ('id_val','comp_val')}; kids[(20000,'comp_val')]=.3 if conflict else .2
+    out,calls=_mock_cli(monkeypatch,tmp_path,kids); selector.main(); decision=json.loads((out/'selection.json').read_text()); progress=json.loads((out/'progress.json').read_text())
+    assert progress['status']=='COMPLETE' and {x[1] for x in calls if x[0]=='kid'}=={5000,10000,15000,20000}
+    assert decision['status']==('CONFLICT' if conflict else 'PASS') and decision['selected_step']==(None if conflict else 20000)
+
+def test_cli_mock_failure_and_compatible_resume(monkeypatch,tmp_path):
+    kids={(s,split):.2 for s in (5000,10000,15000,20000) for split in ('id_val','comp_val')}; out,_=_mock_cli(monkeypatch,tmp_path,kids,fail=True)
+    with pytest.raises(RuntimeError): selector.main()
+    assert json.loads((out/'progress.json').read_text())['status']=='FAILED'
+    out,calls=_mock_cli(monkeypatch,tmp_path,kids); selector.main(); assert json.loads((out/'progress.json').read_text())['status']=='COMPLETE'
