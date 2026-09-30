@@ -1,0 +1,76 @@
+{
+  "batch_size": 32,
+  "same_initial_state": true,
+  "shared_input_shape": [
+    32,
+    3,
+    32,
+    32
+  ],
+  "fp32_output_finite": true,
+  "amp_output_finite": true,
+  "fp32_loss_finite": true,
+  "amp_loss_finite": true,
+  "fp32_loss": 1.1423981189727783,
+  "amp_loss": 1.14241623878479,
+  "absolute_loss_difference": 1.811981201171875e-05,
+  "relative_loss_difference": 1.5861206098633744e-05,
+  "representative_gradients": {
+    "time_embedding.mlp.0.weight": {
+      "fp32_finite": true,
+      "amp_finite": true,
+      "fp32_nonzero": true,
+      "amp_nonzero": true,
+      "fp32_grad_norm": 0.03701039403676987,
+      "amp_unscaled_grad_norm": 0.03701545298099518,
+      "cosine_similarity": 0.9999988079071045
+    },
+    "input_projection.weight": {
+      "fp32_finite": true,
+      "amp_finite": true,
+      "fp32_nonzero": true,
+      "amp_nonzero": true,
+      "fp32_grad_norm": 0.23367570340633392,
+      "amp_unscaled_grad_norm": 0.23367874324321747,
+      "cosine_similarity": 0.9999997019767761
+    },
+    "encoder16_block1.conv1.weight": {
+      "fp32_finite": true,
+      "amp_finite": true,
+      "fp32_nonzero": true,
+      "amp_nonzero": true,
+      "fp32_grad_norm": 0.1442798674106598,
+      "amp_unscaled_grad_norm": 0.14429013431072235,
+      "cosine_similarity": 0.9999925494194031
+    },
+    "bottleneck_block1.conv1.weight": {
+      "fp32_finite": true,
+      "amp_finite": true,
+      "fp32_nonzero": true,
+      "amp_nonzero": true,
+      "fp32_grad_norm": 0.057792119681835175,
+      "amp_unscaled_grad_norm": 0.05779523029923439,
+      "cosine_similarity": 0.9999898672103882
+    },
+    "decoder16_block1.conv1.weight": {
+      "fp32_finite": true,
+      "amp_finite": true,
+      "fp32_nonzero": true,
+      "amp_nonzero": true,
+      "fp32_grad_norm": 0.30051910877227783,
+      "amp_unscaled_grad_norm": 0.3005489706993103,
+      "cosine_similarity": 0.9999969005584717
+    },
+    "output_projection.weight": {
+      "fp32_finite": true,
+      "amp_finite": true,
+      "fp32_nonzero": true,
+      "amp_nonzero": true,
+      "fp32_grad_norm": 1.5495247840881348,
+      "amp_unscaled_grad_norm": 1.5496474504470825,
+      "cosine_similarity": 0.9999998807907104
+    }
+  },
+  "all_representative_gradients_finite": true,
+  "all_representative_gradients_nonzero": true
+}

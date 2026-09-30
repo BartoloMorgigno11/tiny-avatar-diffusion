@@ -1,4 +1,4 @@
-"""MODEL-COMPUTE-ONLY FP32 training-step profile for Tiny U-Net V1."""
+"""MODEL-COMPUTE-ONLY GPU training-step profiles for Tiny U-Net V1."""
 
 from __future__ import annotations
 
@@ -21,13 +21,47 @@ from tiny_avatar_diffusion.unet import TinyUNet
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = ROOT / "reports" / "dr02_gpu_profile" / "fp32_training"
+AMP_OUTPUT_DIR = ROOT / "reports" / "dr02_gpu_profile" / "amp_parity"
 BASE_BATCH_SIZES = (8, 16, 32, 64)
 OPTIONAL_BATCH_SIZE = 128
 OPTIONAL_BATCH_MEMORY_FRACTION = 0.60
+AMP_PILOT_BATCH_SIZE = 32
+PILOT_SEED = 2026
 WARMUP_STEPS = 5
 MEASURED_STEPS = 20
 RESOLUTION = 32
 CHANNELS = 3
+PRECISIONS = ("FP32", "AMP_FP16")
+PARITY_PARAMETER_NAMES = (
+    "time_embedding.mlp.0.weight",
+    "input_projection.weight",
+    "encoder16_block1.conv1.weight",
+    "bottleneck_block1.conv1.weight",
+    "decoder16_block1.conv1.weight",
+    "output_projection.weight",
+)
+MEASUREMENT_FIELDS = (
+    "batch_size",
+    "status",
+    "warmup_steps",
+    "measured_steps",
+    "mean_step_ms",
+    "median_step_ms",
+    "std_step_ms",
+    "images_per_second",
+    "peak_allocated_mb",
+    "peak_reserved_mb",
+    "total_vram_mb",
+    "allocated_fraction",
+)
+AMP_MEASUREMENT_FIELDS = (
+    "precision",
+    *MEASUREMENT_FIELDS,
+    "grad_scaler_initial_scale",
+    "grad_scaler_final_scale",
+    "warmup_skipped_steps",
+    "measured_skipped_steps",
+)
 
 
 @dataclass(frozen=True)
@@ -55,6 +89,41 @@ def images_per_second(batch_size: int, median_step_ms: float) -> float:
     return batch_size / (median_step_ms / 1_000.0)
 
 
+def validate_precision(precision: str) -> None:
+    """Restrict the pilot to its frozen FP32 and AMP-FP16 policies."""
+    if precision not in PRECISIONS:
+        raise ValueError(f"precision must be one of {PRECISIONS}")
+
+
+def backend_precision_metadata() -> dict[str, bool]:
+    """Record, without changing, the process-wide TF32 backend flags."""
+    return {
+        "cudnn_allow_tf32": torch.backends.cudnn.allow_tf32,
+        "cuda_matmul_allow_tf32": torch.backends.cuda.matmul.allow_tf32,
+    }
+
+
+def compare_precision_results(
+    fp32: dict[str, Any], amp: dict[str, Any]
+) -> dict[str, float]:
+    """Derive the frozen latency, throughput, and memory comparisons."""
+    return {
+        "speedup": fp32["median_step_ms"] / amp["median_step_ms"],
+        "throughput_gain_percent": (
+            amp["images_per_second"] / fp32["images_per_second"] - 1.0
+        )
+        * 100.0,
+        "allocated_memory_reduction_percent": (
+            1.0 - amp["peak_allocated_mb"] / fp32["peak_allocated_mb"]
+        )
+        * 100.0,
+        "reserved_memory_reduction_percent": (
+            1.0 - amp["peak_reserved_mb"] / fp32["peak_reserved_mb"]
+        )
+        * 100.0,
+    }
+
+
 def should_try_optional_batch_128(
     batch_64_result: dict[str, Any], *, total_vram_mb: float
 ) -> bool:
@@ -66,13 +135,18 @@ def should_try_optional_batch_128(
     )
 
 
-def _full_training_step(
+def _training_step(
     model: nn.Module,
     schedule: LinearDDPMSchedule,
     optimizer: torch.optim.Optimizer,
     x_start: torch.Tensor,
-) -> None:
-    """Run the validated epsilon-prediction path for one FP32 optimizer step."""
+    *,
+    precision: str,
+    scaler: torch.amp.GradScaler | None,
+) -> bool:
+    """Run one shared FP32 or AMP-FP16 optimizer step."""
+    validate_precision(precision)
+    optimizer.zero_grad(set_to_none=True)
     timesteps = torch.randint(
         0,
         schedule.betas.shape[0],
@@ -81,45 +155,125 @@ def _full_training_step(
     )
     noise = torch.randn_like(x_start)
     x_t = schedule.q_sample(x_start, timesteps, noise=noise)
-    optimizer.zero_grad(set_to_none=True)
-    predicted_noise = model(x_t, timesteps)
-    loss = F.mse_loss(predicted_noise, noise)
-    loss.backward()
-    optimizer.step()
+    if precision == "FP32":
+        predicted_noise = model(x_t, timesteps)
+        loss = F.mse_loss(predicted_noise, noise)
+        loss.backward()
+        optimizer.step()
+        return False
+
+    if scaler is None:
+        raise ValueError("AMP_FP16 requires a GradScaler")
+    scale_before = float(scaler.get_scale())
+    with torch.amp.autocast("cuda", dtype=torch.float16):
+        predicted_noise = model(x_t, timesteps)
+        loss = F.mse_loss(predicted_noise, noise)
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()
+    return float(scaler.get_scale()) < scale_before
 
 
-def _profile_batch(
+def _oom_result(
     batch_size: int,
     *,
-    device: torch.device,
+    precision: str,
     config: ProfileConfig,
     total_vram_mb: float,
 ) -> dict[str, Any]:
-    """Profile one isolated batch size, returning an OOM row instead of raising."""
+    """Return the explicit OOM row used by the preserved Phase 8A policy."""
+    return {
+        "precision": precision,
+        "batch_size": batch_size,
+        "status": "OOM",
+        "warmup_steps": config.warmup_steps,
+        "measured_steps": config.measured_steps,
+        "mean_step_ms": None,
+        "median_step_ms": None,
+        "std_step_ms": None,
+        "images_per_second": None,
+        "peak_allocated_mb": None,
+        "peak_reserved_mb": None,
+        "total_vram_mb": total_vram_mb,
+        "allocated_fraction": None,
+        "grad_scaler_initial_scale": None,
+        "grad_scaler_final_scale": None,
+        "warmup_skipped_steps": 0,
+        "measured_skipped_steps": 0,
+    }
+
+
+def _profile_training_run(
+    batch_size: int,
+    *,
+    precision: str,
+    device: torch.device,
+    config: ProfileConfig,
+    total_vram_mb: float,
+    seed: int | None = None,
+    record_oom: bool = False,
+) -> dict[str, Any]:
+    """Profile one precision policy with the shared measurement semantics."""
+    validate_precision(precision)
     model: TinyUNet | None = None
     schedule: LinearDDPMSchedule | None = None
     optimizer: torch.optim.Optimizer | None = None
+    scaler: torch.amp.GradScaler | None = None
     x_start: torch.Tensor | None = None
     try:
-        model = TinyUNet(dropout=0.0).to(device)
-        schedule = LinearDDPMSchedule(num_timesteps=1_000).to(device)
+        if seed is not None:
+            torch.manual_seed(seed)
+        model = TinyUNet(dropout=0.0).to(device=device, dtype=torch.float32)
+        schedule = LinearDDPMSchedule(num_timesteps=1_000).to(
+            device=device, dtype=torch.float32
+        )
         optimizer = torch.optim.AdamW(
             model.parameters(), lr=1e-4, weight_decay=0.0
         )
+        if precision == "AMP_FP16":
+            scaler = torch.amp.GradScaler("cuda")
         x_start = torch.empty(
-            batch_size, CHANNELS, RESOLUTION, RESOLUTION, device=device
+            batch_size,
+            CHANNELS,
+            RESOLUTION,
+            RESOLUTION,
+            device=device,
+            dtype=torch.float32,
         ).uniform_(-1.0, 1.0)
+        initial_scale = float(scaler.get_scale()) if scaler is not None else None
 
+        warmup_skipped_steps = 0
         for _ in range(config.warmup_steps):
-            _full_training_step(model, schedule, optimizer, x_start)
+            warmup_skipped_steps += int(
+                _training_step(
+                    model,
+                    schedule,
+                    optimizer,
+                    x_start,
+                    precision=precision,
+                    scaler=scaler,
+                )
+            )
+        if not optimizer.state:
+            raise RuntimeError("Warm-up did not materialize AdamW optimizer state")
 
         torch.cuda.synchronize(device)
         torch.cuda.reset_peak_memory_stats(device)
+        measured_skipped_steps = 0
         step_times_ms: list[float] = []
         for _ in range(config.measured_steps):
             torch.cuda.synchronize(device)
             start = time.perf_counter()
-            _full_training_step(model, schedule, optimizer, x_start)
+            measured_skipped_steps += int(
+                _training_step(
+                    model,
+                    schedule,
+                    optimizer,
+                    x_start,
+                    precision=precision,
+                    scaler=scaler,
+                )
+            )
             torch.cuda.synchronize(device)
             step_times_ms.append((time.perf_counter() - start) * 1_000.0)
 
@@ -127,6 +281,7 @@ def _profile_batch(
         peak_allocated_mb = torch.cuda.max_memory_allocated(device) / (1024**2)
         peak_reserved_mb = torch.cuda.max_memory_reserved(device) / (1024**2)
         return {
+            "precision": precision,
             "batch_size": batch_size,
             "status": "success",
             "warmup_steps": config.warmup_steps,
@@ -139,24 +294,151 @@ def _profile_batch(
             "peak_reserved_mb": peak_reserved_mb,
             "total_vram_mb": total_vram_mb,
             "allocated_fraction": peak_allocated_mb / total_vram_mb,
+            "grad_scaler_initial_scale": initial_scale,
+            "grad_scaler_final_scale": (
+                float(scaler.get_scale()) if scaler is not None else None
+            ),
+            "warmup_skipped_steps": warmup_skipped_steps,
+            "measured_skipped_steps": measured_skipped_steps,
         }
     except torch.cuda.OutOfMemoryError:
+        if not record_oom:
+            raise
+        return _oom_result(
+            batch_size,
+            precision=precision,
+            config=config,
+            total_vram_mb=total_vram_mb,
+        )
+    finally:
+        del model, schedule, optimizer, scaler, x_start
+        gc.collect()
+        torch.cuda.empty_cache()
+
+
+def _run_parity_probe(device: torch.device) -> dict[str, Any]:
+    """Compare FP32 and AMP on identical weights and corruption tensors."""
+    fp32_model: TinyUNet | None = None
+    amp_model: TinyUNet | None = None
+    schedule: LinearDDPMSchedule | None = None
+    fp32_optimizer: torch.optim.Optimizer | None = None
+    amp_optimizer: torch.optim.Optimizer | None = None
+    try:
+        torch.manual_seed(PILOT_SEED)
+        fp32_model = TinyUNet(dropout=0.0).to(device=device, dtype=torch.float32)
+        amp_model = TinyUNet(dropout=0.0).to(device=device, dtype=torch.float32)
+        amp_model.load_state_dict(fp32_model.state_dict())
+        schedule = LinearDDPMSchedule(num_timesteps=1_000).to(
+            device=device, dtype=torch.float32
+        )
+        fp32_optimizer = torch.optim.AdamW(
+            fp32_model.parameters(), lr=1e-4, weight_decay=0.0
+        )
+        amp_optimizer = torch.optim.AdamW(
+            amp_model.parameters(), lr=1e-4, weight_decay=0.0
+        )
+        generator = torch.Generator(device=device).manual_seed(PILOT_SEED)
+        x_start = torch.empty(
+            AMP_PILOT_BATCH_SIZE,
+            CHANNELS,
+            RESOLUTION,
+            RESOLUTION,
+            device=device,
+            dtype=torch.float32,
+        ).uniform_(-1.0, 1.0, generator=generator)
+        timesteps = torch.randint(
+            0,
+            schedule.betas.shape[0],
+            (AMP_PILOT_BATCH_SIZE,),
+            device=device,
+            generator=generator,
+        )
+        noise = torch.randn(
+            x_start.shape,
+            device=device,
+            dtype=torch.float32,
+            generator=generator,
+        )
+        x_t = schedule.q_sample(x_start, timesteps, noise=noise)
+
+        fp32_optimizer.zero_grad(set_to_none=True)
+        fp32_prediction = fp32_model(x_t, timesteps)
+        fp32_loss_tensor = F.mse_loss(fp32_prediction, noise)
+        fp32_loss_tensor.backward()
+
+        amp_optimizer.zero_grad(set_to_none=True)
+        scaler = torch.amp.GradScaler("cuda")
+        with torch.amp.autocast("cuda", dtype=torch.float16):
+            amp_prediction = amp_model(x_t, timesteps)
+            amp_loss_tensor = F.mse_loss(amp_prediction, noise)
+        scaler.scale(amp_loss_tensor).backward()
+        scaler.unscale_(amp_optimizer)
+
+        fp32_parameters = dict(fp32_model.named_parameters())
+        amp_parameters = dict(amp_model.named_parameters())
+        gradients: dict[str, dict[str, float | bool | None]] = {}
+        for name in PARITY_PARAMETER_NAMES:
+            fp32_gradient = fp32_parameters[name].grad
+            amp_gradient = amp_parameters[name].grad
+            if fp32_gradient is None or amp_gradient is None:
+                gradients[name] = {
+                    "fp32_finite": False,
+                    "amp_finite": False,
+                    "fp32_nonzero": False,
+                    "amp_nonzero": False,
+                    "fp32_grad_norm": None,
+                    "amp_unscaled_grad_norm": None,
+                    "cosine_similarity": None,
+                }
+                continue
+            fp32_gradient_float = fp32_gradient.float().flatten()
+            amp_gradient_float = amp_gradient.float().flatten()
+            fp32_norm = torch.linalg.vector_norm(fp32_gradient_float)
+            amp_norm = torch.linalg.vector_norm(amp_gradient_float)
+            gradients[name] = {
+                "fp32_finite": bool(torch.isfinite(fp32_gradient).all()),
+                "amp_finite": bool(torch.isfinite(amp_gradient).all()),
+                "fp32_nonzero": bool(torch.count_nonzero(fp32_gradient)),
+                "amp_nonzero": bool(torch.count_nonzero(amp_gradient)),
+                "fp32_grad_norm": float(fp32_norm),
+                "amp_unscaled_grad_norm": float(amp_norm),
+                "cosine_similarity": float(
+                    F.cosine_similarity(
+                        fp32_gradient_float, amp_gradient_float, dim=0
+                    )
+                ),
+            }
+
+        fp32_loss = float(fp32_loss_tensor)
+        amp_loss = float(amp_loss_tensor)
+        absolute_difference = abs(fp32_loss - amp_loss)
         return {
-            "batch_size": batch_size,
-            "status": "OOM",
-            "warmup_steps": config.warmup_steps,
-            "measured_steps": config.measured_steps,
-            "mean_step_ms": None,
-            "median_step_ms": None,
-            "std_step_ms": None,
-            "images_per_second": None,
-            "peak_allocated_mb": None,
-            "peak_reserved_mb": None,
-            "total_vram_mb": total_vram_mb,
-            "allocated_fraction": None,
+            "batch_size": AMP_PILOT_BATCH_SIZE,
+            "same_initial_state": all(
+                torch.equal(fp32_parameters[name], amp_parameters[name])
+                for name in fp32_parameters
+            ),
+            "shared_input_shape": list(x_start.shape),
+            "fp32_output_finite": bool(torch.isfinite(fp32_prediction).all()),
+            "amp_output_finite": bool(torch.isfinite(amp_prediction).all()),
+            "fp32_loss_finite": bool(torch.isfinite(fp32_loss_tensor)),
+            "amp_loss_finite": bool(torch.isfinite(amp_loss_tensor)),
+            "fp32_loss": fp32_loss,
+            "amp_loss": amp_loss,
+            "absolute_loss_difference": absolute_difference,
+            "relative_loss_difference": absolute_difference / abs(fp32_loss),
+            "representative_gradients": gradients,
+            "all_representative_gradients_finite": all(
+                metric["fp32_finite"] and metric["amp_finite"]
+                for metric in gradients.values()
+            ),
+            "all_representative_gradients_nonzero": all(
+                metric["fp32_nonzero"] and metric["amp_nonzero"]
+                for metric in gradients.values()
+            ),
         }
     finally:
-        del model, schedule, optimizer, x_start
+        del fp32_model, amp_model, schedule, fp32_optimizer, amp_optimizer
         gc.collect()
         torch.cuda.empty_cache()
 
@@ -169,22 +451,30 @@ def write_profile_artifacts(
     (output_dir / "summary.json").write_text(
         json.dumps(summary, indent=2) + "\n", encoding="utf-8"
     )
-    fieldnames = [
-        "batch_size",
-        "status",
-        "warmup_steps",
-        "measured_steps",
-        "mean_step_ms",
-        "median_step_ms",
-        "std_step_ms",
-        "images_per_second",
-        "peak_allocated_mb",
-        "peak_reserved_mb",
-        "total_vram_mb",
-        "allocated_fraction",
-    ]
     with (output_dir / "batch_profile.csv").open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer = csv.DictWriter(stream, fieldnames=MEASUREMENT_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_amp_pilot_artifacts(
+    output_dir: Path,
+    summary: dict[str, Any],
+    rows: list[dict[str, Any]],
+    parity: dict[str, Any],
+) -> None:
+    """Write the three frozen Phase 8B artifacts."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+    (output_dir / "parity.json").write_text(
+        json.dumps(parity, indent=2) + "\n", encoding="utf-8"
+    )
+    with (output_dir / "precision_profile.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as stream:
+        writer = csv.DictWriter(stream, fieldnames=AMP_MEASUREMENT_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -209,12 +499,15 @@ def run_fp32_training_profile(
     total_vram_mb = properties.total_memory / (1024**2)
     rows: list[dict[str, Any]] = []
     for batch_size in BASE_BATCH_SIZES:
-        row = _profile_batch(
+        measurement = _profile_training_run(
             batch_size,
+            precision="FP32",
             device=device,
             config=config,
             total_vram_mb=total_vram_mb,
+            record_oom=True,
         )
+        row = {field: measurement[field] for field in MEASUREMENT_FIELDS}
         rows.append(row)
         if row["status"] == "OOM":
             break
@@ -227,14 +520,15 @@ def run_fp32_training_profile(
         batch_64_result, total_vram_mb=total_vram_mb
     ):
         optional_batch_128_attempted = True
-        rows.append(
-            _profile_batch(
-                OPTIONAL_BATCH_SIZE,
-                device=device,
-                config=config,
-                total_vram_mb=total_vram_mb,
-            )
+        measurement = _profile_training_run(
+            OPTIONAL_BATCH_SIZE,
+            precision="FP32",
+            device=device,
+            config=config,
+            total_vram_mb=total_vram_mb,
+            record_oom=True,
         )
+        rows.append({field: measurement[field] for field in MEASUREMENT_FIELDS})
 
     summary = {
         "profile_type": "MODEL-COMPUTE-ONLY PROFILE",
@@ -268,20 +562,100 @@ def run_fp32_training_profile(
     return summary
 
 
+def run_amp_parity_profile(
+    *,
+    output_dir: Path = AMP_OUTPUT_DIR,
+    device_index: int = 0,
+    config: ProfileConfig | None = None,
+) -> dict[str, Any]:
+    """Run the frozen B=32 FP32 versus AMP-FP16 parity and benefit pilot."""
+    if config is None:
+        config = ProfileConfig()
+    validate_config(config)
+    if not torch.cuda.is_available():
+        raise RuntimeError("Phase 8B requires CUDA")
+    if device_index < 0 or device_index >= torch.cuda.device_count():
+        raise ValueError("device_index is not an available CUDA device")
+
+    device = torch.device(f"cuda:{device_index}")
+    properties = torch.cuda.get_device_properties(device)
+    total_vram_mb = properties.total_memory / (1024**2)
+    parity = _run_parity_probe(device)
+    gc.collect()
+    torch.cuda.empty_cache()
+    fp32_result = _profile_training_run(
+        AMP_PILOT_BATCH_SIZE,
+        precision="FP32",
+        device=device,
+        config=config,
+        total_vram_mb=total_vram_mb,
+        seed=PILOT_SEED,
+    )
+    amp_result = _profile_training_run(
+        AMP_PILOT_BATCH_SIZE,
+        precision="AMP_FP16",
+        device=device,
+        config=config,
+        total_vram_mb=total_vram_mb,
+        seed=PILOT_SEED,
+    )
+    rows = [fp32_result, amp_result]
+    comparison = compare_precision_results(fp32_result, amp_result)
+    summary = {
+        "profile_type": "MODEL-COMPUTE-ONLY AMP FP16 PARITY + BENEFIT PILOT",
+        "torch_version": torch.__version__,
+        "cuda_runtime": torch.version.cuda,
+        "gpu_name": properties.name,
+        "compute_capability": [properties.major, properties.minor],
+        "total_vram_mb": total_vram_mb,
+        "device_index": device_index,
+        **backend_precision_metadata(),
+        "precisions": list(PRECISIONS),
+        "batch_size": AMP_PILOT_BATCH_SIZE,
+        "resolution": RESOLUTION,
+        "model_parameter_count": sum(
+            parameter.numel() for parameter in TinyUNet(dropout=0.0).parameters()
+        ),
+        "optimizer": "AdamW",
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "diffusion_timesteps": 1_000,
+        "schedule": "linear",
+        "target": "epsilon",
+        "pilot_seed": PILOT_SEED,
+        "warmup_steps": config.warmup_steps,
+        "measured_steps": config.measured_steps,
+        "throughput_definition": "batch_size / median_step_seconds",
+        "precision_results": rows,
+        "comparison": comparison,
+    }
+    write_amp_pilot_artifacts(output_dir, summary, rows, parity)
+    return summary
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument(
+        "--mode", choices=("fp32", "amp-parity"), default="fp32"
+    )
+    parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--device-index", type=int, default=0)
     return parser.parse_args()
 
 
 def main() -> None:
-    """Run the Phase 8A profile from the command line."""
+    """Run one explicitly selected GPU profiling phase."""
     args = _parse_args()
-    run_fp32_training_profile(
-        output_dir=args.output_dir,
-        device_index=args.device_index,
-    )
+    if args.mode == "amp-parity":
+        run_amp_parity_profile(
+            output_dir=args.output_dir or AMP_OUTPUT_DIR,
+            device_index=args.device_index,
+        )
+    else:
+        run_fp32_training_profile(
+            output_dir=args.output_dir or DEFAULT_OUTPUT_DIR,
+            device_index=args.device_index,
+        )
 
 
 if __name__ == "__main__":

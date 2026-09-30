@@ -1,0 +1,77 @@
+{
+  "profile_type": "MODEL-COMPUTE-ONLY AMP FP16 PARITY + BENEFIT PILOT",
+  "torch_version": "2.5.1+cu121",
+  "cuda_runtime": "12.1",
+  "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "compute_capability": [
+    8,
+    9
+  ],
+  "total_vram_mb": 8187.5,
+  "device_index": 0,
+  "cudnn_allow_tf32": true,
+  "cuda_matmul_allow_tf32": false,
+  "precisions": [
+    "FP32",
+    "AMP_FP16"
+  ],
+  "batch_size": 32,
+  "resolution": 32,
+  "model_parameter_count": 4595779,
+  "optimizer": "AdamW",
+  "lr": 0.0001,
+  "weight_decay": 0.0,
+  "diffusion_timesteps": 1000,
+  "schedule": "linear",
+  "target": "epsilon",
+  "pilot_seed": 2026,
+  "warmup_steps": 5,
+  "measured_steps": 20,
+  "throughput_definition": "batch_size / median_step_seconds",
+  "precision_results": [
+    {
+      "precision": "FP32",
+      "batch_size": 32,
+      "status": "success",
+      "warmup_steps": 5,
+      "measured_steps": 20,
+      "mean_step_ms": 35.20436501130462,
+      "median_step_ms": 35.01414996571839,
+      "std_step_ms": 0.6338514017688535,
+      "images_per_second": 913.9162319042593,
+      "peak_allocated_mb": 525.39404296875,
+      "peak_reserved_mb": 676.0,
+      "total_vram_mb": 8187.5,
+      "allocated_fraction": 0.06417026479007634,
+      "grad_scaler_initial_scale": null,
+      "grad_scaler_final_scale": null,
+      "warmup_skipped_steps": 0,
+      "measured_skipped_steps": 0
+    },
+    {
+      "precision": "AMP_FP16",
+      "batch_size": 32,
+      "status": "success",
+      "warmup_steps": 5,
+      "measured_steps": 20,
+      "mean_step_ms": 29.733699990902096,
+      "median_step_ms": 29.34899996034801,
+      "std_step_ms": 1.7667188196126828,
+      "images_per_second": 1090.3267587731652,
+      "peak_allocated_mb": 467.9677734375,
+      "peak_reserved_mb": 548.0,
+      "total_vram_mb": 8187.5,
+      "allocated_fraction": 0.05715636927480916,
+      "grad_scaler_initial_scale": 65536.0,
+      "grad_scaler_final_scale": 65536.0,
+      "warmup_skipped_steps": 0,
+      "measured_skipped_steps": 0
+    }
+  ],
+  "comparison": {
+    "speedup": 1.193027020103727,
+    "throughput_gain_percent": 19.3027020103727,
+    "allocated_memory_reduction_percent": 10.930133354151039,
+    "reserved_memory_reduction_percent": 18.934911242603548
+  }
+}
