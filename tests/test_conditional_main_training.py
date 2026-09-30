@@ -17,6 +17,7 @@ from tiny_avatar_diffusion.conditional_main_training import (
     _append_metric,
     tensor_audit,
     compare_continuation_audits,
+    finalize_amp_attempt,
 )
 
 
@@ -88,6 +89,26 @@ def test_old_checkpoint_defaults_skipped_step_count_to_zero(tmp_path) -> None:
     restored = TrainingProgress()
     restored, _ = load_checkpoint(path, config=config, text_encoder=text, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler, corruption_generator=corruption, map_location=torch.device("cpu"))
     assert restored.skipped_step_count == 0
+
+
+class _Scaler:
+    def __init__(self, skip: bool): self.scale, self.skip = 8.0, skip
+    def get_scale(self): return self.scale
+    def step(self, optimizer):
+        if not self.skip: optimizer.step()
+    def update(self):
+        if self.skip: self.scale /= 2
+
+
+def test_amp_skip_then_recovery_preserves_then_updates_raw_and_ema() -> None:
+    text, denoiser = torch.nn.Linear(2, 2), torch.nn.Linear(2, 2)
+    ema = ConditionalEMA(text, denoiser); optimizer = torch.optim.SGD([*text.parameters(), *denoiser.parameters()], lr=0.1)
+    progress = TrainingProgress(); raw, shadow = copy.deepcopy(text.state_dict()), copy.deepcopy(ema.text_encoder)
+    assert finalize_amp_attempt(scaler=_Scaler(True), optimizer=optimizer, gradients_finite=False, progress=progress, ema=ema, text_encoder=text, denoiser=denoiser, ema_decay=.9999)
+    assert progress.step == 0 and progress.skipped_step_count == 1 and _state_equal(text.state_dict(), raw) and _state_equal(ema.text_encoder, shadow)
+    for parameter in [*text.parameters(), *denoiser.parameters()]: parameter.grad = torch.ones_like(parameter)
+    assert not finalize_amp_attempt(scaler=_Scaler(False), optimizer=optimizer, gradients_finite=True, progress=progress, ema=ema, text_encoder=text, denoiser=denoiser, ema_decay=.9999)
+    assert progress.step == 1 and progress.skipped_step_count == 1 and not _state_equal(text.state_dict(), raw) and not _state_equal(ema.text_encoder, shadow)
 
 
 def test_fixed_preview_manifest_is_reproducible_and_validation_only() -> None:

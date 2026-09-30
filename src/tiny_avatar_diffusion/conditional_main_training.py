@@ -239,6 +239,21 @@ def _append_metric(path: Path, row: dict[str, Any]) -> None:
         stream.write(json.dumps(row, sort_keys=True) + "\n")
 
 
+def finalize_amp_attempt(*, scaler: Any, optimizer: torch.optim.Optimizer, gradients_finite: bool, progress: TrainingProgress, ema: ConditionalEMA, text_encoder: torch.nn.Module, denoiser: torch.nn.Module, ema_decay: float) -> bool:
+    """Finalize one already-unscaled AMP attempt; returns whether it was skipped."""
+    before = float(scaler.get_scale())
+    scaler.step(optimizer); scaler.update()
+    skipped = float(scaler.get_scale()) < before
+    if not gradients_finite and not skipped:
+        raise FloatingPointError("non-finite gradients were not skipped by GradScaler")
+    if skipped:
+        progress.skipped_step_count += 1
+        return True
+    ema.update(text_encoder, denoiser, decay=ema_decay)
+    progress.step += 1
+    return False
+
+
 def tensor_audit(tensor: torch.Tensor) -> dict[str, Any]:
     """Compact, device-independent record of an observed training tensor."""
     value = tensor.detach().cpu().contiguous()
@@ -340,16 +355,10 @@ def run_main_training(
         if not bool(torch.isfinite(result.loss)): raise FloatingPointError("non-finite training loss")
         scaler.scale(result.loss).backward(); scaler.unscale_(optimizer)
         gradients_finite = _finite_gradients(text_encoder, denoiser)
-        before = float(scaler.get_scale()); scaler.step(optimizer); scaler.update()
-        skipped = float(scaler.get_scale()) < before
-        if not gradients_finite and not skipped:
-            raise FloatingPointError("non-finite gradients were not skipped by GradScaler")
-        if skipped:
-            progress.skipped_step_count += 1
+        if finalize_amp_attempt(scaler=scaler, optimizer=optimizer, gradients_finite=gradients_finite, progress=progress, ema=ema, text_encoder=text_encoder, denoiser=denoiser, ema_decay=config.ema_decay):
             # The batch was already drawn and is intentionally consumed, preserving prior sampler semantics.
             continue
-        ema.update(text_encoder, denoiser, decay=config.ema_decay)
-        progress.step += 1; progress.images_seen += config.physical_batch_size; progress.train_losses.append(float(result.loss.detach()))
+        progress.images_seen += config.physical_batch_size; progress.train_losses.append(float(result.loss.detach()))
         _append_metric(metrics_path, {"kind": "train", "step": progress.step, "images_seen": progress.images_seen, "effective_epochs": progress.images_seen / train.images.shape[0], "raw_training_epsilon_mse": progress.train_losses[-1], "smoothed_training_epsilon_mse": sum(progress.train_losses[-100:]) / min(100, len(progress.train_losses)), "learning_rate": config.learning_rate, "grad_scaler_scale": float(scaler.get_scale()), "skipped_step_count": progress.skipped_step_count, "elapsed_seconds": time.perf_counter() - started})
         if progress.step % config.validation_interval == 0:
             for name, split in (("ID_VAL", id_validation), ("COMP_VAL", comp_validation)):
