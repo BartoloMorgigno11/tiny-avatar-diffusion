@@ -2,7 +2,7 @@ from __future__ import annotations
 import json
 import pytest
 import torch
-from tiny_avatar_diffusion.checkpoint_selection import ALLOWED_SPLITS, build_manifest, image_name, select, write_atomic, load_or_initialize_progress, write_selection_markdown, execution_identity, expected_complete, tensor_to_png, compute_kid
+from tiny_avatar_diffusion.checkpoint_selection import ALLOWED_SPLITS, build_manifest, image_name, select, write_atomic, load_or_initialize_progress, write_selection_markdown, execution_identity, expected_complete, tensor_to_png, compute_kid, sample_per_seed, generate_split
 
 def test_manifest_is_deterministic_and_validation_only(tmp_path):
     a=build_manifest(tmp_path/'a.json',count=2); b=build_manifest(tmp_path/'b.json',count=2)
@@ -57,3 +57,24 @@ def test_selection_markdown_states(tmp_path,status,phrase):
     path=tmp_path/'x.md'; identity={'manifest_sha256':'m','config_sha256':'c'}
     write_selection_markdown(path,{'status':status,'selected_step':20000 if status=='PASS' else None,'weight_set':'EMA' if status=='PASS' else None},identity=identity,results={})
     assert phrase in path.read_text() and 'ID_TEST NOT USED' in path.read_text()
+
+class _Text(torch.nn.Module):
+    def forward(self, ids, masks): return ids.float().unsqueeze(-1)
+class _Unet(torch.nn.Module):
+    def forward(self,x,t,c,m): return torch.zeros_like(x)
+class _Schedule:
+    betas=torch.zeros(1)
+    def p_sample_from_noise(self,x,t,e,noise,clip_denoised): assert clip_denoised; return {'sample':x+noise}
+
+def test_production_seed_orchestration_is_batch_invariant():
+    entries=[{'token_ids':[1,2], 'attention_mask':[1,1], 'generation_seed':seed} for seed in (1,2,3)]
+    one=torch.cat([sample_per_seed(_Schedule(),_Text(),_Unet(),[entry],torch.device('cpu')) for entry in entries])
+    grouped=sample_per_seed(_Schedule(),_Text(),_Unet(),entries,torch.device('cpu'))
+    assert torch.equal(one,grouped) and not torch.equal(grouped[0],grouped[1])
+
+def test_partial_generation_reuses_expected_pngs(monkeypatch,tmp_path):
+    entries=[{'image_id':'a','token_ids':[1], 'attention_mask':[1], 'generation_seed':1},{'image_id':'b','token_ids':[1], 'attention_mask':[1], 'generation_seed':2}]
+    tensor_to_png(torch.zeros(3,32,32),tmp_path/'a.png'); calls=[]
+    monkeypatch.setattr('tiny_avatar_diffusion.checkpoint_selection.sample_per_seed',lambda *args,**kwargs: calls.append([e['image_id'] for e in args[3]]) or torch.zeros(len(args[3]),3,32,32))
+    generate_split(entries=entries,text=None,unet=None,schedule=None,directory=tmp_path,batch_size=8,device=torch.device('cpu'))
+    assert calls==[['b']] and expected_complete(entries,tmp_path)
