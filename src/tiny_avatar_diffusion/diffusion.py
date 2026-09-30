@@ -145,11 +145,19 @@ class LinearDDPMSchedule(nn.Module):
         x_t: torch.Tensor,
         timesteps: torch.Tensor,
         predicted_noise: torch.Tensor,
+        *,
+        clip_denoised: bool = False,
     ) -> dict[str, torch.Tensor]:
-        """Compose deterministic reverse-process quantities from predicted noise."""
+        """Compose reverse-process quantities from predicted noise.
+
+        When requested, clip only the reconstructed ``x_0`` before using it
+        in the posterior mean. The predicted epsilon remains unchanged.
+        """
         predicted_x_start = self.predict_x_start_from_noise(
             x_t, timesteps, predicted_noise
         )
+        if clip_denoised:
+            predicted_x_start = predicted_x_start.clamp(-1.0, 1.0)
         model_mean = self.q_posterior_mean(predicted_x_start, x_t, timesteps)
         posterior_variance = _extract(self.posterior_variance, timesteps, x_t)
         return {
@@ -164,6 +172,8 @@ class LinearDDPMSchedule(nn.Module):
         timesteps: torch.Tensor,
         predicted_noise: torch.Tensor,
         noise: torch.Tensor | None = None,
+        *,
+        clip_denoised: bool = False,
     ) -> dict[str, torch.Tensor]:
         """Take one DDPM reverse step from an already predicted noise tensor."""
         if noise is None:
@@ -172,7 +182,7 @@ class LinearDDPMSchedule(nn.Module):
             raise ValueError("noise must have the same shape as x_t")
 
         mean_variance = self.p_mean_variance_from_noise(
-            x_t, timesteps, predicted_noise
+            x_t, timesteps, predicted_noise, clip_denoised=clip_denoised
         )
         nonzero_mask = (timesteps != 0).to(device=x_t.device, dtype=x_t.dtype)
         nonzero_mask = nonzero_mask.reshape(x_t.shape[0], *((1,) * (x_t.ndim - 1)))
@@ -186,6 +196,8 @@ class LinearDDPMSchedule(nn.Module):
         self,
         x_T: torch.Tensor,
         noise_predictor: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+        *,
+        clip_denoised: bool = False,
     ) -> torch.Tensor:
         """Run the complete DDPM reverse process from a provided ``x_T`` tensor."""
         if not isinstance(x_T, torch.Tensor):
@@ -215,7 +227,10 @@ class LinearDDPMSchedule(nn.Module):
                     )
 
                 x_t = self.p_sample_from_noise(
-                    x_t, timesteps, predicted_noise
+                    x_t,
+                    timesteps,
+                    predicted_noise,
+                    clip_denoised=clip_denoised,
                 )["sample"]
 
         return x_t

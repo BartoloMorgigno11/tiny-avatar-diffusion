@@ -195,6 +195,103 @@ def test_cosine_ddpm_schedule_reuses_the_existing_reverse_sampler() -> None:
     assert torch.isfinite(sample).all()
 
 
+@pytest.mark.parametrize("schedule_type", (LinearDDPMSchedule, CosineDDPMSchedule))
+def test_clipped_reverse_mean_uses_clipped_x_start(
+    schedule_type: type[LinearDDPMSchedule],
+) -> None:
+    schedule = schedule_type()
+    x_t = torch.zeros(1, 1, 1, 3)
+    timesteps = torch.tensor([500], dtype=torch.long)
+    unclipped_x_start = torch.tensor([[[[-2.0, 0.25, 2.0]]]])
+    sqrt_alpha_bar = schedule.sqrt_alphas_cumprod[500]
+    sqrt_one_minus_alpha_bar = schedule.sqrt_one_minus_alphas_cumprod[500]
+    predicted_noise = -unclipped_x_start * sqrt_alpha_bar / sqrt_one_minus_alpha_bar
+
+    legacy = schedule.p_mean_variance_from_noise(x_t, timesteps, predicted_noise)
+    explicit_unclipped = schedule.p_mean_variance_from_noise(
+        x_t, timesteps, predicted_noise, clip_denoised=False
+    )
+    clipped = schedule.p_mean_variance_from_noise(
+        x_t, timesteps, predicted_noise, clip_denoised=True
+    )
+    reverse_noise = torch.full_like(x_t, 0.5)
+    legacy_sample = schedule.p_sample_from_noise(
+        x_t, timesteps, predicted_noise, reverse_noise
+    )
+    explicit_unclipped_sample = schedule.p_sample_from_noise(
+        x_t,
+        timesteps,
+        predicted_noise,
+        reverse_noise,
+        clip_denoised=False,
+    )
+    expected_x_start = unclipped_x_start.clamp(-1.0, 1.0)
+    expected_mean = (
+        schedule.posterior_mean_coef1[500] * expected_x_start
+        + schedule.posterior_mean_coef2[500] * x_t
+    )
+
+    assert torch.allclose(legacy["predicted_x_start"], unclipped_x_start)
+    assert torch.equal(explicit_unclipped["predicted_x_start"], legacy["predicted_x_start"])
+    assert torch.equal(explicit_unclipped["model_mean"], legacy["model_mean"])
+    assert torch.equal(legacy_sample["sample"], explicit_unclipped_sample["sample"])
+    assert torch.equal(clipped["predicted_x_start"], expected_x_start)
+    assert torch.allclose(clipped["model_mean"], expected_mean)
+    assert not torch.allclose(clipped["model_mean"], legacy["model_mean"])
+
+
+def test_clipping_does_not_clamp_predicted_epsilon() -> None:
+    schedule = LinearDDPMSchedule()
+    x_t = torch.zeros(1, 1, 1, 3)
+    timesteps = torch.zeros(1, dtype=torch.long)
+    predicted_noise = torch.tensor([[[[-500.0, 0.0, 500.0]]]])
+
+    result = schedule.p_mean_variance_from_noise(
+        x_t, timesteps, predicted_noise, clip_denoised=True
+    )
+
+    assert torch.all(predicted_noise[..., (0, 2)].abs() > 1.0)
+    assert torch.equal(predicted_noise, torch.tensor([[[[-500.0, 0.0, 500.0]]]]))
+    assert torch.equal(
+        result["predicted_x_start"], torch.tensor([[[[1.0, 0.0, -1.0]]]])
+    )
+
+
+def test_sample_loop_propagates_clip_denoised(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    schedule = CosineDDPMSchedule(num_timesteps=4)
+    x_t = torch.zeros(2, 1, 2, 2)
+    original_reverse_step = schedule.p_sample_from_noise
+    received_flags: list[bool] = []
+
+    def tracked_reverse_step(
+        current_x_t: torch.Tensor,
+        timesteps: torch.Tensor,
+        predicted_noise: torch.Tensor,
+        noise: torch.Tensor | None = None,
+        *,
+        clip_denoised: bool = False,
+    ) -> dict[str, torch.Tensor]:
+        received_flags.append(clip_denoised)
+        return original_reverse_step(
+            current_x_t,
+            timesteps,
+            predicted_noise,
+            noise,
+            clip_denoised=clip_denoised,
+        )
+
+    monkeypatch.setattr(schedule, "p_sample_from_noise", tracked_reverse_step)
+    sample = schedule.sample_loop_from_noise_predictor(
+        x_t, lambda current_x_t, _: torch.zeros_like(current_x_t), clip_denoised=True
+    )
+
+    assert received_flags == [True, True, True, True]
+    assert sample.shape == x_t.shape
+    assert torch.isfinite(sample).all()
+
+
 @pytest.mark.parametrize("timestep", (0, 500, 999))
 def test_q_sample_matches_the_forward_noising_formula(timestep: int) -> None:
     schedule = LinearDDPMSchedule()
@@ -654,8 +751,10 @@ def test_sample_loop_runs_all_timesteps_and_propagates_each_sample(
         x_t: torch.Tensor,
         timesteps: torch.Tensor,
         predicted_noise: torch.Tensor,
+        *,
+        clip_denoised: bool = False,
     ) -> dict[str, torch.Tensor]:
-        del predicted_noise
+        del predicted_noise, clip_denoised
         reverse_calls.append(timesteps.clone())
         return {"sample": x_t + timesteps.reshape(-1, 1, 1, 1) + 1.0}
 
