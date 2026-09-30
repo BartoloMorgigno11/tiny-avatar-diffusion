@@ -113,7 +113,7 @@ def generate_split(*, entries:list[dict[str,Any]], text:TextConditioningEncoder,
 
 def compute_kid(real_dir: Path, generated_dir: Path, *, batch_size: int, device: torch.device) -> dict[str,Any]:
     from cleanfid import fid
-    started=time.perf_counter(); value=fid.compute_kid(str(real_dir),str(generated_dir),mode="clean",batch_size=batch_size,device=device)
+    started=time.perf_counter(); value=fid.compute_kid(str(real_dir),str(generated_dir),mode="clean",batch_size=batch_size,device=device,num_workers=0)
     return {"clean_fid_version":"0.1.35","mode":"clean","batch_size":batch_size,"device":str(device),"kid":float(value),"runtime_seconds":time.perf_counter()-started}
 
 def select(results: dict[int,dict[str,Any]]) -> dict[str,Any]:

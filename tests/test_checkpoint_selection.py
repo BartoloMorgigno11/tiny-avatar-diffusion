@@ -54,7 +54,7 @@ def test_cleanfid_adapter_uses_clean_mode(monkeypatch,tmp_path):
     from cleanfid import fid
     monkeypatch.setattr(fid,'compute_kid',fake)
     result=compute_kid(tmp_path/'real',tmp_path/'generated',batch_size=7,device=torch.device('cpu'))
-    assert result['kid']==.25 and result['mode']=='clean' and seen['mode']=='clean' and seen['batch_size']==7
+    assert result['kid']==.25 and result['mode']=='clean' and seen['mode']=='clean' and seen['batch_size']==7 and seen['num_workers']==0
 
 @pytest.mark.parametrize('status,phrase', [('PASS','Selected EMA'),('CONFLICT','No checkpoint frozen'),('NOT_RUN','Status')])
 def test_selection_markdown_states(tmp_path,status,phrase):
