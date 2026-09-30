@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-09-30T17:28:41.4953243+02:00",
+  "branch": "master",
+  "pre_commit_head": "52990b4752224931609f26e8c02f99e818b23d5d",
+  "scientific_config": {
+    "dataset": "10k",
+    "resolution": [32, 32],
+    "train_size": 8388,
+    "physical_batch": 32,
+    "gradient_accumulation": 1,
+    "precision": "AMP FP16",
+    "optimizer": "AdamW",
+    "learning_rate": 0.0002,
+    "weight_decay": 0.0,
+    "seed": 2026,
+    "diffusion_schedule": "linear",
+    "diffusion_timesteps": 1000,
+    "target": "epsilon",
+    "ema": true,
+    "ema_decay": 0.9999,
+    "max_steps": 20000,
+    "validation_every": 1000,
+    "milestones": [5000, 10000, 15000, 20000],
+    "conditional_sampling_clip_denoised": true
+  },
+  "parameter_counts": {
+    "text_conditioning_encoder": 102976,
+    "conditional_tiny_unet": 4620931,
+    "total": 4723907
+  },
+  "validation": {
+    "full_pytest": "196 passed",
+    "resume_integrity": "PASS",
+    "explicit_continuation_audit": "PASS",
+    "id_test_used": false,
+    "final_ood_used": false
+  }
+}

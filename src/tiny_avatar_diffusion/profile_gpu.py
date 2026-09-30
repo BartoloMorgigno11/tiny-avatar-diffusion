@@ -17,8 +17,19 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from tiny_avatar_diffusion.conditional_debug_tiny_overfit import (
+    create_conditional_debug_optimizer,
+    select_text_conditioning,
+)
+from tiny_avatar_diffusion.conditional_training import conditional_diffusion_loss
+from tiny_avatar_diffusion.debug_tiny_overfit import (
+    load_train_records,
+    preload_images,
+    select_tiny_subset,
+)
 from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule
-from tiny_avatar_diffusion.unet import TinyUNet
+from tiny_avatar_diffusion.text_conditioning import TextConditioningEncoder
+from tiny_avatar_diffusion.unet import ConditionalTinyUNet, TinyUNet
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = ROOT / "reports" / "dr02_gpu_profile" / "fp32_training"
@@ -38,6 +49,9 @@ SAMPLING_BATCH_SIZES = (1, 32)
 SAMPLING_WARMUP_FORWARDS = 5
 SAMPLING_REPETITIONS = 2
 SAMPLING_SEED = 2026
+CONDITIONAL_BATCH_SIZES = (4, 8, 16, 32)
+CONDITIONAL_MEASURED_STEPS = 10
+CONDITIONAL_SAFE_RESERVED_FRACTION = 0.85
 PARITY_PARAMETER_NAMES = (
     "time_embedding.mlp.0.weight",
     "input_projection.weight",
@@ -105,6 +119,16 @@ class SamplingProfileConfig:
     repetitions: int = SAMPLING_REPETITIONS
 
 
+@dataclass(frozen=True)
+class ConditionalProfileConfig:
+    """DR03 engineering-only full conditional-training profile settings."""
+
+    batch_sizes: tuple[int, ...] = CONDITIONAL_BATCH_SIZES
+    warmup_steps: int = WARMUP_STEPS
+    measured_steps: int = CONDITIONAL_MEASURED_STEPS
+    seed: int = PILOT_SEED
+
+
 def validate_config(config: ProfileConfig) -> None:
     """Reject nonsensical benchmark step counts before any GPU allocation."""
     if config.warmup_steps < 0:
@@ -119,6 +143,18 @@ def validate_sampling_config(config: SamplingProfileConfig) -> None:
         raise ValueError("warmup_model_forwards must be non-negative")
     if config.repetitions <= 0:
         raise ValueError("repetitions must be positive")
+
+
+def validate_conditional_profile_config(config: ConditionalProfileConfig) -> None:
+    """Validate only the scoped DR03 engineering-pilot controls."""
+    if not config.batch_sizes or any(batch_size <= 0 for batch_size in config.batch_sizes):
+        raise ValueError("batch_sizes must contain positive values")
+    if tuple(sorted(set(config.batch_sizes))) != config.batch_sizes:
+        raise ValueError("batch_sizes must be unique and increasing")
+    if config.warmup_steps < 0:
+        raise ValueError("warmup_steps must be non-negative")
+    if config.measured_steps <= 0:
+        raise ValueError("measured_steps must be positive")
 
 
 def validate_sampling_batch_size(batch_size: int) -> None:
@@ -989,10 +1025,449 @@ def run_ancestral_sampling_profile(
     return summary
 
 
+def _conditional_profile_batch(
+    images: torch.Tensor,
+    input_ids: torch.Tensor,
+    attention_mask: torch.Tensor,
+    batch_size: int,
+    *,
+    device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Cycle the real deterministic TRAIN-only subset to a physical batch size."""
+    indices = torch.arange(batch_size) % images.shape[0]
+    return (
+        images[indices].to(device),
+        input_ids[indices].to(device),
+        attention_mask[indices].to(device),
+    )
+
+
+def _conditional_profile_training_step(
+    text_encoder: TextConditioningEncoder,
+    denoiser: ConditionalTinyUNet,
+    schedule: LinearDDPMSchedule,
+    optimizer: torch.optim.Optimizer,
+    x_start: torch.Tensor,
+    input_ids: torch.Tensor,
+    attention_mask: torch.Tensor,
+    *,
+    precision: str,
+    scaler: torch.amp.GradScaler | None,
+) -> tuple[bool, bool, bool]:
+    """Execute the full joint conditional step under one engineering precision mode."""
+    validate_precision(precision)
+    optimizer.zero_grad(set_to_none=True)
+    if precision == "FP32":
+        result = conditional_diffusion_loss(
+            text_encoder, denoiser, schedule, x_start, input_ids, attention_mask
+        )
+        result.loss.backward()
+        finite_gradients = all(
+            parameter.grad is None or bool(torch.isfinite(parameter.grad).all())
+            for parameter in [*text_encoder.parameters(), *denoiser.parameters()]
+        )
+        optimizer.step()
+        return bool(torch.isfinite(result.loss)), finite_gradients, False
+
+    if scaler is None:
+        raise ValueError("AMP_FP16 requires a GradScaler")
+    scale_before = float(scaler.get_scale())
+    with torch.amp.autocast("cuda", dtype=torch.float16):
+        result = conditional_diffusion_loss(
+            text_encoder, denoiser, schedule, x_start, input_ids, attention_mask
+        )
+    scaler.scale(result.loss).backward()
+    scaler.unscale_(optimizer)
+    finite_gradients = all(
+        parameter.grad is None or bool(torch.isfinite(parameter.grad).all())
+        for parameter in [*text_encoder.parameters(), *denoiser.parameters()]
+    )
+    scaler.step(optimizer)
+    scaler.update()
+    return (
+        bool(torch.isfinite(result.loss)),
+        finite_gradients,
+        float(scaler.get_scale()) < scale_before,
+    )
+
+
+def _conditional_oom_result(
+    batch_size: int,
+    *,
+    precision: str,
+    config: ConditionalProfileConfig,
+    total_vram_mb: float,
+) -> dict[str, Any]:
+    """Serialize a clean OOM result for one conditional batch candidate."""
+    return {
+        "precision": precision,
+        "batch_size": batch_size,
+        "status": "OOM",
+        "warmup_steps": config.warmup_steps,
+        "measured_steps": config.measured_steps,
+        "mean_step_ms": None,
+        "median_step_ms": None,
+        "std_step_ms": None,
+        "images_per_second": None,
+        "peak_allocated_mb": None,
+        "peak_reserved_mb": None,
+        "total_vram_mb": total_vram_mb,
+        "allocated_fraction": None,
+        "reserved_fraction": None,
+        "finite_loss": False,
+        "finite_gradients": False,
+        "grad_scaler_initial_scale": None,
+        "grad_scaler_final_scale": None,
+        "warmup_skipped_steps": 0,
+        "measured_skipped_steps": 0,
+    }
+
+
+def _profile_conditional_training_run(
+    batch_size: int,
+    *,
+    precision: str,
+    device: torch.device,
+    config: ConditionalProfileConfig,
+    total_vram_mb: float,
+    images: torch.Tensor,
+    input_ids: torch.Tensor,
+    attention_mask: torch.Tensor,
+    record_oom: bool = True,
+) -> dict[str, Any]:
+    """Profile full joint DR03 training steps on real 10k TRAIN records."""
+    validate_precision(precision)
+    text_encoder: TextConditioningEncoder | None = None
+    denoiser: ConditionalTinyUNet | None = None
+    schedule: LinearDDPMSchedule | None = None
+    optimizer: torch.optim.Optimizer | None = None
+    scaler: torch.amp.GradScaler | None = None
+    batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor] | None = None
+    try:
+        torch.manual_seed(config.seed)
+        text_encoder = TextConditioningEncoder().to(device=device, dtype=torch.float32)
+        denoiser = ConditionalTinyUNet(dropout=0.0).to(device=device, dtype=torch.float32)
+        schedule = LinearDDPMSchedule(num_timesteps=1_000).to(device=device, dtype=torch.float32)
+        optimizer = create_conditional_debug_optimizer(text_encoder, denoiser)
+        if precision == "AMP_FP16":
+            scaler = torch.amp.GradScaler("cuda")
+        batch = _conditional_profile_batch(
+            images, input_ids, attention_mask, batch_size, device=device
+        )
+        initial_scale = float(scaler.get_scale()) if scaler is not None else None
+        warmup_skipped_steps = 0
+        for _ in range(config.warmup_steps):
+            _, _, skipped = _conditional_profile_training_step(
+                text_encoder,
+                denoiser,
+                schedule,
+                optimizer,
+                *batch,
+                precision=precision,
+                scaler=scaler,
+            )
+            warmup_skipped_steps += int(skipped)
+        if not optimizer.state:
+            raise RuntimeError("Warm-up did not materialize AdamW optimizer state")
+
+        torch.cuda.synchronize(device)
+        torch.cuda.reset_peak_memory_stats(device)
+        step_times_ms: list[float] = []
+        finite_losses = True
+        finite_gradients = True
+        measured_skipped_steps = 0
+        for _ in range(config.measured_steps):
+            torch.cuda.synchronize(device)
+            start = time.perf_counter()
+            finite_loss, finite_gradients_step, skipped = _conditional_profile_training_step(
+                text_encoder,
+                denoiser,
+                schedule,
+                optimizer,
+                *batch,
+                precision=precision,
+                scaler=scaler,
+            )
+            torch.cuda.synchronize(device)
+            step_times_ms.append((time.perf_counter() - start) * 1_000.0)
+            finite_losses = finite_losses and finite_loss
+            finite_gradients = finite_gradients and finite_gradients_step
+            measured_skipped_steps += int(skipped)
+
+        median_step_ms = statistics.median(step_times_ms)
+        peak_allocated_mb = torch.cuda.max_memory_allocated(device) / (1024**2)
+        peak_reserved_mb = torch.cuda.max_memory_reserved(device) / (1024**2)
+        return {
+            "precision": precision,
+            "batch_size": batch_size,
+            "status": "success",
+            "warmup_steps": config.warmup_steps,
+            "measured_steps": config.measured_steps,
+            "mean_step_ms": statistics.mean(step_times_ms),
+            "median_step_ms": median_step_ms,
+            "std_step_ms": statistics.pstdev(step_times_ms),
+            "images_per_second": images_per_second(batch_size, median_step_ms),
+            "peak_allocated_mb": peak_allocated_mb,
+            "peak_reserved_mb": peak_reserved_mb,
+            "total_vram_mb": total_vram_mb,
+            "allocated_fraction": peak_allocated_mb / total_vram_mb,
+            "reserved_fraction": peak_reserved_mb / total_vram_mb,
+            "finite_loss": finite_losses,
+            "finite_gradients": finite_gradients,
+            "grad_scaler_initial_scale": initial_scale,
+            "grad_scaler_final_scale": float(scaler.get_scale()) if scaler else None,
+            "warmup_skipped_steps": warmup_skipped_steps,
+            "measured_skipped_steps": measured_skipped_steps,
+        }
+    except torch.cuda.OutOfMemoryError:
+        if not record_oom:
+            raise
+        return _conditional_oom_result(
+            batch_size,
+            precision=precision,
+            config=config,
+            total_vram_mb=total_vram_mb,
+        )
+    finally:
+        del text_encoder, denoiser, schedule, optimizer, scaler, batch
+        gc.collect()
+        torch.cuda.empty_cache()
+
+
+def _conditional_amp_parity_probe(
+    *,
+    batch_size: int,
+    device: torch.device,
+    images: torch.Tensor,
+    input_ids: torch.Tensor,
+    attention_mask: torch.Tensor,
+    seed: int,
+) -> dict[str, Any]:
+    """Check conditional FP32/AMP health from identical weights and corruption."""
+    fp32_text: TextConditioningEncoder | None = None
+    fp32_denoiser: ConditionalTinyUNet | None = None
+    amp_text: TextConditioningEncoder | None = None
+    amp_denoiser: ConditionalTinyUNet | None = None
+    try:
+        torch.manual_seed(seed)
+        fp32_text = TextConditioningEncoder().to(device)
+        fp32_denoiser = ConditionalTinyUNet(dropout=0.0).to(device)
+        amp_text = TextConditioningEncoder().to(device)
+        amp_denoiser = ConditionalTinyUNet(dropout=0.0).to(device)
+        amp_text.load_state_dict(fp32_text.state_dict())
+        amp_denoiser.load_state_dict(fp32_denoiser.state_dict())
+        schedule = LinearDDPMSchedule().to(device)
+        x_start, ids, mask = _conditional_profile_batch(
+            images, input_ids, attention_mask, batch_size, device=device
+        )
+        generator = torch.Generator(device=device).manual_seed(seed)
+        timesteps = torch.randint(0, 1_000, (batch_size,), device=device, generator=generator)
+        noise = torch.randn(x_start.shape, device=device, generator=generator)
+        fp32_result = conditional_diffusion_loss(
+            fp32_text,
+            fp32_denoiser,
+            schedule,
+            x_start,
+            ids,
+            mask,
+            timesteps=timesteps,
+            noise=noise,
+        )
+        fp32_result.loss.backward()
+        amp_optimizer = create_conditional_debug_optimizer(amp_text, amp_denoiser)
+        scaler = torch.amp.GradScaler("cuda")
+        with torch.amp.autocast("cuda", dtype=torch.float16):
+            amp_result = conditional_diffusion_loss(
+                amp_text,
+                amp_denoiser,
+                schedule,
+                x_start,
+                ids,
+                mask,
+                timesteps=timesteps,
+                noise=noise,
+            )
+        scaler.scale(amp_result.loss).backward()
+        scaler.unscale_(amp_optimizer)
+        amp_parameters = [*amp_text.parameters(), *amp_denoiser.parameters()]
+        return {
+            "batch_size": batch_size,
+            "same_initial_state": all(
+                torch.equal(left, right)
+                for left, right in zip(fp32_text.parameters(), amp_text.parameters(), strict=True)
+            )
+            and all(
+                torch.equal(left, right)
+                for left, right in zip(fp32_denoiser.parameters(), amp_denoiser.parameters(), strict=True)
+            ),
+            "fp32_loss": float(fp32_result.loss),
+            "amp_loss": float(amp_result.loss),
+            "fp32_loss_finite": bool(torch.isfinite(fp32_result.loss)),
+            "amp_loss_finite": bool(torch.isfinite(amp_result.loss)),
+            "fp32_output_finite": bool(torch.isfinite(fp32_result.predicted_noise).all()),
+            "amp_output_finite": bool(torch.isfinite(amp_result.predicted_noise).all()),
+            "amp_gradients_finite": all(
+                parameter.grad is None or bool(torch.isfinite(parameter.grad).all())
+                for parameter in amp_parameters
+            ),
+            "amp_gradients_nonzero": any(
+                parameter.grad is not None and torch.count_nonzero(parameter.grad).item() > 0
+                for parameter in amp_parameters
+            ),
+            "grad_scaler_scale": float(scaler.get_scale()),
+        }
+    finally:
+        del fp32_text, fp32_denoiser, amp_text, amp_denoiser
+        gc.collect()
+        torch.cuda.empty_cache()
+
+
+def _write_conditional_profile_artifacts(
+    output_dir: Path,
+    summary: dict[str, Any],
+    fp32_rows: list[dict[str, Any]],
+    amp_rows: list[dict[str, Any]],
+    parity: dict[str, Any],
+) -> None:
+    """Write the concise machine-readable DR03 engineering-pilot artifacts."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+    (output_dir / "amp_parity.json").write_text(
+        json.dumps(parity, indent=2) + "\n", encoding="utf-8"
+    )
+    fields = tuple(fp32_rows[0]) if fp32_rows else tuple(amp_rows[0])
+    for filename, rows in (("fp32_results.csv", fp32_rows), ("amp_results.csv", amp_rows)):
+        with (output_dir / filename).open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(rows)
+
+
+def run_conditional_gpu_pilot(
+    *,
+    output_dir: Path = ROOT / "reports" / "dr03_conditional_gpu_pilot",
+    device_index: int = 0,
+    config: ConditionalProfileConfig | None = None,
+) -> dict[str, Any]:
+    """Measure full joint DR03 training steps on real TRAIN data in FP32 and AMP."""
+    if config is None:
+        config = ConditionalProfileConfig()
+    validate_conditional_profile_config(config)
+    if not torch.cuda.is_available():
+        raise RuntimeError("DR03 conditional GPU pilot requires CUDA")
+    if device_index < 0 or device_index >= torch.cuda.device_count():
+        raise ValueError("device_index is not an available CUDA device")
+    device = torch.device(f"cuda:{device_index}")
+    properties = torch.cuda.get_device_properties(device)
+    total_vram_mb = properties.total_memory / (1024**2)
+    selected = select_tiny_subset(load_train_records())
+    images = preload_images(selected)
+    input_ids, attention_mask = select_text_conditioning(selected)
+
+    fp32_rows: list[dict[str, Any]] = []
+    for batch_size in config.batch_sizes:
+        row = _profile_conditional_training_run(
+            batch_size,
+            precision="FP32",
+            device=device,
+            config=config,
+            total_vram_mb=total_vram_mb,
+            images=images,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+        )
+        fp32_rows.append(row)
+        if row["status"] == "OOM" or row["reserved_fraction"] >= CONDITIONAL_SAFE_RESERVED_FRACTION:
+            break
+
+    safe_rows = [
+        row
+        for row in fp32_rows
+        if row["status"] == "success"
+        and row["finite_loss"]
+        and row["finite_gradients"]
+        and row["reserved_fraction"] <= CONDITIONAL_SAFE_RESERVED_FRACTION
+    ]
+    if not safe_rows:
+        raise RuntimeError("No FP32 conditional batch met the engineering safety criterion")
+    same_batch_size = safe_rows[-1]["batch_size"]
+    parity = _conditional_amp_parity_probe(
+        batch_size=same_batch_size,
+        device=device,
+        images=images,
+        input_ids=input_ids,
+        attention_mask=attention_mask,
+        seed=config.seed,
+    )
+    amp_rows: list[dict[str, Any]] = []
+    amp_health = all(
+        parity[field]
+        for field in (
+            "fp32_loss_finite",
+            "amp_loss_finite",
+            "fp32_output_finite",
+            "amp_output_finite",
+            "amp_gradients_finite",
+            "amp_gradients_nonzero",
+        )
+    )
+    if amp_health:
+        for batch_size in config.batch_sizes:
+            row = _profile_conditional_training_run(
+                batch_size,
+                precision="AMP_FP16",
+                device=device,
+                config=config,
+                total_vram_mb=total_vram_mb,
+                images=images,
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+            )
+            amp_rows.append(row)
+            if row["status"] == "OOM" or row["reserved_fraction"] >= CONDITIONAL_SAFE_RESERVED_FRACTION:
+                break
+
+    summary = {
+        "profile_type": "DR03 CONDITIONAL FULL-TRAINING ENGINEERING PILOT ONLY",
+        "torch_version": torch.__version__,
+        "cuda_available": torch.cuda.is_available(),
+        "cuda_runtime": torch.version.cuda,
+        "gpu_name": properties.name,
+        "compute_capability": [properties.major, properties.minor],
+        "total_vram_mb": total_vram_mb,
+        "device": str(device),
+        "dataset": "10k",
+        "split": "TRAIN",
+        "subset_size": len(selected),
+        "seed": config.seed,
+        "resolution": RESOLUTION,
+        "optimizer": "AdamW",
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "optimizer_policy": "ENGINEERING PILOT ONLY",
+        "warmup_steps": config.warmup_steps,
+        "measured_steps": config.measured_steps,
+        "text_encoder_parameter_count": sum(parameter.numel() for parameter in TextConditioningEncoder().parameters()),
+        "conditional_denoiser_parameter_count": sum(parameter.numel() for parameter in ConditionalTinyUNet().parameters()),
+        "complete_system_parameter_count": sum(parameter.numel() for parameter in TextConditioningEncoder().parameters()) + sum(parameter.numel() for parameter in ConditionalTinyUNet().parameters()),
+        "fp32_results": fp32_rows,
+        "amp_same_batch_size": same_batch_size,
+        "amp_health_passed": amp_health,
+        "amp_results": amp_rows,
+        "safe_reserved_memory_fraction": CONDITIONAL_SAFE_RESERVED_FRACTION,
+    }
+    _write_conditional_profile_artifacts(output_dir, summary, fp32_rows, amp_rows, parity)
+    return summary
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--mode", choices=("fp32", "amp-parity", "ancestral-sampling"), default="fp32"
+        "--mode",
+        choices=("fp32", "amp-parity", "ancestral-sampling", "conditional-pilot"),
+        default="fp32",
     )
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--device-index", type=int, default=0)
@@ -1002,7 +1477,12 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     """Run one explicitly selected GPU profiling phase."""
     args = _parse_args()
-    if args.mode == "amp-parity":
+    if args.mode == "conditional-pilot":
+        run_conditional_gpu_pilot(
+            output_dir=args.output_dir or ROOT / "reports" / "dr03_conditional_gpu_pilot",
+            device_index=args.device_index,
+        )
+    elif args.mode == "amp-parity":
         run_amp_parity_profile(
             output_dir=args.output_dir or AMP_OUTPUT_DIR,
             device_index=args.device_index,

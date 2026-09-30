@@ -1,0 +1,13 @@
+{
+  "batch_size": 32,
+  "same_initial_state": true,
+  "fp32_loss": 1.1208131313323975,
+  "amp_loss": 1.1207892894744873,
+  "fp32_loss_finite": true,
+  "amp_loss_finite": true,
+  "fp32_output_finite": true,
+  "amp_output_finite": true,
+  "amp_gradients_finite": true,
+  "amp_gradients_nonzero": true,
+  "grad_scaler_scale": 65536.0
+}

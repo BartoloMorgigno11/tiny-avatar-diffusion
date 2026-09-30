@@ -6,6 +6,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from tiny_avatar_diffusion.text_conditioning import ImageTextCrossAttention
+
 
 def sinusoidal_timestep_embedding(
     timesteps: torch.Tensor,
@@ -205,6 +207,71 @@ class TinyUNet(nn.Module):
         s8 = self.encoder8_block2(h, time_emb)
 
         h = self.bottleneck_block1(s8, time_emb)
+        h = self.bottleneck_block2(h, time_emb)
+
+        h = torch.cat((h, s8), dim=1)
+        h = self.decoder8_block1(h, time_emb)
+        h = self.decoder8_block2(h, time_emb)
+        h = self.upsample8(h)
+
+        h = torch.cat((h, s16), dim=1)
+        h = self.decoder16_block1(h, time_emb)
+        h = self.decoder16_block2(h, time_emb)
+        h = self.upsample16(h)
+
+        h = torch.cat((h, s32), dim=1)
+        h = self.decoder32_block1(h, time_emb)
+        h = self.decoder32_block2(h, time_emb)
+
+        return self.output_projection(self.output_activation(self.output_norm(h)))
+
+
+class ConditionalTinyUNet(TinyUNet):
+    """DR03 V1 conditional denoiser with bottleneck image-to-text attention."""
+
+    def __init__(self, *, dropout: float = 0.0) -> None:
+        super().__init__(dropout=dropout)
+        self.image_text_cross_attention = ImageTextCrossAttention()
+
+    def forward(
+        self,
+        x_t: torch.Tensor,
+        timesteps: torch.Tensor,
+        context: torch.Tensor,
+        context_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        """Predict epsilon from noisy images and required encoded text context."""
+        if context is None:
+            raise ValueError("context is required for ConditionalTinyUNet")
+        if context_mask is None:
+            raise ValueError("context_mask is required for ConditionalTinyUNet")
+        if x_t.ndim != 4:
+            raise ValueError("x_t must have shape [B, 3, H, W]")
+        if x_t.shape[1] != 3:
+            raise ValueError("x_t must have three channels")
+        if timesteps.ndim != 1:
+            raise ValueError("timesteps must be one-dimensional")
+        if timesteps.shape[0] != x_t.shape[0]:
+            raise ValueError("x_t and timesteps must have the same batch size")
+        if x_t.shape[2] % 4 != 0 or x_t.shape[3] % 4 != 0:
+            raise ValueError("spatial dimensions must be divisible by four")
+
+        time_emb = self.time_embedding(timesteps)
+        h = self.input_projection(x_t)
+
+        h = self.encoder32_block1(h, time_emb)
+        s32 = self.encoder32_block2(h, time_emb)
+        h = self.downsample32(s32)
+
+        h = self.encoder16_block1(h, time_emb)
+        s16 = self.encoder16_block2(h, time_emb)
+        h = self.downsample16(s16)
+
+        h = self.encoder8_block1(h, time_emb)
+        s8 = self.encoder8_block2(h, time_emb)
+
+        h = self.bottleneck_block1(s8, time_emb)
+        h = self.image_text_cross_attention(h, context, context_mask)
         h = self.bottleneck_block2(h, time_emb)
 
         h = torch.cat((h, s8), dim=1)
