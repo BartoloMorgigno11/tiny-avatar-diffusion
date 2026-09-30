@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-src/tiny_avatar_diffusion/__init__.py
-src/tiny_avatar_diffusion.egg-info/PKG-INFO
-src/tiny_avatar_diffusion.egg-info/SOURCES.txt
-src/tiny_avatar_diffusion.egg-info/dependency_links.txt
-src/tiny_avatar_diffusion.egg-info/requires.txt
-src/tiny_avatar_diffusion.egg-info/top_level.txt
-tests/test_import.py
