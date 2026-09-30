@@ -1,7 +1,7 @@
 """Validation-only DR03 EMA checkpoint selector; never accesses test/OOD splits."""
 from __future__ import annotations
 
-import argparse, hashlib, json, time
+import argparse, hashlib, json, time, os
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +19,32 @@ ROOT = Path(__file__).resolve().parents[2]
 ALLOWED_SPLITS = ("ID_VAL", "COMP_VAL")
 STEPS = (5000, 10000, 15000, 20000)
 LOSS = {5000:(.010080884028231466,.011311929900735557),10000:(.006581584719117619,.008058486252846803),15000:(.00721289130068985,.008754865304958186),20000:(.004818801780115381,.005957545730959499)}
+
+def sha256_file(path: Path) -> str:
+    digest=hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda:stream.read(1024*1024),b""): digest.update(block)
+    return digest.hexdigest()
+
+def execution_identity(*, run_id:str, manifest_sha256:str, checkpoints:dict[int,Path], sampling_batch_size:int) -> dict[str,Any]:
+    body={"run_id":run_id,"manifest_sha256":manifest_sha256,"training_commit":"2d38da843f792e9f91c687a7d051984134e87a0a","checkpoints":{str(k):{"path":str(v),"sha256":sha256_file(v)} for k,v in checkpoints.items()},"steps":list(STEPS),"weight_set":"EMA","timesteps":1000,"clip_denoised":True,"cfg":False,"native_resolution":32,"sampling_batch_size":sampling_batch_size,"clean_fid_version":"0.1.35","clean_fid_mode":"clean","kid_batch_size":sampling_batch_size,"seed_mapping":"manifest_generation_seed_v1"}
+    body["config_sha256"]=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(",",":")).encode()).hexdigest(); return body
+
+def write_atomic(path:Path,payload:dict[str,Any]) -> None:
+    path.parent.mkdir(parents=True,exist_ok=True); temporary=path.with_suffix(path.suffix+".tmp"); temporary.write_text(json.dumps(payload,indent=2)+"\n"); os.replace(temporary,path)
+
+def load_or_initialize_progress(path:Path, identity:dict[str,Any]) -> dict[str,Any]:
+    if path.exists():
+        progress=json.loads(path.read_text())
+        if progress.get("config_sha256") != identity["config_sha256"]: raise ValueError("incompatible checkpoint-selection progress identity")
+        return progress
+    return {"status":"NOT_STARTED","config_sha256":identity["config_sha256"],"manifest_sha256":identity["manifest_sha256"],"run_id":identity["run_id"],"checkpoint_hashes":identity["checkpoints"],"completed_generation":[],"completed_kid":[]}
+
+def write_selection_markdown(path:Path, decision:dict[str,Any], *, identity:dict[str,Any], results:dict[str,Any]) -> None:
+    lines=["# DR03 Validation Checkpoint Selection","",f"Status: `{decision['status']}`.","",f"Manifest SHA256: `{identity['manifest_sha256']}`.",f"Config SHA256: `{identity['config_sha256']}`.","", "ID_TEST NOT USED.","FINAL_OOD NOT USED."]
+    if decision["status"]=="PASS": lines.insert(3,f"Selected EMA milestone: `{decision['selected_step']}`.")
+    elif decision["status"]=="CONFLICT": lines.insert(3,"No checkpoint frozen: 20k/15k COMP_VAL KID conflict.")
+    path.write_text("\n".join(lines)+"\n",encoding="utf-8")
 
 def _manifest_path(split: str) -> Path:
     if split not in ALLOWED_SPLITS: raise ValueError("checkpoint selection permits only ID_VAL and COMP_VAL")
@@ -100,12 +126,14 @@ def main() -> None:
     args=parser.parse_args(); manifest=args.output_root/"validation_quality_manifest.json"
     if not manifest.exists() or "source_image_path" not in json.loads(manifest.read_text())["entries"][0]: build_manifest(manifest)
     if not args.execute: print(manifest); return
-    data=json.loads(manifest.read_text()); device=torch.device("cuda" if torch.cuda.is_available() else "cpu"); schedule=LinearDDPMSchedule().to(device); results={}
-    for step in STEPS:
-        checkpoint=args.run_root/args.run_id/f"milestone_{step:05d}.pt"; text,unet=load_ema_checkpoint(checkpoint,expected_step=step,device=device); item={"checkpoint_path":str(checkpoint),"weight_set":"EMA"}
+    data=json.loads(manifest.read_text()); checkpoints={s:args.run_root/args.run_id/f"milestone_{s:05d}.pt" for s in STEPS}; identity=execution_identity(run_id=args.run_id,manifest_sha256=data["sha256"],checkpoints=checkpoints,sampling_batch_size=args.sampling_batch_size); progress_path=args.output_root/"progress.json"; progress=load_or_initialize_progress(progress_path,identity); progress["status"]="RUNNING"; write_atomic(progress_path,progress); device=torch.device("cuda" if torch.cuda.is_available() else "cpu"); schedule=LinearDDPMSchedule().to(device); results={}
+    try:
+      for step in STEPS:
+        checkpoint=checkpoints[step]; text,unet=load_ema_checkpoint(checkpoint,expected_step=step,device=device); item={"checkpoint_path":str(checkpoint),"checkpoint_sha256":identity["checkpoints"][str(step)]["sha256"],"weight_set":"EMA"}
         for split in ALLOWED_SPLITS:
-            entries=[e for e in data["entries"] if e["split"]==split]; real=args.output_root/"real"/split.lower(); generated=args.output_root/"generated"/f"step_{step:05d}"/split.lower(); export_real(entries,real); generate_split(entries=entries,text=text,unet=unet,schedule=schedule,directory=generated,batch_size=args.sampling_batch_size,device=device); item[split.lower()] = compute_kid(real,generated,batch_size=args.sampling_batch_size,device=device)
+            entries=[e for e in data["entries"] if e["split"]==split]; real=args.output_root/"real"/split.lower(); generated=args.output_root/"generated"/f"step_{step:05d}"/split.lower(); export_real(entries,real); generate_split(entries=entries,text=text,unet=unet,schedule=schedule,directory=generated,batch_size=args.sampling_batch_size,device=device); item[split.lower()] = compute_kid(real,generated,batch_size=args.sampling_batch_size,device=device); progress["completed_generation"].append(f"{step}:{split}"); progress["completed_kid"].append(f"{step}:{split}"); write_atomic(progress_path,progress)
         results[step]=item; print(f"milestone {step} complete",flush=True)
-    (args.output_root/"validation_quality_results.json").write_text(json.dumps({"manifest_sha256":data["sha256"],"results":results},indent=2)+"\n")
-    decision=select(results); (args.output_root/"selection.json").write_text(json.dumps(decision,indent=2)+"\n"); print(json.dumps(decision),flush=True)
+    except Exception as error:
+      progress["status"]="FAILED"; progress["last_error"]=str(error); write_atomic(progress_path,progress); raise
+    payload={"identity":identity,"results":results}; write_atomic(args.output_root/"validation_quality_results.json",payload); decision=select(results); write_atomic(args.output_root/"selection.json",decision); write_selection_markdown(args.output_root/"selection.md",decision,identity=identity,results=results); progress["status"]="COMPLETE"; write_atomic(progress_path,progress); print(json.dumps(decision),flush=True)
 if __name__=="__main__": main()
