@@ -1,7 +1,8 @@
 from __future__ import annotations
 import json
 import pytest
-from tiny_avatar_diffusion.checkpoint_selection import ALLOWED_SPLITS, build_manifest, image_name, select, write_atomic, load_or_initialize_progress, write_selection_markdown
+import torch
+from tiny_avatar_diffusion.checkpoint_selection import ALLOWED_SPLITS, build_manifest, image_name, select, write_atomic, load_or_initialize_progress, write_selection_markdown, execution_identity, expected_complete, tensor_to_png, compute_kid
 
 def test_manifest_is_deterministic_and_validation_only(tmp_path):
     a=build_manifest(tmp_path/'a.json',count=2); b=build_manifest(tmp_path/'b.json',count=2)
@@ -27,3 +28,32 @@ def test_progress_rejects_identity_change_and_selection_markdown(tmp_path):
     assert load_or_initialize_progress(path,identity)['status']=='NOT_STARTED'
     with pytest.raises(ValueError): load_or_initialize_progress(path,{**identity,'config_sha256':'b'})
     output=tmp_path/'selection.md'; write_selection_markdown(output,{'status':'CONFLICT','selected_step':None,'weight_set':None},identity=identity,results={}); assert 'No checkpoint frozen' in output.read_text()
+
+def test_identity_hash_is_stable_and_changes_with_checkpoint_or_batch(tmp_path):
+    checkpoint=tmp_path/'x.pt'; checkpoint.write_bytes(b'x')
+    a=execution_identity(run_id='r',manifest_sha256='m',checkpoints={5000:checkpoint},sampling_batch_size=8)
+    b=execution_identity(run_id='r',manifest_sha256='m',checkpoints={5000:checkpoint},sampling_batch_size=8)
+    assert a['config_sha256']==b['config_sha256']
+    c=execution_identity(run_id='r',manifest_sha256='m',checkpoints={5000:checkpoint},sampling_batch_size=4)
+    assert c['config_sha256']!=a['config_sha256']; checkpoint.write_bytes(b'y')
+    assert execution_identity(run_id='r',manifest_sha256='m',checkpoints={5000:checkpoint},sampling_batch_size=8)['config_sha256']!=a['config_sha256']
+
+def test_png_export_and_expected_set_validation(tmp_path):
+    entry={'image_id':'one'}; tensor_to_png(torch.zeros(3,32,32),tmp_path/'one.png')
+    assert expected_complete([entry],tmp_path)
+    (tmp_path/'bad.png').write_bytes(b'x')
+    with pytest.raises(ValueError): expected_complete([entry],tmp_path)
+
+def test_cleanfid_adapter_uses_clean_mode(monkeypatch,tmp_path):
+    seen={}
+    def fake(*args,**kwargs): seen.update(kwargs); return .25
+    from cleanfid import fid
+    monkeypatch.setattr(fid,'compute_kid',fake)
+    result=compute_kid(tmp_path/'real',tmp_path/'generated',batch_size=7,device=torch.device('cpu'))
+    assert result['kid']==.25 and result['mode']=='clean' and seen['mode']=='clean' and seen['batch_size']==7
+
+@pytest.mark.parametrize('status,phrase', [('PASS','Selected EMA'),('CONFLICT','No checkpoint frozen'),('NOT_RUN','Status')])
+def test_selection_markdown_states(tmp_path,status,phrase):
+    path=tmp_path/'x.md'; identity={'manifest_sha256':'m','config_sha256':'c'}
+    write_selection_markdown(path,{'status':status,'selected_step':20000 if status=='PASS' else None,'weight_set':'EMA' if status=='PASS' else None},identity=identity,results={})
+    assert phrase in path.read_text() and 'ID_TEST NOT USED' in path.read_text()
