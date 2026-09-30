@@ -10,15 +10,24 @@ from tiny_avatar_diffusion.profile_gpu import (
     MEASUREMENT_FIELDS,
     OPTIONAL_BATCH_MEMORY_FRACTION,
     PRECISIONS,
+    SAMPLING_BATCH_SIZES,
+    SAMPLING_MEASUREMENT_FIELDS,
     ProfileConfig,
+    SamplingProfileConfig,
     backend_precision_metadata,
     compare_precision_results,
+    compare_sampling_precision_results,
     images_per_second,
+    sampling_images_per_second,
+    seconds_per_image,
     should_try_optional_batch_128,
     validate_config,
     validate_precision,
+    validate_sampling_batch_size,
+    validate_sampling_config,
     write_amp_pilot_artifacts,
     write_profile_artifacts,
+    write_sampling_profile_artifacts,
 )
 
 
@@ -172,3 +181,90 @@ def test_amp_pilot_artifact_serialization(tmp_path) -> None:
         "FP32",
         "AMP_FP16",
     ]
+
+
+def test_sampling_configuration_is_fixed_to_the_two_approved_batches() -> None:
+    assert SAMPLING_BATCH_SIZES == (1, 32)
+    validate_sampling_batch_size(1)
+    validate_sampling_batch_size(32)
+    with pytest.raises(ValueError, match="batch_size"):
+        validate_sampling_batch_size(8)
+    with pytest.raises(ValueError, match="warmup_model_forwards"):
+        validate_sampling_config(SamplingProfileConfig(warmup_model_forwards=-1))
+    with pytest.raises(ValueError, match="repetitions"):
+        validate_sampling_config(SamplingProfileConfig(repetitions=0))
+
+
+def test_sampling_protocol_defaults_are_frozen() -> None:
+    config = SamplingProfileConfig()
+
+    assert config.warmup_model_forwards == 5
+    assert config.repetitions == 2
+
+
+def test_sampling_latency_throughput_and_precision_comparison_formulas() -> None:
+    assert seconds_per_image(32, 16.0) == pytest.approx(0.5)
+    assert sampling_images_per_second(32, 16.0) == pytest.approx(2.0)
+    with pytest.raises(ValueError):
+        seconds_per_image(0, 16.0)
+    with pytest.raises(ValueError):
+        sampling_images_per_second(32, 0.0)
+
+    comparison = compare_sampling_precision_results(
+        {
+            "median_total_seconds": 20.0,
+            "images_per_second": 1.6,
+            "peak_allocated_mb": 500.0,
+            "peak_reserved_mb": 600.0,
+        },
+        {
+            "median_total_seconds": 10.0,
+            "images_per_second": 3.2,
+            "peak_allocated_mb": 300.0,
+            "peak_reserved_mb": 400.0,
+        },
+    )
+    assert comparison["speedup"] == pytest.approx(2.0)
+    assert comparison["throughput_gain_percent"] == pytest.approx(100.0)
+    assert comparison["allocated_memory_reduction_percent"] == pytest.approx(40.0)
+    assert comparison["reserved_memory_reduction_percent"] == pytest.approx(
+        100.0 / 3.0
+    )
+
+
+def test_sampling_profile_artifact_serialization(tmp_path) -> None:
+    summary = {
+        "profile_type": (
+            "COMPUTE/MEMORY PROFILE ONLY — NOT A GENERATIVE-QUALITY EXPERIMENT"
+        ),
+        "not_a_generative_quality_experiment": True,
+    }
+    row = {
+        "batch_size": 1,
+        "precision": "FP32",
+        "repetition": 1,
+        "status": "success",
+        "total_seconds": 10.0,
+        "seconds_per_image": 10.0,
+        "images_per_second": 0.1,
+        "peak_allocated_mb": 100.0,
+        "peak_reserved_mb": 128.0,
+        "total_vram_mb": 8_000.0,
+        "allocated_fraction": 0.0125,
+        "final_shape": [1, 3, 32, 32],
+        "final_finite": True,
+        "final_min": -2.0,
+        "final_max": 2.0,
+        "final_mean": 0.0,
+        "final_std": 1.0,
+    }
+
+    write_sampling_profile_artifacts(tmp_path, summary, [row])
+
+    assert json.loads((tmp_path / "summary.json").read_text()) == summary
+    with (tmp_path / "sampling_profile.csv").open(
+        newline="", encoding="utf-8"
+    ) as stream:
+        serialized_rows = list(csv.DictReader(stream))
+    assert tuple(serialized_rows[0]) == SAMPLING_MEASUREMENT_FIELDS
+    assert serialized_rows[0]["final_shape"] == "[1, 3, 32, 32]"

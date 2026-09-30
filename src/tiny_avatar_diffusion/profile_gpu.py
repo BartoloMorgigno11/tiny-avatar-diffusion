@@ -9,6 +9,7 @@ import json
 import statistics
 import time
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ from tiny_avatar_diffusion.unet import TinyUNet
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = ROOT / "reports" / "dr02_gpu_profile" / "fp32_training"
 AMP_OUTPUT_DIR = ROOT / "reports" / "dr02_gpu_profile" / "amp_parity"
+SAMPLING_OUTPUT_DIR = ROOT / "reports" / "dr02_gpu_profile" / "ancestral_sampling"
 BASE_BATCH_SIZES = (8, 16, 32, 64)
 OPTIONAL_BATCH_SIZE = 128
 OPTIONAL_BATCH_MEMORY_FRACTION = 0.60
@@ -32,6 +34,10 @@ MEASURED_STEPS = 20
 RESOLUTION = 32
 CHANNELS = 3
 PRECISIONS = ("FP32", "AMP_FP16")
+SAMPLING_BATCH_SIZES = (1, 32)
+SAMPLING_WARMUP_FORWARDS = 5
+SAMPLING_REPETITIONS = 2
+SAMPLING_SEED = 2026
 PARITY_PARAMETER_NAMES = (
     "time_embedding.mlp.0.weight",
     "input_projection.weight",
@@ -62,6 +68,25 @@ AMP_MEASUREMENT_FIELDS = (
     "warmup_skipped_steps",
     "measured_skipped_steps",
 )
+SAMPLING_MEASUREMENT_FIELDS = (
+    "batch_size",
+    "precision",
+    "repetition",
+    "status",
+    "total_seconds",
+    "seconds_per_image",
+    "images_per_second",
+    "peak_allocated_mb",
+    "peak_reserved_mb",
+    "total_vram_mb",
+    "allocated_fraction",
+    "final_shape",
+    "final_finite",
+    "final_min",
+    "final_max",
+    "final_mean",
+    "final_std",
+)
 
 
 @dataclass(frozen=True)
@@ -72,12 +97,34 @@ class ProfileConfig:
     measured_steps: int = MEASURED_STEPS
 
 
+@dataclass(frozen=True)
+class SamplingProfileConfig:
+    """Frozen engineering parameters for the ancestral-sampling profile."""
+
+    warmup_model_forwards: int = SAMPLING_WARMUP_FORWARDS
+    repetitions: int = SAMPLING_REPETITIONS
+
+
 def validate_config(config: ProfileConfig) -> None:
     """Reject nonsensical benchmark step counts before any GPU allocation."""
     if config.warmup_steps < 0:
         raise ValueError("warmup_steps must be non-negative")
     if config.measured_steps <= 0:
         raise ValueError("measured_steps must be positive")
+
+
+def validate_sampling_config(config: SamplingProfileConfig) -> None:
+    """Reject invalid fixed-profile counts before any GPU allocation."""
+    if config.warmup_model_forwards < 0:
+        raise ValueError("warmup_model_forwards must be non-negative")
+    if config.repetitions <= 0:
+        raise ValueError("repetitions must be positive")
+
+
+def validate_sampling_batch_size(batch_size: int) -> None:
+    """Restrict Phase 8C to its approved B=1 and B=32 measurements."""
+    if batch_size not in SAMPLING_BATCH_SIZES:
+        raise ValueError(f"batch_size must be one of {SAMPLING_BATCH_SIZES}")
 
 
 def images_per_second(batch_size: int, median_step_ms: float) -> float:
@@ -87,6 +134,20 @@ def images_per_second(batch_size: int, median_step_ms: float) -> float:
     if median_step_ms <= 0.0:
         raise ValueError("median_step_ms must be positive")
     return batch_size / (median_step_ms / 1_000.0)
+
+
+def seconds_per_image(batch_size: int, total_seconds: float) -> float:
+    """Return full-loop latency per generated image."""
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+    if total_seconds <= 0.0:
+        raise ValueError("total_seconds must be positive")
+    return total_seconds / batch_size
+
+
+def sampling_images_per_second(batch_size: int, total_seconds: float) -> float:
+    """Return full-loop sampling throughput for one batch."""
+    return 1.0 / seconds_per_image(batch_size, total_seconds)
 
 
 def validate_precision(precision: str) -> None:
@@ -109,6 +170,27 @@ def compare_precision_results(
     """Derive the frozen latency, throughput, and memory comparisons."""
     return {
         "speedup": fp32["median_step_ms"] / amp["median_step_ms"],
+        "throughput_gain_percent": (
+            amp["images_per_second"] / fp32["images_per_second"] - 1.0
+        )
+        * 100.0,
+        "allocated_memory_reduction_percent": (
+            1.0 - amp["peak_allocated_mb"] / fp32["peak_allocated_mb"]
+        )
+        * 100.0,
+        "reserved_memory_reduction_percent": (
+            1.0 - amp["peak_reserved_mb"] / fp32["peak_reserved_mb"]
+        )
+        * 100.0,
+    }
+
+
+def compare_sampling_precision_results(
+    fp32: dict[str, Any], amp: dict[str, Any]
+) -> dict[str, float]:
+    """Compare paired full-loop FP32 and AMP ancestral-sampling results."""
+    return {
+        "speedup": fp32["median_total_seconds"] / amp["median_total_seconds"],
         "throughput_gain_percent": (
             amp["images_per_second"] / fp32["images_per_second"] - 1.0
         )
@@ -633,10 +715,284 @@ def run_amp_parity_profile(
     return summary
 
 
+def _sampling_oom_result(
+    batch_size: int,
+    *,
+    precision: str,
+    total_vram_mb: float,
+) -> dict[str, Any]:
+    """Record an OOM without attempting a larger Phase 8C batch."""
+    return {
+        "batch_size": batch_size,
+        "precision": precision,
+        "status": "OOM",
+        "run_results": [],
+        "mean_total_seconds": None,
+        "median_total_seconds": None,
+        "std_total_seconds": None,
+        "seconds_per_image": None,
+        "images_per_second": None,
+        "peak_allocated_mb": None,
+        "peak_reserved_mb": None,
+        "total_vram_mb": total_vram_mb,
+        "allocated_fraction": None,
+    }
+
+
+def _sample_with_precision(
+    model: nn.Module,
+    x_t: torch.Tensor,
+    timesteps: torch.Tensor,
+    *,
+    precision: str,
+) -> torch.Tensor:
+    """Predict noise while keeping FP32 weights in both precision policies."""
+    if precision == "FP32":
+        return model(x_t, timesteps)
+    with torch.amp.autocast("cuda", dtype=torch.float16):
+        return model(x_t, timesteps)
+
+
+def _profile_ancestral_sampling_configuration(
+    batch_size: int,
+    *,
+    precision: str,
+    device: torch.device,
+    config: SamplingProfileConfig,
+    total_vram_mb: float,
+) -> dict[str, Any]:
+    """Measure two complete validated ancestral DDPM sampling loops."""
+    validate_sampling_batch_size(batch_size)
+    validate_precision(precision)
+    model: TinyUNet | None = None
+    schedule: LinearDDPMSchedule | None = None
+    x_t: torch.Tensor | None = None
+    try:
+        torch.manual_seed(SAMPLING_SEED)
+        model = TinyUNet(dropout=0.0).to(device=device, dtype=torch.float32)
+        model.eval()
+        schedule = LinearDDPMSchedule(num_timesteps=1_000).to(
+            device=device, dtype=torch.float32
+        )
+        generator = torch.Generator(device=device).manual_seed(SAMPLING_SEED)
+        x_t = torch.randn(
+            batch_size,
+            CHANNELS,
+            RESOLUTION,
+            RESOLUTION,
+            device=device,
+            dtype=torch.float32,
+            generator=generator,
+        )
+
+        warmup_timesteps = torch.full(
+            (batch_size,),
+            schedule.betas.shape[0] - 1,
+            device=device,
+            dtype=torch.long,
+        )
+        with torch.no_grad():
+            for _ in range(config.warmup_model_forwards):
+                _sample_with_precision(
+                    model, x_t, warmup_timesteps, precision=precision
+                )
+        torch.cuda.synchronize(device)
+
+        noise_predictor = partial(_sample_with_precision, model, precision=precision)
+        expected_shape = (batch_size, CHANNELS, RESOLUTION, RESOLUTION)
+
+        run_results: list[dict[str, Any]] = []
+        for repetition in range(1, config.repetitions + 1):
+            torch.manual_seed(SAMPLING_SEED + repetition)
+            torch.cuda.reset_peak_memory_stats(device)
+            torch.cuda.synchronize(device)
+            start = time.perf_counter()
+            final_sample = schedule.sample_loop_from_noise_predictor(
+                x_t, noise_predictor
+            )
+            torch.cuda.synchronize(device)
+            total_seconds = time.perf_counter() - start
+            peak_allocated_mb = torch.cuda.max_memory_allocated(device) / (1024**2)
+            peak_reserved_mb = torch.cuda.max_memory_reserved(device) / (1024**2)
+            if tuple(final_sample.shape) != expected_shape:
+                raise RuntimeError(
+                    "ancestral sampling returned shape "
+                    f"{tuple(final_sample.shape)}, expected {expected_shape}"
+                )
+            finite = bool(torch.isfinite(final_sample).all())
+            if not finite:
+                raise RuntimeError("ancestral sampling produced NaN or Inf")
+            run_results.append(
+                {
+                    "batch_size": batch_size,
+                    "precision": precision,
+                    "repetition": repetition,
+                    "status": "success",
+                    "total_seconds": total_seconds,
+                    "seconds_per_image": seconds_per_image(batch_size, total_seconds),
+                    "images_per_second": sampling_images_per_second(
+                        batch_size, total_seconds
+                    ),
+                    "peak_allocated_mb": peak_allocated_mb,
+                    "peak_reserved_mb": peak_reserved_mb,
+                    "total_vram_mb": total_vram_mb,
+                    "allocated_fraction": peak_allocated_mb / total_vram_mb,
+                    "final_shape": list(final_sample.shape),
+                    "final_finite": finite,
+                    "final_min": float(final_sample.min()),
+                    "final_max": float(final_sample.max()),
+                    "final_mean": float(final_sample.mean()),
+                    "final_std": float(final_sample.std()),
+                }
+            )
+            del final_sample
+
+        total_seconds = [item["total_seconds"] for item in run_results]
+        median_total_seconds = statistics.median(total_seconds)
+        peak_allocated_mb = max(item["peak_allocated_mb"] for item in run_results)
+        peak_reserved_mb = max(item["peak_reserved_mb"] for item in run_results)
+        return {
+            "batch_size": batch_size,
+            "precision": precision,
+            "status": "success",
+            "run_results": run_results,
+            "mean_total_seconds": statistics.mean(total_seconds),
+            "median_total_seconds": median_total_seconds,
+            "std_total_seconds": statistics.pstdev(total_seconds),
+            "seconds_per_image": seconds_per_image(batch_size, median_total_seconds),
+            "images_per_second": sampling_images_per_second(
+                batch_size, median_total_seconds
+            ),
+            "peak_allocated_mb": peak_allocated_mb,
+            "peak_reserved_mb": peak_reserved_mb,
+            "total_vram_mb": total_vram_mb,
+            "allocated_fraction": peak_allocated_mb / total_vram_mb,
+        }
+    except torch.cuda.OutOfMemoryError:
+        return _sampling_oom_result(
+            batch_size, precision=precision, total_vram_mb=total_vram_mb
+        )
+    finally:
+        del model, schedule, x_t
+        gc.collect()
+        torch.cuda.empty_cache()
+
+
+def write_sampling_profile_artifacts(
+    output_dir: Path, summary: dict[str, Any], rows: list[dict[str, Any]]
+) -> None:
+    """Write only the Phase 8C summary and per-run sampling CSV."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+    with (output_dir / "sampling_profile.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as stream:
+        writer = csv.DictWriter(stream, fieldnames=SAMPLING_MEASUREMENT_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def run_ancestral_sampling_profile(
+    *,
+    output_dir: Path = SAMPLING_OUTPUT_DIR,
+    device_index: int = 0,
+    config: SamplingProfileConfig | None = None,
+) -> dict[str, Any]:
+    """Profile full T=1000 ancestral DDPM sampling; not image-quality evaluation."""
+    if config is None:
+        config = SamplingProfileConfig()
+    validate_sampling_config(config)
+    if not torch.cuda.is_available():
+        raise RuntimeError("Phase 8C requires CUDA")
+    if device_index < 0 or device_index >= torch.cuda.device_count():
+        raise ValueError("device_index is not an available CUDA device")
+
+    device = torch.device(f"cuda:{device_index}")
+    properties = torch.cuda.get_device_properties(device)
+    total_vram_mb = properties.total_memory / (1024**2)
+    results: list[dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
+    for batch_size in SAMPLING_BATCH_SIZES:
+        batch_results = []
+        for precision in PRECISIONS:
+            result = _profile_ancestral_sampling_configuration(
+                batch_size,
+                precision=precision,
+                device=device,
+                config=config,
+                total_vram_mb=total_vram_mb,
+            )
+            batch_results.append(result)
+            results.append(result)
+            rows.extend(result["run_results"])
+        if any(result["status"] == "OOM" for result in batch_results):
+            break
+
+    comparisons: dict[str, dict[str, float]] = {}
+    for batch_size in SAMPLING_BATCH_SIZES:
+        paired = [result for result in results if result["batch_size"] == batch_size]
+        if len(paired) == 2 and all(result["status"] == "success" for result in paired):
+            fp32, amp = paired
+            comparisons[str(batch_size)] = compare_sampling_precision_results(fp32, amp)
+
+    batching_efficiency: dict[str, float] = {}
+    for precision in PRECISIONS:
+        by_batch = {
+            result["batch_size"]: result
+            for result in results
+            if result["precision"] == precision and result["status"] == "success"
+        }
+        if all(batch_size in by_batch for batch_size in SAMPLING_BATCH_SIZES):
+            batching_efficiency[precision] = (
+                by_batch[32]["images_per_second"] / by_batch[1]["images_per_second"]
+            )
+
+    summary = {
+        "profile_type": (
+            "COMPUTE/MEMORY PROFILE ONLY — NOT A GENERATIVE-QUALITY EXPERIMENT"
+        ),
+        "not_a_generative_quality_experiment": True,
+        "torch_version": torch.__version__,
+        "cuda_runtime": torch.version.cuda,
+        "gpu_name": properties.name,
+        "compute_capability": [properties.major, properties.minor],
+        "total_vram_mb": total_vram_mb,
+        "device_index": device_index,
+        **backend_precision_metadata(),
+        "model_parameter_count": sum(
+            parameter.numel() for parameter in TinyUNet(dropout=0.0).parameters()
+        ),
+        "model_weights_dtype": "torch.float32",
+        "resolution": RESOLUTION,
+        "channels": CHANNELS,
+        "diffusion_timesteps": 1_000,
+        "schedule": "linear",
+        "sampler": "ancestral DDPM",
+        "posterior_variance": "fixed-small",
+        "final_step_noise": False,
+        "model_mode": "eval",
+        "gradient_mode": "torch.no_grad",
+        "sampling_batch_sizes": list(SAMPLING_BATCH_SIZES),
+        "precision_policies": list(PRECISIONS),
+        "warmup_model_forwards": config.warmup_model_forwards,
+        "repetitions": config.repetitions,
+        "starting_noise_seed": SAMPLING_SEED,
+        "reverse_noise_seed_base": SAMPLING_SEED + 1,
+        "throughput_definition": "batch_size / median_total_seconds",
+        "configuration_results": results,
+        "fp32_to_amp_comparisons": comparisons,
+        "batching_efficiency": batching_efficiency,
+    }
+    write_sampling_profile_artifacts(output_dir, summary, rows)
+    return summary
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--mode", choices=("fp32", "amp-parity"), default="fp32"
+        "--mode", choices=("fp32", "amp-parity", "ancestral-sampling"), default="fp32"
     )
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--device-index", type=int, default=0)
@@ -649,6 +1005,11 @@ def main() -> None:
     if args.mode == "amp-parity":
         run_amp_parity_profile(
             output_dir=args.output_dir or AMP_OUTPUT_DIR,
+            device_index=args.device_index,
+        )
+    elif args.mode == "ancestral-sampling":
+        run_ancestral_sampling_profile(
+            output_dir=args.output_dir or SAMPLING_OUTPUT_DIR,
             device_index=args.device_index,
         )
     else:
