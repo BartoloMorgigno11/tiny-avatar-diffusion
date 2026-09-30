@@ -2,7 +2,9 @@ from __future__ import annotations
 import json
 import pytest
 import torch
-from tiny_avatar_diffusion.checkpoint_selection import ALLOWED_SPLITS, build_manifest, image_name, select, write_atomic, load_or_initialize_progress, write_selection_markdown, execution_identity, expected_complete, tensor_to_png, compute_kid, sample_per_seed, generate_split
+from tiny_avatar_diffusion.checkpoint_selection import ALLOWED_SPLITS, build_manifest, image_name, select, write_atomic, load_or_initialize_progress, write_selection_markdown, execution_identity, expected_complete, tensor_to_png, compute_kid, sample_per_seed, generate_split, load_ema_checkpoint
+from tiny_avatar_diffusion.text_conditioning import TextConditioningEncoder
+from tiny_avatar_diffusion.unet import ConditionalTinyUNet
 
 def test_manifest_is_deterministic_and_validation_only(tmp_path):
     a=build_manifest(tmp_path/'a.json',count=2); b=build_manifest(tmp_path/'b.json',count=2)
@@ -78,3 +80,13 @@ def test_partial_generation_reuses_expected_pngs(monkeypatch,tmp_path):
     monkeypatch.setattr('tiny_avatar_diffusion.checkpoint_selection.sample_per_seed',lambda *args,**kwargs: calls.append([e['image_id'] for e in args[3]]) or torch.zeros(len(args[3]),3,32,32))
     generate_split(entries=entries,text=None,unet=None,schedule=None,directory=tmp_path,batch_size=8,device=torch.device('cpu'))
     assert calls==[['b']] and expected_complete(entries,tmp_path)
+
+def test_production_ema_loader_never_uses_raw(tmp_path):
+    text,unet=TextConditioningEncoder(),ConditionalTinyUNet(dropout=0.0)
+    raw_text={k:torch.zeros_like(v) for k,v in text.state_dict().items()}; raw_unet={k:torch.zeros_like(v) for k,v in unet.state_dict().items()}
+    ema_text={k:torch.ones_like(v) if v.is_floating_point() else v.clone() for k,v in text.state_dict().items()}; ema_unet={k:torch.ones_like(v) if v.is_floating_point() else v.clone() for k,v in unet.state_dict().items()}
+    path=tmp_path/'m.pt'; torch.save({'progress':{'step':5000},'text_encoder_state_dict':raw_text,'conditional_unet_state_dict':raw_unet,'ema_state_dict':{'text_encoder':ema_text,'conditional_unet':ema_unet}},path)
+    loaded_text,loaded_unet=load_ema_checkpoint(path,expected_step=5000,device=torch.device('cpu'))
+    assert torch.equal(loaded_text.token_embedding.weight,ema_text['token_embedding.weight']) and not torch.equal(loaded_text.token_embedding.weight,raw_text['token_embedding.weight'])
+    assert torch.equal(next(loaded_unet.parameters()),ema_unet[next(iter(dict(unet.named_parameters())))])
+    with pytest.raises(ValueError): load_ema_checkpoint(path,expected_step=10000,device=torch.device('cpu'))

@@ -1,7 +1,7 @@
 """Validation-only DR03 EMA checkpoint selector; never accesses test/OOD splits."""
 from __future__ import annotations
 
-import argparse, hashlib, json, time, os
+import argparse, hashlib, json, time, os, subprocess
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +27,8 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 def execution_identity(*, run_id:str, manifest_sha256:str, checkpoints:dict[int,Path], sampling_batch_size:int) -> dict[str,Any]:
-    body={"run_id":run_id,"manifest_sha256":manifest_sha256,"training_commit":"2d38da843f792e9f91c687a7d051984134e87a0a","checkpoints":{str(k):{"path":str(v),"sha256":sha256_file(v)} for k,v in checkpoints.items()},"steps":list(STEPS),"weight_set":"EMA","timesteps":1000,"clip_denoised":True,"cfg":False,"native_resolution":32,"sampling_batch_size":sampling_batch_size,"clean_fid_version":"0.1.35","clean_fid_mode":"clean","kid_batch_size":sampling_batch_size,"seed_mapping":"manifest_generation_seed_v1"}
+    evaluation_commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+    body={"run_id":run_id,"manifest_sha256":manifest_sha256,"training_git_commit":"2d38da843f792e9f91c687a7d051984134e87a0a","evaluation_git_commit":evaluation_commit,"checkpoints":{str(k):{"path":str(v),"sha256":sha256_file(v)} for k,v in checkpoints.items()},"steps":list(STEPS),"weight_set":"EMA","timesteps":1000,"clip_denoised":True,"cfg":False,"native_resolution":32,"sampling_batch_size":sampling_batch_size,"clean_fid_version":"0.1.35","clean_fid_mode":"clean","kid_batch_size":sampling_batch_size,"seed_mapping":"manifest_generation_seed_v1"}
     body["config_sha256"]=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(",",":")).encode()).hexdigest(); return body
 
 def write_atomic(path:Path,payload:dict[str,Any]) -> None:
