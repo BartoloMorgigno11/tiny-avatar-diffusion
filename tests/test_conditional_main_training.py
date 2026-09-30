@@ -77,6 +77,19 @@ def test_checkpoint_round_trip_carries_raw_ema_optimizer_scaler_progress_and_rej
         load_checkpoint(path, config=MainTrainingConfig(run_id="other"), text_encoder=restored_text, denoiser=restored_denoiser, ema=restored_ema, optimizer=restored_optimizer, scaler=restored_scaler, sampler_generator=restored_sampler, corruption_generator=restored_corruption, map_location=torch.device("cpu"))
 
 
+def test_old_checkpoint_defaults_skipped_step_count_to_zero(tmp_path) -> None:
+    config = MainTrainingConfig(run_id="compat")
+    text, denoiser = torch.nn.Linear(2, 2), torch.nn.Linear(2, 2)
+    ema = ConditionalEMA(text, denoiser); optimizer = torch.optim.AdamW([*text.parameters(), *denoiser.parameters()], lr=2e-4)
+    scaler = torch.amp.GradScaler("cuda", enabled=False); sampler, corruption = torch.Generator(), torch.Generator()
+    checkpoint = build_checkpoint(config=config, progress=TrainingProgress(), text_encoder=text, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler, corruption_generator=corruption, validation_history=[])
+    del checkpoint["progress"]["skipped_step_count"]
+    path = tmp_path / "old.pt"; atomic_save_checkpoint(path, checkpoint)
+    restored = TrainingProgress()
+    restored, _ = load_checkpoint(path, config=config, text_encoder=text, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler, corruption_generator=corruption, map_location=torch.device("cpu"))
+    assert restored.skipped_step_count == 0
+
+
 def test_fixed_preview_manifest_is_reproducible_and_validation_only() -> None:
     first, second = fixed_preview_manifest(), fixed_preview_manifest()
     assert first == second and len(first) == 4

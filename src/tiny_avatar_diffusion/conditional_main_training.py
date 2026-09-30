@@ -137,6 +137,7 @@ class TrainingProgress:
     batch_offset: int = 0
     permutation: torch.Tensor | None = None
     train_losses: list[float] | None = None
+    skipped_step_count: int = 0
 
     def __post_init__(self) -> None:
         if self.train_losses is None:
@@ -177,6 +178,7 @@ def build_checkpoint(
         "progress": {"step": progress.step, "images_seen": progress.images_seen,
                      "batch_offset": progress.batch_offset, "permutation": progress.permutation,
                      "train_losses": progress.train_losses,
+                     "skipped_step_count": progress.skipped_step_count,
                      "sampler_generator_state": sampler_generator.get_state(),
                      "corruption_generator_state": corruption_generator.get_state()},
         "text_encoder_state_dict": text_encoder.state_dict(),
@@ -216,7 +218,7 @@ def load_checkpoint(
     permutation = stored["permutation"]
     if permutation is not None:
         permutation = permutation.cpu()
-    return TrainingProgress(stored["step"], stored["images_seen"], stored["batch_offset"], permutation, stored["train_losses"]), checkpoint.get("validation_history", [])
+    return TrainingProgress(stored["step"], stored["images_seen"], stored["batch_offset"], permutation, stored["train_losses"], stored.get("skipped_step_count", 0)), checkpoint.get("validation_history", [])
 
 
 def _new_models(device: torch.device, seed: int) -> tuple[TextConditioningEncoder, ConditionalTinyUNet]:
@@ -337,12 +339,18 @@ def run_main_training(
             result = conditional_diffusion_loss(text_encoder, denoiser, schedule, x_start, input_ids, attention_mask, generator=corruption_generator)
         if not bool(torch.isfinite(result.loss)): raise FloatingPointError("non-finite training loss")
         scaler.scale(result.loss).backward(); scaler.unscale_(optimizer)
-        if not _finite_gradients(text_encoder, denoiser): raise FloatingPointError("non-finite training gradients")
+        gradients_finite = _finite_gradients(text_encoder, denoiser)
         before = float(scaler.get_scale()); scaler.step(optimizer); scaler.update()
-        if float(scaler.get_scale()) < before: continue
+        skipped = float(scaler.get_scale()) < before
+        if not gradients_finite and not skipped:
+            raise FloatingPointError("non-finite gradients were not skipped by GradScaler")
+        if skipped:
+            progress.skipped_step_count += 1
+            # The batch was already drawn and is intentionally consumed, preserving prior sampler semantics.
+            continue
         ema.update(text_encoder, denoiser, decay=config.ema_decay)
         progress.step += 1; progress.images_seen += config.physical_batch_size; progress.train_losses.append(float(result.loss.detach()))
-        _append_metric(metrics_path, {"kind": "train", "step": progress.step, "images_seen": progress.images_seen, "effective_epochs": progress.images_seen / train.images.shape[0], "raw_training_epsilon_mse": progress.train_losses[-1], "smoothed_training_epsilon_mse": sum(progress.train_losses[-100:]) / min(100, len(progress.train_losses)), "learning_rate": config.learning_rate, "grad_scaler_scale": float(scaler.get_scale()), "skipped_step_count": 0, "elapsed_seconds": time.perf_counter() - started})
+        _append_metric(metrics_path, {"kind": "train", "step": progress.step, "images_seen": progress.images_seen, "effective_epochs": progress.images_seen / train.images.shape[0], "raw_training_epsilon_mse": progress.train_losses[-1], "smoothed_training_epsilon_mse": sum(progress.train_losses[-100:]) / min(100, len(progress.train_losses)), "learning_rate": config.learning_rate, "grad_scaler_scale": float(scaler.get_scale()), "skipped_step_count": progress.skipped_step_count, "elapsed_seconds": time.perf_counter() - started})
         if progress.step % config.validation_interval == 0:
             for name, split in (("ID_VAL", id_validation), ("COMP_VAL", comp_validation)):
                 validation_history.append({"step": progress.step, "split": name, "epsilon_mse": evaluate_fixed_validation(text_encoder, denoiser, schedule, split, device=device)})
