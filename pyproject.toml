@@ -16,6 +16,12 @@ dev = [
     "pytest",
     "ruff",
 ]
+notebook = [
+    "matplotlib",
+    "nbformat",
+    "nbconvert",
+    "ipykernel",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
