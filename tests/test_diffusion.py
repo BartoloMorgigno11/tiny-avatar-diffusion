@@ -1,7 +1,9 @@
+import math
+
 import pytest
 import torch
 
-from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule
+from tiny_avatar_diffusion.diffusion import CosineDDPMSchedule, LinearDDPMSchedule
 
 COEFFICIENT_NAMES = (
     "betas",
@@ -21,6 +23,24 @@ def _independent_schedule() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     betas = torch.linspace(1e-4, 0.02, 1_000, dtype=torch.float32)
     alphas = 1.0 - betas
     return betas, alphas, torch.cumprod(alphas, dim=0)
+
+
+def _independent_cosine_betas(num_timesteps: int) -> torch.Tensor:
+    def alpha_bar(time: float) -> float:
+        return math.cos(((time + 0.008) / 1.008) * math.pi / 2.0) ** 2
+
+    return torch.tensor(
+        [
+            min(
+                1.0
+                - alpha_bar((index + 1) / num_timesteps)
+                / alpha_bar(index / num_timesteps),
+                0.999,
+            )
+            for index in range(num_timesteps)
+        ],
+        dtype=torch.float32,
+    )
 
 
 def test_linear_ddpm_schedule_shapes_and_endpoints() -> None:
@@ -109,6 +129,70 @@ def test_linear_ddpm_schedule_coefficients_are_buffers_and_follow_to() -> None:
         coefficient = getattr(schedule, name)
         assert coefficient.dtype == torch.float64
         assert not coefficient.requires_grad
+
+
+@pytest.mark.parametrize("num_timesteps", (4, 1_000))
+def test_cosine_ddpm_schedule_matches_the_independent_reference(
+    num_timesteps: int,
+) -> None:
+    schedule = CosineDDPMSchedule(num_timesteps=num_timesteps)
+    expected_betas = _independent_cosine_betas(num_timesteps)
+
+    assert schedule.betas.dtype == torch.float32
+    assert torch.equal(schedule.betas, expected_betas)
+    assert schedule.betas.shape == (num_timesteps,)
+    assert torch.isfinite(schedule.betas).all()
+    assert torch.all((schedule.betas > 0.0) & (schedule.betas <= 0.999))
+    assert torch.isfinite(schedule.alphas).all()
+    assert torch.all(schedule.alphas > 0.0)
+    assert torch.isfinite(schedule.alphas_cumprod).all()
+    assert torch.all(schedule.alphas_cumprod[1:] < schedule.alphas_cumprod[:-1])
+
+
+def test_cosine_ddpm_schedule_derived_coefficients_and_forward_round_trip() -> None:
+    schedule = CosineDDPMSchedule()
+    x_start = torch.linspace(-1.0, 1.0, 48).reshape(2, 3, 4, 2)
+    noise = torch.linspace(0.75, -0.75, x_start.numel()).reshape_as(x_start)
+    timesteps = torch.tensor([0, 999], dtype=torch.long)
+
+    for name in COEFFICIENT_NAMES:
+        coefficient = getattr(schedule, name)
+        assert coefficient.shape == (1_000,)
+        assert torch.isfinite(coefficient).all()
+
+    x_t = schedule.q_sample(x_start, timesteps, noise)
+    reconstructed = schedule.predict_x_start_from_noise(x_t, timesteps, noise)
+
+    assert x_t.shape == x_start.shape
+    assert reconstructed.shape == x_start.shape
+    assert torch.isfinite(x_t).all()
+    assert torch.isfinite(reconstructed).all()
+    assert torch.allclose(reconstructed, x_start, atol=1e-3, rtol=1e-3)
+
+
+def test_cosine_ddpm_schedule_reuses_the_existing_reverse_sampler() -> None:
+    schedule = CosineDDPMSchedule(num_timesteps=4)
+    x_t = torch.ones(2, 1, 2, 2)
+    timesteps = torch.zeros(2, dtype=torch.long)
+    final_step = schedule.p_sample_from_noise(
+        x_t,
+        timesteps,
+        torch.zeros_like(x_t),
+        noise=torch.full_like(x_t, 1_000.0),
+    )
+
+    predictor_calls: list[int] = []
+
+    def predictor(current_x_t: torch.Tensor, current_timesteps: torch.Tensor) -> torch.Tensor:
+        predictor_calls.append(current_timesteps[0].item())
+        return torch.zeros_like(current_x_t)
+
+    sample = schedule.sample_loop_from_noise_predictor(x_t, predictor)
+
+    assert torch.equal(final_step["sample"], final_step["model_mean"])
+    assert predictor_calls == [3, 2, 1, 0]
+    assert sample.shape == x_t.shape
+    assert torch.isfinite(sample).all()
 
 
 @pytest.mark.parametrize("timestep", (0, 500, 999))

@@ -1,4 +1,4 @@
-"""Precomputed coefficients for the frozen linear DDPM forward process.
+"""Precomputed coefficients for fixed DDPM forward processes.
 
 Python indices ``t = 0, ..., T - 1`` represent mathematical DDPM steps
 ``1, ..., T``.  Accordingly, ``alphas_cumprod_prev[0]`` is exactly one.
@@ -6,10 +6,14 @@ Python indices ``t = 0, ..., T - 1`` represent mathematical DDPM steps
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 
 import torch
 from torch import nn
+
+COSINE_OFFSET = 0.008
+COSINE_MAX_BETA = 0.999
 
 
 def _extract(coefficients: torch.Tensor, timesteps: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -29,6 +33,39 @@ def _extract(coefficients: torch.Tensor, timesteps: torch.Tensor, x: torch.Tenso
         0, timesteps.to(device=x.device)
     )
     return values.reshape(x.shape[0], *((1,) * (x.ndim - 1)))
+
+
+def _register_ddpm_buffers(schedule: nn.Module, betas: torch.Tensor) -> None:
+    """Derive and register the DDPM coefficients shared by all fixed schedules."""
+    alphas = 1.0 - betas
+    alphas_cumprod = torch.cumprod(alphas, dim=0)
+    alphas_cumprod_prev = torch.cat(
+        (torch.ones(1, dtype=alphas_cumprod.dtype), alphas_cumprod[:-1])
+    )
+
+    schedule.register_buffer("betas", betas)
+    schedule.register_buffer("alphas", alphas)
+    schedule.register_buffer("alphas_cumprod", alphas_cumprod)
+    schedule.register_buffer("alphas_cumprod_prev", alphas_cumprod_prev)
+    schedule.register_buffer("sqrt_alphas_cumprod", torch.sqrt(alphas_cumprod))
+    schedule.register_buffer(
+        "sqrt_one_minus_alphas_cumprod", torch.sqrt(1.0 - alphas_cumprod)
+    )
+    schedule.register_buffer("sqrt_recip_alphas", torch.rsqrt(alphas))
+
+    denominator = 1.0 - alphas_cumprod
+    schedule.register_buffer(
+        "posterior_variance",
+        betas * (1.0 - alphas_cumprod_prev) / denominator,
+    )
+    schedule.register_buffer(
+        "posterior_mean_coef1",
+        betas * torch.sqrt(alphas_cumprod_prev) / denominator,
+    )
+    schedule.register_buffer(
+        "posterior_mean_coef2",
+        torch.sqrt(alphas) * (1.0 - alphas_cumprod_prev) / denominator,
+    )
 
 
 class LinearDDPMSchedule(nn.Module):
@@ -53,35 +90,7 @@ class LinearDDPMSchedule(nn.Module):
         betas = torch.linspace(
             beta_start, beta_end, num_timesteps, dtype=torch.float32
         )
-        alphas = 1.0 - betas
-        alphas_cumprod = torch.cumprod(alphas, dim=0)
-        alphas_cumprod_prev = torch.cat(
-            (torch.ones(1, dtype=alphas_cumprod.dtype), alphas_cumprod[:-1])
-        )
-
-        self.register_buffer("betas", betas)
-        self.register_buffer("alphas", alphas)
-        self.register_buffer("alphas_cumprod", alphas_cumprod)
-        self.register_buffer("alphas_cumprod_prev", alphas_cumprod_prev)
-        self.register_buffer("sqrt_alphas_cumprod", torch.sqrt(alphas_cumprod))
-        self.register_buffer(
-            "sqrt_one_minus_alphas_cumprod", torch.sqrt(1.0 - alphas_cumprod)
-        )
-        self.register_buffer("sqrt_recip_alphas", torch.rsqrt(alphas))
-
-        denominator = 1.0 - alphas_cumprod
-        self.register_buffer(
-            "posterior_variance",
-            betas * (1.0 - alphas_cumprod_prev) / denominator,
-        )
-        self.register_buffer(
-            "posterior_mean_coef1",
-            betas * torch.sqrt(alphas_cumprod_prev) / denominator,
-        )
-        self.register_buffer(
-            "posterior_mean_coef2",
-            torch.sqrt(alphas) * (1.0 - alphas_cumprod_prev) / denominator,
-        )
+        _register_ddpm_buffers(self, betas)
 
     def q_sample(
         self,
@@ -210,3 +219,36 @@ class LinearDDPMSchedule(nn.Module):
                 )["sample"]
 
         return x_t
+
+
+class CosineDDPMSchedule(LinearDDPMSchedule):
+    """Use the frozen Improved DDPM cosine beta construction.
+
+    The Python timestep convention and every derived DDPM operation are
+    inherited unchanged. Only the initial one-dimensional ``betas`` vector
+    differs from :class:`LinearDDPMSchedule`.
+    """
+
+    def __init__(self, num_timesteps: int = 1_000) -> None:
+        nn.Module.__init__(self)
+        if num_timesteps <= 0:
+            raise ValueError("num_timesteps must be positive")
+
+        def alpha_bar(time: float) -> float:
+            return math.cos(
+                ((time + COSINE_OFFSET) / (1.0 + COSINE_OFFSET)) * math.pi / 2.0
+            ) ** 2
+
+        betas = torch.tensor(
+            [
+                min(
+                    1.0
+                    - alpha_bar((index + 1) / num_timesteps)
+                    / alpha_bar(index / num_timesteps),
+                    COSINE_MAX_BETA,
+                )
+                for index in range(num_timesteps)
+            ],
+            dtype=torch.float32,
+        )
+        _register_ddpm_buffers(self, betas)
