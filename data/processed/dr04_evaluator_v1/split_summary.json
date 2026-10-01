@@ -1,0 +1,466 @@
+{
+  "schema": "tiny_avatar_diffusion.dr04_evaluator_split_summary",
+  "version": "dr04_evaluator_v1",
+  "manifest_sha256": "09fa2cc89caf3f9b2e72d97b3a4cda16a2c7d728ef895c9111fc2c1caa558ee9",
+  "config_sha256": "6585ba88d949e4f929a62057a4f3695ed0f381e48e1f303177922965857e8197",
+  "manifest_path": "data/processed/dr04_evaluator_v1/split_manifest.csv",
+  "config_path": "data/processed/dr04_evaluator_v1/split_config.json",
+  "split_counts": {
+    "EVAL_TRAIN": 94200,
+    "EVAL_VAL": 5000,
+    "REAL_GENERATOR_OOD_CEILING": 400,
+    "REAL_ID_CEILING": 400
+  },
+  "id_ceiling_by_source_direction_replacement": [
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "0",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "1",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "10",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "11",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "2",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "4",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "5",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "6",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "7",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "8",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "A_FIXED",
+      "replacement_value": "9",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "B_FIXED",
+      "replacement_value": "0",
+      "count": 9
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "B_FIXED",
+      "replacement_value": "1",
+      "count": 8
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "B_FIXED",
+      "replacement_value": "3",
+      "count": 8
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "B_FIXED",
+      "replacement_value": "4",
+      "count": 8
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "B_FIXED",
+      "replacement_value": "5",
+      "count": 8
+    },
+    {
+      "source_ood": "OOD1",
+      "direction": "B_FIXED",
+      "replacement_value": "6",
+      "count": 9
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "0",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "1",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "2",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "3",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "4",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "5",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "7",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "8",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "A_FIXED",
+      "replacement_value": "9",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "B_FIXED",
+      "replacement_value": "0",
+      "count": 8
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "B_FIXED",
+      "replacement_value": "1",
+      "count": 8
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "B_FIXED",
+      "replacement_value": "2",
+      "count": 8
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "B_FIXED",
+      "replacement_value": "3",
+      "count": 9
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "B_FIXED",
+      "replacement_value": "5",
+      "count": 8
+    },
+    {
+      "source_ood": "OOD2",
+      "direction": "B_FIXED",
+      "replacement_value": "6",
+      "count": 9
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "0",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "1",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "2",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "3",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "4",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "5",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "6",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "7",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "8",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "A_FIXED",
+      "replacement_value": "9",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "0",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "1",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "11",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "2",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "3",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "4",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "5",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "6",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "7",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "8",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD3",
+      "direction": "B_FIXED",
+      "replacement_value": "9",
+      "count": 4
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "1",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "10",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "2",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "3",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "4",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "5",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "6",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "7",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "8",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "A_FIXED",
+      "replacement_value": "9",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "1",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "2",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "3",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "4",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "5",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "6",
+      "count": 5
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "7",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "8",
+      "count": 6
+    },
+    {
+      "source_ood": "OOD4",
+      "direction": "B_FIXED",
+      "replacement_value": "9",
+      "count": 6
+    }
+  ],
+  "ood_ceiling_by_source": {
+    "OOD1": 100,
+    "OOD2": 100,
+    "OOD3": 100,
+    "OOD4": 100
+  },
+  "eval_val_exclusive_by_source": {
+    "OOD1": 50,
+    "OOD2": 50,
+    "OOD3": 50,
+    "OOD4": 50
+  },
+  "multi_ood_by_split": {
+    "REAL_GENERATOR_OOD_CEILING": 0,
+    "REAL_ID_CEILING": 0,
+    "EVAL_VAL": 0,
+    "EVAL_TRAIN": 5
+  }
+}

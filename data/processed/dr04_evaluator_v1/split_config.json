@@ -1,0 +1,55 @@
+{
+  "schema": "tiny_avatar_diffusion.dr04_evaluator_split_config",
+  "version": "dr04_evaluator_v1",
+  "seed": 2026,
+  "selected_attributes": [
+    "face_shape",
+    "glasses",
+    "hair_color",
+    "face_color"
+  ],
+  "frozen_final_ood_definitions": [
+    {
+      "name": "OOD1",
+      "attribute_a": "face_shape",
+      "value_a": 2,
+      "attribute_b": "glasses",
+      "value_b": 3
+    },
+    {
+      "name": "OOD2",
+      "attribute_a": "face_shape",
+      "value_a": 4,
+      "attribute_b": "hair_color",
+      "value_b": 6
+    },
+    {
+      "name": "OOD3",
+      "attribute_a": "glasses",
+      "value_a": 10,
+      "attribute_b": "face_color",
+      "value_b": 10
+    },
+    {
+      "name": "OOD4",
+      "attribute_a": "hair_color",
+      "value_a": 0,
+      "attribute_b": "face_color",
+      "value_b": 0
+    }
+  ],
+  "hash_serialization": "seed=<seed>|namespace=<namespace>|image_id=<canonical_id>|<sorted key=value fields>",
+  "namespaces": {
+    "ood_ceiling": "dr04-evaluator/ood-ceiling",
+    "control_quota": "dr04-evaluator/control-quota-remainder",
+    "control_assignment": "dr04-evaluator/control-candidate-assignment",
+    "eval_val_exclusive": "dr04-evaluator/eval-val-exclusive-ood",
+    "eval_val_natural": "dr04-evaluator/eval-val-natural-remainder"
+  },
+  "target_counts": {
+    "REAL_GENERATOR_OOD_CEILING": 400,
+    "REAL_ID_CEILING": 400,
+    "EVAL_VAL": 5000,
+    "EVAL_TRAIN": 94200
+  }
+}

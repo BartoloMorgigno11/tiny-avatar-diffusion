@@ -1,0 +1,176 @@
+{
+  "schema": "tiny_avatar_diffusion.dr04_evaluator_class_distribution_audit",
+  "source_split": "EVAL_TRAIN",
+  "attributes": {
+    "face_shape": {
+      "counts": [
+        13500,
+        13532,
+        13413,
+        13338,
+        13270,
+        13520,
+        13627
+      ],
+      "percentages": [
+        14.331210191082803,
+        14.365180467091296,
+        14.238853503184714,
+        14.159235668789808,
+        14.087048832271762,
+        14.35244161358811,
+        14.466029723991507
+      ],
+      "min_support": 13270,
+      "max_support": 13627,
+      "max_min_support_ratio": 1.0269027882441597,
+      "min_class_weight": 0.987535250395748,
+      "max_class_weight": 1.014102702120788
+    },
+    "glasses": {
+      "counts": [
+        4315,
+        4360,
+        4198,
+        4163,
+        4311,
+        4285,
+        4341,
+        4416,
+        4259,
+        4299,
+        4099,
+        47154
+      ],
+      "percentages": [
+        4.58067940552017,
+        4.628450106157112,
+        4.456475583864119,
+        4.41932059447983,
+        4.576433121019108,
+        4.548832271762208,
+        4.60828025477707,
+        4.687898089171974,
+        4.521231422505308,
+        4.563694267515924,
+        4.351380042462845,
+        50.05732484076433
+      ],
+      "min_support": 4099,
+      "max_support": 47154,
+      "max_min_support_ratio": 11.503781410100025,
+      "min_class_weight": 0.16647580268906137,
+      "max_class_weight": 1.9151012442059039
+    },
+    "hair_color": {
+      "counts": [
+        9330,
+        9434,
+        9482,
+        9591,
+        9555,
+        9457,
+        9277,
+        9367,
+        9442,
+        9265
+      ],
+      "percentages": [
+        9.904458598726114,
+        10.014861995753716,
+        10.065817409766455,
+        10.181528662420382,
+        10.143312101910828,
+        10.03927813163482,
+        9.84819532908705,
+        9.943736730360934,
+        10.023354564755838,
+        9.835456475583864
+      ],
+      "min_support": 9265,
+      "max_support": 9591,
+      "max_min_support_ratio": 1.0351861845655694,
+      "min_class_weight": 0.9821707851110416,
+      "max_class_weight": 1.0167296276308688
+    },
+    "face_color": {
+      "counts": [
+        8399,
+        8567,
+        8745,
+        8442,
+        8642,
+        8635,
+        8635,
+        8706,
+        8543,
+        8505,
+        8381
+      ],
+      "percentages": [
+        8.916135881104035,
+        9.09447983014862,
+        9.28343949044586,
+        8.961783439490446,
+        9.174097664543524,
+        9.166666666666666,
+        9.166666666666666,
+        9.242038216560509,
+        9.069002123142251,
+        9.028662420382165,
+        8.897027600849256
+      ],
+      "min_support": 8381,
+      "max_support": 8745,
+      "max_min_support_ratio": 1.043431571411526,
+      "min_class_weight": 0.9792608763449244,
+      "max_class_weight": 1.0217917150264126
+    }
+  },
+  "ood_matches": {
+    "EVAL_TRAIN": {
+      "OOD1": {
+        "total_matches": 492,
+        "exclusive_matches": 491,
+        "multi_matches": 1
+      },
+      "OOD2": {
+        "total_matches": 1169,
+        "exclusive_matches": 1165,
+        "multi_matches": 4
+      },
+      "OOD3": {
+        "total_matches": 247,
+        "exclusive_matches": 243,
+        "multi_matches": 4
+      },
+      "OOD4": {
+        "total_matches": 711,
+        "exclusive_matches": 710,
+        "multi_matches": 1
+      }
+    },
+    "EVAL_VAL": {
+      "OOD1": {
+        "total_matches": 73,
+        "exclusive_matches": 73,
+        "multi_matches": 0
+      },
+      "OOD2": {
+        "total_matches": 104,
+        "exclusive_matches": 104,
+        "multi_matches": 0
+      },
+      "OOD3": {
+        "total_matches": 64,
+        "exclusive_matches": 64,
+        "multi_matches": 0
+      },
+      "OOD4": {
+        "total_matches": 89,
+        "exclusive_matches": 89,
+        "multi_matches": 0
+      }
+    }
+  }
+}
