@@ -26,6 +26,7 @@ env/
 # Local datasets
 data/raw/cartoonset/archives/*.tgz
 datasets/
+data/cache/
 
 # Model checkpoints
 checkpoints/

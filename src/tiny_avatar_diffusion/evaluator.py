@@ -1,7 +1,7 @@
 """Frozen DR04 real-image attribute evaluator components."""
 from __future__ import annotations
 
-import csv, hashlib, json, random, tarfile, platform, os
+import csv, hashlib, json, random, platform, os
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,11 +14,11 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import Dataset
 
-from tiny_avatar_diffusion.debug_tiny_overfit import parse_source_image_path
 from tiny_avatar_diffusion.semantic_mapping import CANONICAL_ATTRIBUTE_ORDER, SEMANTIC_MAPPING
 
 ROOT = Path(__file__).resolve().parents[2]
 SPLIT_ROOT = ROOT / "data" / "processed" / "dr04_evaluator_v1"
+CACHE_ROOT = ROOT / "data" / "cache" / "dr04_evaluator_32x32_uint8"
 CLASS_COUNTS = {name: len(SEMANTIC_MAPPING[name]) for name in CANONICAL_ATTRIBUTE_ORDER}
 
 ARCHITECTURE_ID = "dr04_shared_cnn_32_64_128_gap_linear_heads_v1"
@@ -44,51 +44,28 @@ def preprocess(image:Image.Image)->torch.Tensor:
     pixels=torch.frombuffer(bytearray(resized.tobytes()),dtype=torch.uint8).reshape(32,32,3).permute(2,0,1)
     return pixels.to(torch.float32).div(255).mul(2).sub(1)
 
+def preprocess_cached(image:Image.Image)->torch.Tensor:
+    if image.mode != "RGB" or image.size != (32,32): raise ValueError("Cached evaluator image must be RGB 32x32")
+    pixels=torch.frombuffer(bytearray(image.tobytes()),dtype=torch.uint8).reshape(32,32,3).permute(2,0,1)
+    return pixels.to(torch.float32).div(255).mul(2).sub(1)
+
 def load_manifest(path:Path=SPLIT_ROOT/"split_manifest.csv")->list[dict[str,str]]:
     with path.open(encoding="utf-8",newline="") as handle: return list(csv.DictReader(handle))
 
-def _source_paths()->dict[str,str]:
-    paths:dict[str,str]={}
-    for filename in ("train.jsonl","id_val.jsonl","id_test.jsonl","comp_val.jsonl","final_ood.jsonl"):
-        with (ROOT/"data"/"processed"/"dr01_v1"/"100k"/filename).open(encoding="utf-8") as f:
-            for line in f:
-                raw=json.loads(line); paths[raw["image_id"]]=raw["source_image_path"]
-    return paths
-
 class EvaluatorDataset(Dataset[tuple[torch.Tensor,dict[str,torch.Tensor]]]):
-    """Canonical split dataset; only requested real 100k members are decoded."""
-    def __init__(self, split:str, manifest_path:Path=SPLIT_ROOT/"split_manifest.csv"):
+    """Canonical split dataset reading only the D28 uint8 cache."""
+    def __init__(self, split:str, manifest_path:Path=SPLIT_ROOT/"split_manifest.csv",cache_root:Path=CACHE_ROOT,include_image_id:bool=False):
         self.rows=[row for row in load_manifest(manifest_path) if row["split"]==split]
         if not self.rows: raise ValueError(f"Empty split {split}")
-        sources=_source_paths()
-        for row in self.rows: row["source_image_path"]=sources[row["image_id"]]
-        self._archives:dict[Path,tarfile.TarFile]={}
+        self.cache_root=cache_root
+        self.include_image_id=include_image_id
     def __len__(self)->int:return len(self.rows)
     def __getitem__(self,index:int)->tuple[torch.Tensor,dict[str,torch.Tensor]]:
-        row=self.rows[index]; archive_ref,member=parse_source_image_path(row["source_image_path"]); archive=archive_ref if archive_ref.is_absolute() else ROOT/archive_ref
-        tf=self._archives.setdefault(archive,tarfile.open(archive,"r:gz")); stream=tf.extractfile(member)
-        if stream is None: raise FileNotFoundError(member)
-        with Image.open(stream) as image: image.load(); x=preprocess(image)
-        return x,{name:torch.tensor(int(row[name]),dtype=torch.long) for name in CANONICAL_ATTRIBUTE_ORDER}
-
-def load_streaming_batch(dataset:EvaluatorDataset,batch_size:int=128)->tuple[torch.Tensor,dict[str,torch.Tensor]]:
-    """Load a physical batch through one sequential archive pass (no extraction to disk)."""
-    eligible=[row for row in dataset.rows if "::cartoonset100k/0/" in row["source_image_path"]]
-    if len(eligible)<batch_size: raise ValueError("Insufficient early archive members for streaming batch")
-    selected=sorted(eligible,key=lambda row:row["source_image_path"])[:batch_size]
-    archive_ref,_=parse_source_image_path(selected[0]["source_image_path"]); archive=archive_ref if archive_ref.is_absolute() else ROOT/archive_ref
-    wanted={parse_source_image_path(row["source_image_path"])[1]:row for row in selected}; loaded:dict[str,torch.Tensor]={}
-    with tarfile.open(archive,"r|gz") as tf:
-        for member in tf:
-            if member.name not in wanted: continue
-            stream=tf.extractfile(member)
-            if stream is None: raise FileNotFoundError(member.name)
-            with Image.open(stream) as image: image.load(); loaded[member.name]=preprocess(image)
-            if len(loaded)==len(wanted): break
-    if len(loaded)!=len(wanted): raise RuntimeError("Could not load every requested streaming batch member")
-    x=torch.stack([loaded[parse_source_image_path(row["source_image_path"])[1]] for row in selected])
-    y={name:torch.tensor([int(row[name]) for row in selected],dtype=torch.long) for name in CANONICAL_ATTRIBUTE_ORDER}
-    return x,y
+        row=self.rows[index]; path=self.cache_root/f"{row['image_id']}.png"
+        if not path.is_file(): raise FileNotFoundError(f"Missing evaluator cache item: {path.name}")
+        with Image.open(path) as image: image.load(); x=preprocess_cached(image)
+        labels={name:torch.tensor(int(row[name]),dtype=torch.long) for name in CANONICAL_ATTRIBUTE_ORDER}
+        return (x,labels,row["image_id"]) if self.include_image_id else (x,labels)
 
 def class_weight_artifact(manifest_path:Path=SPLIT_ROOT/"split_manifest.csv")->dict[str,Any]:
     raw=manifest_path.read_bytes(); manifest_hash=hashlib.sha256(raw).hexdigest(); rows=[r for r in load_manifest(manifest_path) if r["split"]=="EVAL_TRAIN"]

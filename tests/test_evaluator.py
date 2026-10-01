@@ -3,8 +3,9 @@ import hashlib, json, random
 import numpy as np
 import pytest, torch
 from PIL import Image
-from tiny_avatar_diffusion.evaluator import (ARCHITECTURE_ID, CLASS_COUNTS, AttributeEvaluator, PREPROCESSING_ID, better_checkpoint, checkpoint_payload, class_weight_artifact, configure_main_determinism, make_optimizer, parameter_count, preprocess, seed_everything, validate_checkpoint, weighted_loss, write_class_weights)
+from tiny_avatar_diffusion.evaluator import (ARCHITECTURE_ID, CLASS_COUNTS, AttributeEvaluator, EvaluatorDataset, PREPROCESSING_ID, better_checkpoint, checkpoint_payload, class_weight_artifact, configure_main_determinism, make_optimizer, parameter_count, preprocess, preprocess_cached, seed_everything, validate_checkpoint, weighted_loss, write_class_weights)
 from tiny_avatar_diffusion.evaluator_training import restore_checkpoint
+from tiny_avatar_diffusion.evaluator_training import MAIN_LOADER_CONFIG
 
 def test_architecture_shapes_parameter_count_and_no_dropout():
     model=AttributeEvaluator(); x=torch.randn(3,3,32,32); out=model(x)
@@ -30,6 +31,22 @@ def test_main_determinism_requires_exact_cublas_workspace(monkeypatch):
     monkeypatch.setenv("CUBLAS_WORKSPACE_CONFIG",":4096:8")
     configure_main_determinism()
     assert torch.are_deterministic_algorithms_enabled()
+
+def test_frozen_main_loader_defaults():
+    assert MAIN_LOADER_CONFIG == {"num_workers":4,"pin_memory":True,"persistent_workers":True,"prefetch_factor":2}
+
+def test_cached_preprocessing_and_dataset_have_no_archive_fallback(tmp_path):
+    source=Image.frombytes("RGB",(2,2),bytes(range(12))*1)
+    cached=source.convert("RGB").resize((32,32),resample=Image.Resampling.BILINEAR)
+    cache=tmp_path/"cache";cache.mkdir();cached.save(cache/"sample.png",format="PNG")
+    manifest=tmp_path/"manifest.csv";manifest.write_text("image_id,split,face_shape,glasses,hair_color,face_color\nsample,EVAL_TRAIN,0,0,0,0\n",encoding="utf-8")
+    dataset=EvaluatorDataset("EVAL_TRAIN",manifest,cache); x,y=dataset[0]
+    assert torch.equal(x,preprocess(source)) and y["glasses"].item()==0 and not hasattr(dataset,"_archives")
+    (cache/"sample.png").unlink()
+    with pytest.raises(FileNotFoundError,match="Missing evaluator cache item"):
+        dataset[0]
+    bad=Image.new("RGBA",(32,32));
+    with pytest.raises(ValueError,match="RGB 32x32"): preprocess_cached(bad)
 
 def test_class_weights_are_from_frozen_train_manifest_and_stable(tmp_path):
     artifact=class_weight_artifact(); assert artifact["split_manifest_sha256"]=="09fa2cc89caf3f9b2e72d97b3a4cda16a2c7d728ef895c9111fc2c1caa558ee9"

@@ -9,9 +9,15 @@ from torch.utils.data import DataLoader
 from tiny_avatar_diffusion.evaluator import CANONICAL_ATTRIBUTE_ORDER, weighted_loss, validate_checkpoint
 
 HISTORY_FIELDS=["epoch","global_step","train_loss","val_loss",*[f"{a}_{m}" for a in CANONICAL_ATTRIBUTE_ORDER for m in ("accuracy","macro_f1","balanced_accuracy")],"val_macro_balanced_accuracy","val_mean_macro_f1","is_best"]
-def loader(dataset,shuffle:bool,seed:int=2026,epoch:int=0)->DataLoader:
+MAIN_LOADER_CONFIG={"num_workers":4,"pin_memory":True,"persistent_workers":True,"prefetch_factor":2}
+def _seed_worker(worker_id:int)->None:
+    seed=torch.initial_seed()%2**32; random.seed(seed); np.random.seed(seed)
+def loader(dataset,shuffle:bool,seed:int=2026,epoch:int=0,*,num_workers:int=MAIN_LOADER_CONFIG["num_workers"],pin_memory:bool=MAIN_LOADER_CONFIG["pin_memory"],persistent_workers:bool=MAIN_LOADER_CONFIG["persistent_workers"],prefetch_factor:int|None=MAIN_LOADER_CONFIG["prefetch_factor"])->DataLoader:
     g=torch.Generator().manual_seed(seed+epoch)
-    return DataLoader(dataset,batch_size=128,shuffle=shuffle,drop_last=False,num_workers=0,generator=g)
+    kwargs={"num_workers":num_workers,"pin_memory":pin_memory,"generator":g,"worker_init_fn":_seed_worker}
+    if num_workers:
+        kwargs.update({"persistent_workers":persistent_workers,"prefetch_factor":prefetch_factor})
+    return DataLoader(dataset,batch_size=128,shuffle=shuffle,drop_last=False,**kwargs)
 def _metrics(pred:torch.Tensor,target:torch.Tensor,k:int)->tuple[float,float,float]:
     accuracy=float((pred==target).float().mean()); f1=[]; recalls=[]
     for c in range(k):
