@@ -1,0 +1,136 @@
+{
+  "phase": "DR03",
+  "status": "CLOSED_SCIENTIFICALLY",
+  "run_id": "dr03_conditional_main_10k_seed2026_r2",
+  "dataset": "Google Cartoon Set 10k",
+  "resolution": [
+    32,
+    32
+  ],
+  "train_size": 8388,
+  "seed": 2026,
+  "text_encoder": {
+    "vocabulary_size": 45,
+    "max_text_length": 7,
+    "d_model": 64,
+    "layers": 2,
+    "heads": 4,
+    "head_dim": 16,
+    "ffn_dim": 256,
+    "normalization": "Pre-LN",
+    "activation": "GELU",
+    "positional_encoding": "sinusoidal",
+    "attention_ffn_dropout": 0.1,
+    "token_embedding_dropout": 0.0,
+    "final_layer_norm": true,
+    "parameters": 102976
+  },
+  "cross_attention": {
+    "blocks": 1,
+    "location": "bottleneck_8x8",
+    "visual_channels": 128,
+    "query_source": "image",
+    "key_value_source": "text",
+    "attention_dim": 64,
+    "heads": 4,
+    "parameters": 25152,
+    "visual_self_attention": false
+  },
+  "parameter_counts": {
+    "conditional_tiny_unet": 4620931,
+    "full_conditional_system": 4723907
+  },
+  "diffusion": {
+    "prediction": "epsilon",
+    "loss": "epsilon_mse",
+    "timesteps": 1000,
+    "beta_schedule": "linear",
+    "variance": "fixed-small",
+    "pixel_space": true
+  },
+  "optimizer": {
+    "name": "AdamW",
+    "learning_rate": 0.0002,
+    "weight_decay": 0.0
+  },
+  "training": {
+    "physical_batch_size": 32,
+    "precision": "AMP FP16",
+    "successful_optimizer_steps": 20000,
+    "successful_update_image_presentations": 640000,
+    "amp_skipped_update_attempts": 5,
+    "cfg": false,
+    "conditioning_dropout": false,
+    "metrics_export": {
+      "training_observations": 20000,
+      "validation_steps": [
+        0,
+        1000,
+        2000,
+        3000,
+        4000,
+        5000,
+        6000,
+        7000,
+        8000,
+        9000,
+        10000,
+        11000,
+        12000,
+        13000,
+        14000,
+        15000,
+        16000,
+        17000,
+        18000,
+        19000,
+        20000
+      ],
+      "smoothing": "trailing mean of up to 100 raw training observations; available prefix used for steps 1-99"
+    }
+  },
+  "ema": {
+    "decay": 0.9999,
+    "components": [
+      "text_encoder",
+      "unet"
+    ],
+    "raw_copy_at_step_0": true,
+    "updated_after_successful_optimizer_updates_only": true
+  },
+  "checkpoint_selection": {
+    "status": "PASS",
+    "selected_step": 20000,
+    "weight_set": "EMA",
+    "selected_checkpoint_sha256": "0bad000254c59bef3b9cf3a2e33ccc10d263f6cea231841e71950a41b7bd3884",
+    "validation_samples_per_split": 256,
+    "splits": [
+      "ID_VAL",
+      "COMP_VAL"
+    ],
+    "clean_fid_version": "0.1.35",
+    "clean_fid_mode": "clean",
+    "timesteps": 1000,
+    "clip_denoised": true,
+    "cfg": false,
+    "sampling_batch_size": 8,
+    "kid_batch_size": 8
+  },
+  "provenance": {
+    "training_git_commit": "2d38da843f792e9f91c687a7d051984134e87a0a",
+    "evaluation_git_commit": "74b570969f60f9751a6c26a49fca3e419dd05566",
+    "validation_manifest_sha256": "e00981fb721a4f4c7338fe591053888bc524f7a596f91e75ac2dfbc0adf27edc",
+    "authoritative_source_file_sha256": {
+      "reports/dr03_main_training/dr03_conditional_main_10k_seed2026_r2/metrics.jsonl": "7ce5449f37f99935153fd6f7e1f791ba0a24112a67183b001f53fabfd06df9d3",
+      "reports/dr03_checkpoint_selection_hotfix/validation_quality_manifest.json": "091f6a8cfcf409c3b2bf6d64391deb84fc6114de2b78b9840adfc71fb32431be",
+      "reports/dr03_checkpoint_selection_hotfix/validation_quality_results.json": "09c8c2452fc081b1f6f9e97fcae45756a7be2abf06f10544968a865c37d607ba",
+      "reports/dr03_checkpoint_selection_hotfix/selection.json": "1beb0e89f3612552715bf32584de73cceb90dbd60e8db537e8ba4fce0805e4a6"
+    }
+  },
+  "scope": {
+    "id_test_used": false,
+    "final_ood_used": false,
+    "final_project_kid": false,
+    "conditioning_adherence_evaluated": false
+  }
+}

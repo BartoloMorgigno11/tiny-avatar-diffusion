@@ -37,3 +37,19 @@ checkpoints/
 outputs/
 results/
 runs/
+
+# Local DR03 experimental evidence (canonical compact evidence remains trackable)
+reports/dr03_amp_recovery_validation/
+reports/dr03_checkpoint_selection/generated/
+reports/dr03_checkpoint_selection/real/
+reports/dr03_checkpoint_selection/progress.json
+reports/dr03_checkpoint_selection/validation_kid_pid.txt
+reports/dr03_checkpoint_selection/validation_kid_stderr.log
+reports/dr03_checkpoint_selection/validation_kid_stdout.log
+reports/dr03_checkpoint_selection_hotfix/
+reports/dr03_conditional_sampling_debug/
+reports/dr03_conditional_tiny_overfit_debug/
+reports/dr03_lr_pilot/lr_*/
+reports/dr03_main_training/
+reports/dr03_main_training_integrity/gate_*/
+reports/dr03_main_training_integrity/integrity_*/
