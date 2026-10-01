@@ -43,7 +43,7 @@ def train_epoch(model,data_loader,weights,optimizer,device)->float:
     return sum(losses)/len(losses)
 def save_checkpoint(path:Path,payload:dict[str,Any])->None:path.parent.mkdir(parents=True,exist_ok=True);torch.save(payload,path)
 def restore_checkpoint(path:Path,model,optimizer,identity:dict[str,Any],device:torch.device)->dict[str,Any]:
-    payload=torch.load(path,map_location=device,weights_only=False); validate_checkpoint(payload,identity); model.load_state_dict(payload["model_state_dict"]); optimizer.load_state_dict(payload["optimizer_state_dict"])
+    payload=torch.load(path,map_location="cpu",weights_only=False); validate_checkpoint(payload,identity); model.load_state_dict(payload["model_state_dict"]); optimizer.load_state_dict(payload["optimizer_state_dict"])
     random.setstate(payload["python_rng_state"]); np.random.set_state(payload["numpy_rng_state"]); torch.set_rng_state(payload["torch_cpu_rng_state"])
     if torch.cuda.is_available() and payload["torch_cuda_rng_states"] is not None: torch.cuda.set_rng_state_all(payload["torch_cuda_rng_states"])
     return payload
