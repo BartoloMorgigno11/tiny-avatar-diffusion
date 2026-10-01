@@ -1,0 +1,33 @@
+{
+  "bootstrap_seed": 2026,
+  "d31_freeze_sha256": "374e23ab2cb42f9b21b813042e93cfbfcab97187fdd30621b154378fd7c2f436",
+  "evaluator_checkpoint_sha256": "3f97b8763dc8caa1148ff9434224cac619507f6a377b32bc742cd5fae204c50f",
+  "generation_seeds": [
+    2026,
+    2027,
+    2028,
+    2029,
+    2030
+  ],
+  "generator_checkpoint_sha256": "0bad000254c59bef3b9cf3a2e33ccc10d263f6cea231841e71950a41b7bd3884",
+  "head": "90d099f084f320d14bca687b979e39ac56bc5064",
+  "protocol_version": "dr04_final_eval_v1",
+  "python_version": "3.12.4 | packaged by Anaconda, Inc. | (main, Jun 18 2024, 15:03:56) [MSC v.1929 64 bit (AMD64)]",
+  "scipy_version": "1.18.1",
+  "script_hashes": {
+    "a16_audit": "4b2bd05249473c2fe1ee1cddc0197d954e537d3518ae59c2657a2cfec8323a5c",
+    "materializer": "d74af588c65f524e25731a67e58ab2269a3b5156364710a14b1cf3afe76a4eb1"
+  },
+  "selection_namespaces": [
+    "dr04_prompt_source_v1",
+    "dr04_final_ood_prompt_v1",
+    "dr04_matched_control_v1",
+    "dr04_minimal_edit_pair_v1"
+  ],
+  "solver": "scipy.optimize.milp / HiGHS",
+  "source_metadata_hashes": {
+    "FINAL_OOD": "8414c64ac13781c148fd38154bb04b684b841088f2e4243b7e03afb524bf070d",
+    "ID_TEST": "6b23a54ef90d74a0b6bdff0ac8054d4e8c4ec92ee6e6311f07316715e268adde",
+    "TRAIN": "295f7c93766294243871ebb2bf742a9fdae2f5a716ac773b0ead16dc8e6eb014"
+  }
+}

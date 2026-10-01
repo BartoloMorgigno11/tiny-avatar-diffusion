@@ -1,0 +1,15 @@
+{
+  "main_caption_unique_count": 252,
+  "matched_controls": {
+    "both": 76,
+    "cost_histogram": {
+      "0": 60,
+      "1": 92,
+      "2": 0
+    },
+    "mean_cost": 0.6052631578947368,
+    "neither": 24,
+    "one_only": 0
+  },
+  "minimal_edit_endpoint_unique_count": 80
+}

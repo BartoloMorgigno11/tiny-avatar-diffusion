@@ -1,0 +1,45 @@
+{
+  "aggregation_hierarchy": [
+    "seed",
+    "prompt",
+    "held-out pair / domain",
+    "macro aggregate"
+  ],
+  "bootstrap": {
+    "all_seeds_clustered": true,
+    "cluster_unit": "prompt",
+    "confidence_level": 0.95,
+    "id_ood_gap": "D36 independent ID/OOD resampling",
+    "method": "percentile",
+    "repetitions": 10000,
+    "seed": 2026
+  },
+  "human_audit_reference": "human_audit_protocol.json",
+  "invalid_generation_handling": "D39: finite [3,32,32] tensors valid; exact prompt/seed retries only for technical external failures; no new seed replacement; persistent intrinsic failure remains denominator with zero failure score where required.",
+  "main_conditioning": {
+    "applicability": "OOD metrics use all 100 OOD prompts; matched-control comparisons use only the 76 OOD prompts with both controls and 152 ID controls.",
+    "matched_comparisons_ood_prompt_count": 76,
+    "matched_id_control_count": 152,
+    "ood_full_panel_prompt_count": 100
+  },
+  "metrics": {
+    "evaluator_ceiling_correction": false,
+    "primary_compositional": "MacroPSR",
+    "primary_conditioning": "MAA",
+    "secondary": [
+      "EAM",
+      "per-attribute Macro-F1",
+      "per-attribute Balanced Accuracy",
+      "per-combination PSR",
+      "p11/p10/p01/p00",
+      "confusion matrices",
+      "matched-control diagnostics"
+    ]
+  },
+  "minimal_edit": {
+    "metric": "target edit success plus non-target retention; secondary same-seed sensitivity diagnostic, not causal proof",
+    "qualitative_grid_rule": "fixed, no cherry-picking"
+  },
+  "protocol_id": "dr04_final_eval_v1",
+  "status": "FROZEN"
+}

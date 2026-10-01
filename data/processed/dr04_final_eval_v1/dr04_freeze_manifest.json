@@ -1,0 +1,26 @@
+{
+  "K": 19,
+  "active_control_protocol": "D40/D41-v2",
+  "closure_audit_status": "PASS",
+  "decision_range": "D1-D42a",
+  "evidence": {
+    "A15_solver_provenance_sha256": "17f8ef2b637b138d60b68bbe7ec38108ea150f08d21136ce509110aca32bca76",
+    "A15_summary_sha256": "cf2ec1f4868a97a050fd3e5ea706e402632d9cb14f7ab6dcce1742df03b347fb",
+    "A16_solver_provenance_sha256": "67fc472ad85fe1e543b28829bf4c61195210297d8903a6947577a5882e5ad15b",
+    "A16_summary_sha256": "3630d9dd8c416126447a3e712eb8691f1911a6daf1f6158d5e828caa72ddbf79",
+    "A16_witness_controls_sha256": "19fcbd04e404b709bdfe336df3c634a5c53bad75c8caf53aa2d559fb63cd674b"
+  },
+  "final_generation_executed": false,
+  "generation_has_occurred": false,
+  "main_generation_slots": 1260,
+  "main_panel_prompts": 252,
+  "minimal_edit_generation_slots": 400,
+  "minimal_edit_pairs": 40,
+  "phase": "DR04",
+  "status": "CLOSED",
+  "superseded_decisions": [
+    "D40/D41-v1"
+  ],
+  "superseded_reason": "structurally infeasible under exact MILP before final evaluation",
+  "total_DR04_conditional_generation_slots_if_all_executed": 1660
+}

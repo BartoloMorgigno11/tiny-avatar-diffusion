@@ -1,0 +1,26 @@
+{
+  "blinding": [
+    "model identity",
+    "ID/OOD split",
+    "automatic evaluator prediction",
+    "favored hypothesis"
+  ],
+  "breakdown": {
+    "ID": 40,
+    "OOD": 40
+  },
+  "evaluator_recalibration": false,
+  "image_count": 80,
+  "questions": "four atomic attribute questions",
+  "raters": {
+    "independent": 2,
+    "third_adjudicator_for_disagreement": true
+  },
+  "report": [
+    "rater agreement",
+    "human-vs-evaluator agreement",
+    "optional Cohen/Fleiss-style kappa"
+  ],
+  "sampling": "stratified; up to 16 error-enriched by frozen rule; remainder preregistered non-error-enriched strata; no aesthetic selection",
+  "status": "FROZEN_PROTOCOL_ONLY"
+}

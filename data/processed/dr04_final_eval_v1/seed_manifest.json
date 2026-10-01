@@ -1,0 +1,14 @@
+{
+  "bootstrap_seed": 2026,
+  "evaluator_training_seed": 2026,
+  "expected_main_generation_count": 1260,
+  "expected_minimal_edit_generation_count": 400,
+  "generation_seeds": [
+    2026,
+    2027,
+    2028,
+    2029,
+    2030
+  ],
+  "prompt_panel_selection_seed": 2026
+}

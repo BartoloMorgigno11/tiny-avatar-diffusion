@@ -1,0 +1,27 @@
+{
+  "FINAL_OOD_image_content_accessed": false,
+  "FINAL_OOD_metadata_accessed": true,
+  "ID_TEST_image_content_accessed": false,
+  "ID_TEST_metadata_accessed": true,
+  "TRAIN_metadata_accessed_for_minimal_edit_construction": true,
+  "evaluator_executed": false,
+  "final_metric_executed": false,
+  "generator_executed": false,
+  "metadata_files_read": [
+    "data\\processed\\dr01_v1\\text\\10k\\id_test.jsonl",
+    "data\\processed\\dr01_v1\\text\\10k\\final_ood.jsonl",
+    "data\\processed\\dr01_v1\\text\\10k\\train.jsonl"
+  ],
+  "permitted_fields_read": [
+    "image_id",
+    "split_role",
+    "face_shape",
+    "glasses",
+    "hair_color",
+    "face_color",
+    "caption"
+  ],
+  "scripts_executed": [
+    "scripts/dr04_materialize_final_evaluation_protocol.py"
+  ]
+}

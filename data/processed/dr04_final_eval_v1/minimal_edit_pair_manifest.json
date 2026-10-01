@@ -1,0 +1,1301 @@
+{
+  "diagnostics": {
+    "candidate_pairs": 34322,
+    "endpoints_considered": 3935,
+    "selection": "SHA-ordered globally endpoint-unique feasibility construction"
+  },
+  "endpoint_global_uniqueness": true,
+  "expected_generations_per_pair": 10,
+  "expected_total_generation_count": 400,
+  "generation_seeds": [
+    2026,
+    2027,
+    2028,
+    2029,
+    2030
+  ],
+  "pair_count": 40,
+  "pair_records": [
+    {
+      "attributes_a": {
+        "face_color": 4,
+        "face_shape": 4,
+        "glasses": 6,
+        "hair_color": 2
+      },
+      "attributes_b": {
+        "face_color": 4,
+        "face_shape": 5,
+        "glasses": 6,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_round glasses_thick_rectangular_glasses hair_color_orange face_color_golden_tan",
+      "caption_b": "avatar face_shape_wide glasses_thick_rectangular_glasses hair_color_orange face_color_golden_tan",
+      "changed_from": 4,
+      "changed_to": 5,
+      "endpoint_a_prompt_id": "ME_face_shape_00_A",
+      "endpoint_b_prompt_id": "ME_face_shape_00_B",
+      "pair_id": "ME_face_shape_00",
+      "selection_hash": "000d856a405936f485b988ac29532bdb1e9c0fda91d9e926c433e08588080a24",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs10490071096903975079",
+        "cs11213166269945893601"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 4,
+        "glasses": 6,
+        "hair_color": 2
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 7,
+        "face_shape": 2,
+        "glasses": 11,
+        "hair_color": 2
+      },
+      "attributes_b": {
+        "face_color": 7,
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_oval glasses_no_glasses hair_color_orange face_color_peach_tan",
+      "caption_b": "avatar face_shape_round glasses_no_glasses hair_color_orange face_color_peach_tan",
+      "changed_from": 2,
+      "changed_to": 4,
+      "endpoint_a_prompt_id": "ME_face_shape_01_A",
+      "endpoint_b_prompt_id": "ME_face_shape_01_B",
+      "pair_id": "ME_face_shape_01",
+      "selection_hash": "003b48283ebe80a8b6613b213ac40dbca38ed0a9977e6f6b3ae341c6f190f08d",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs10111507108356987827",
+        "cs1060037489902546322"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 7,
+        "glasses": 11,
+        "hair_color": 2
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 9,
+        "face_shape": 0,
+        "glasses": 1,
+        "hair_color": 7
+      },
+      "attributes_b": {
+        "face_color": 9,
+        "face_shape": 5,
+        "glasses": 1,
+        "hair_color": 7
+      },
+      "caption_a": "avatar face_shape_pointed glasses_aviator_sunglasses hair_color_black face_color_light_peach",
+      "caption_b": "avatar face_shape_wide glasses_aviator_sunglasses hair_color_black face_color_light_peach",
+      "changed_from": 0,
+      "changed_to": 5,
+      "endpoint_a_prompt_id": "ME_face_shape_02_A",
+      "endpoint_b_prompt_id": "ME_face_shape_02_B",
+      "pair_id": "ME_face_shape_02",
+      "selection_hash": "00498e512744eab295b5947d11eabb8b275946c6a1b8e767a9d7df1229b846c1",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs11265029522534775249",
+        "cs1001284411639126213"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 9,
+        "glasses": 1,
+        "hair_color": 7
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 6,
+        "face_shape": 0,
+        "glasses": 5,
+        "hair_color": 8
+      },
+      "attributes_b": {
+        "face_color": 6,
+        "face_shape": 4,
+        "glasses": 5,
+        "hair_color": 8
+      },
+      "caption_a": "avatar face_shape_pointed glasses_round_glasses hair_color_blue_gray face_color_rose_tan",
+      "caption_b": "avatar face_shape_round glasses_round_glasses hair_color_blue_gray face_color_rose_tan",
+      "changed_from": 0,
+      "changed_to": 4,
+      "endpoint_a_prompt_id": "ME_face_shape_03_A",
+      "endpoint_b_prompt_id": "ME_face_shape_03_B",
+      "pair_id": "ME_face_shape_03",
+      "selection_hash": "00506430f23dc33ce7ae43ed3bd0131926e8e34b28170013ace06ca74b6f75a9",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs10067523414842638931",
+        "cs11043428665153090717"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 6,
+        "glasses": 5,
+        "hair_color": 8
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 7,
+        "face_shape": 1,
+        "glasses": 11,
+        "hair_color": 0
+      },
+      "attributes_b": {
+        "face_color": 7,
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 0
+      },
+      "caption_a": "avatar face_shape_1 glasses_no_glasses hair_color_light_blond face_color_peach_tan",
+      "caption_b": "avatar face_shape_round glasses_no_glasses hair_color_light_blond face_color_peach_tan",
+      "changed_from": 1,
+      "changed_to": 4,
+      "endpoint_a_prompt_id": "ME_face_shape_04_A",
+      "endpoint_b_prompt_id": "ME_face_shape_04_B",
+      "pair_id": "ME_face_shape_04",
+      "selection_hash": "005b27d62872c2831c365f605c9e6b1b21fbe7a49090c00261c3bd9f2dc7d7a5",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs10516486517001935066",
+        "cs11486938276460846311"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 7,
+        "glasses": 11,
+        "hair_color": 0
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 10,
+        "face_shape": 6,
+        "glasses": 11,
+        "hair_color": 0
+      },
+      "attributes_b": {
+        "face_color": 10,
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 0
+      },
+      "caption_a": "avatar face_shape_rectangular glasses_no_glasses hair_color_light_blond face_color_pale_pink",
+      "caption_b": "avatar face_shape_round glasses_no_glasses hair_color_light_blond face_color_pale_pink",
+      "changed_from": 6,
+      "changed_to": 4,
+      "endpoint_a_prompt_id": "ME_face_shape_05_A",
+      "endpoint_b_prompt_id": "ME_face_shape_05_B",
+      "pair_id": "ME_face_shape_05",
+      "selection_hash": "005c721965ca68ec5e9e1c9064f0b29d7ad6f338debee37a565ec21b9c4fbd06",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs11491368901710731995",
+        "cs10310684329983630634"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 10,
+        "glasses": 11,
+        "hair_color": 0
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 8,
+        "face_shape": 1,
+        "glasses": 11,
+        "hair_color": 1
+      },
+      "attributes_b": {
+        "face_color": 8,
+        "face_shape": 3,
+        "glasses": 11,
+        "hair_color": 1
+      },
+      "caption_a": "avatar face_shape_1 glasses_no_glasses hair_color_golden_blond face_color_light_beige",
+      "caption_b": "avatar face_shape_long glasses_no_glasses hair_color_golden_blond face_color_light_beige",
+      "changed_from": 1,
+      "changed_to": 3,
+      "endpoint_a_prompt_id": "ME_face_shape_06_A",
+      "endpoint_b_prompt_id": "ME_face_shape_06_B",
+      "pair_id": "ME_face_shape_06",
+      "selection_hash": "00606483f48c05803f581900f01a3b200d8567082d3ab3bb24599c0c73f5b37e",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs11139462015412455458",
+        "cs10891310903471688592"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 8,
+        "glasses": 11,
+        "hair_color": 1
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 2,
+        "face_shape": 2,
+        "glasses": 9,
+        "hair_color": 0
+      },
+      "attributes_b": {
+        "face_color": 2,
+        "face_shape": 0,
+        "glasses": 9,
+        "hair_color": 0
+      },
+      "caption_a": "avatar face_shape_oval glasses_round_sunglasses hair_color_light_blond face_color_medium_brown",
+      "caption_b": "avatar face_shape_pointed glasses_round_sunglasses hair_color_light_blond face_color_medium_brown",
+      "changed_from": 2,
+      "changed_to": 0,
+      "endpoint_a_prompt_id": "ME_face_shape_07_A",
+      "endpoint_b_prompt_id": "ME_face_shape_07_B",
+      "pair_id": "ME_face_shape_07",
+      "selection_hash": "00633f36114f641e0eaeca0792e2f1e0bd2212c9ef303d942475b3a11b822d1d",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs10428405448262326053",
+        "cs11342993158063609670"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 2,
+        "glasses": 9,
+        "hair_color": 0
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 4,
+        "face_shape": 3,
+        "glasses": 11,
+        "hair_color": 2
+      },
+      "attributes_b": {
+        "face_color": 4,
+        "face_shape": 2,
+        "glasses": 11,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_long glasses_no_glasses hair_color_orange face_color_golden_tan",
+      "caption_b": "avatar face_shape_oval glasses_no_glasses hair_color_orange face_color_golden_tan",
+      "changed_from": 3,
+      "changed_to": 2,
+      "endpoint_a_prompt_id": "ME_face_shape_08_A",
+      "endpoint_b_prompt_id": "ME_face_shape_08_B",
+      "pair_id": "ME_face_shape_08",
+      "selection_hash": "0072a4e4546127b45e189769e280549d45012b718985597c70490d2c958419c3",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs11224406429135553233",
+        "cs10274312235929497800"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 4,
+        "glasses": 11,
+        "hair_color": 2
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 10,
+        "face_shape": 1,
+        "glasses": 11,
+        "hair_color": 7
+      },
+      "attributes_b": {
+        "face_color": 10,
+        "face_shape": 0,
+        "glasses": 11,
+        "hair_color": 7
+      },
+      "caption_a": "avatar face_shape_1 glasses_no_glasses hair_color_black face_color_pale_pink",
+      "caption_b": "avatar face_shape_pointed glasses_no_glasses hair_color_black face_color_pale_pink",
+      "changed_from": 1,
+      "changed_to": 0,
+      "endpoint_a_prompt_id": "ME_face_shape_09_A",
+      "endpoint_b_prompt_id": "ME_face_shape_09_B",
+      "pair_id": "ME_face_shape_09",
+      "selection_hash": "0075ec8e986a4b4bfc157f81797d5bfe6b206d246e7fd8ad83da6230176e5575",
+      "target_attribute": "face_shape",
+      "train_known_source_sample_ids": [
+        "cs1074560012887867768",
+        "cs11422054265272518160"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 10,
+        "glasses": 11,
+        "hair_color": 7
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 9,
+        "face_shape": 1,
+        "glasses": 10,
+        "hair_color": 8
+      },
+      "attributes_b": {
+        "face_color": 9,
+        "face_shape": 1,
+        "glasses": 11,
+        "hair_color": 8
+      },
+      "caption_a": "avatar face_shape_1 glasses_heart_glasses hair_color_blue_gray face_color_light_peach",
+      "caption_b": "avatar face_shape_1 glasses_no_glasses hair_color_blue_gray face_color_light_peach",
+      "changed_from": 10,
+      "changed_to": 11,
+      "endpoint_a_prompt_id": "ME_glasses_00_A",
+      "endpoint_b_prompt_id": "ME_glasses_00_B",
+      "pair_id": "ME_glasses_00",
+      "selection_hash": "0002fa1625ac529b911fad38139c7b291cb13ca9adf65a3de937920a536ba9f7",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs10515445035233453169",
+        "cs10212931963352295445"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 9,
+        "face_shape": 1,
+        "hair_color": 8
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 4,
+        "face_shape": 0,
+        "glasses": 11,
+        "hair_color": 9
+      },
+      "attributes_b": {
+        "face_color": 4,
+        "face_shape": 0,
+        "glasses": 6,
+        "hair_color": 9
+      },
+      "caption_a": "avatar face_shape_pointed glasses_no_glasses hair_color_silver face_color_golden_tan",
+      "caption_b": "avatar face_shape_pointed glasses_thick_rectangular_glasses hair_color_silver face_color_golden_tan",
+      "changed_from": 11,
+      "changed_to": 6,
+      "endpoint_a_prompt_id": "ME_glasses_01_A",
+      "endpoint_b_prompt_id": "ME_glasses_01_B",
+      "pair_id": "ME_glasses_01",
+      "selection_hash": "000708497c28b00e7bb03fb250825deb2576308754b6c1ad2212727c64ebe6d0",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs10416091887331653743",
+        "cs10854065556819576754"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 4,
+        "face_shape": 0,
+        "hair_color": 9
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 2,
+        "face_shape": 4,
+        "glasses": 9,
+        "hair_color": 8
+      },
+      "attributes_b": {
+        "face_color": 2,
+        "face_shape": 4,
+        "glasses": 6,
+        "hair_color": 8
+      },
+      "caption_a": "avatar face_shape_round glasses_round_sunglasses hair_color_blue_gray face_color_medium_brown",
+      "caption_b": "avatar face_shape_round glasses_thick_rectangular_glasses hair_color_blue_gray face_color_medium_brown",
+      "changed_from": 9,
+      "changed_to": 6,
+      "endpoint_a_prompt_id": "ME_glasses_02_A",
+      "endpoint_b_prompt_id": "ME_glasses_02_B",
+      "pair_id": "ME_glasses_02",
+      "selection_hash": "00186570f82db58ff1d03a1ee289d271dc3f39313df7b2b73f2254f617ac0ad2",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs10327821443976069743",
+        "cs10509351154158102572"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 2,
+        "face_shape": 4,
+        "hair_color": 8
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 6,
+        "face_shape": 4,
+        "glasses": 5,
+        "hair_color": 2
+      },
+      "attributes_b": {
+        "face_color": 6,
+        "face_shape": 4,
+        "glasses": 9,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_round glasses_round_glasses hair_color_orange face_color_rose_tan",
+      "caption_b": "avatar face_shape_round glasses_round_sunglasses hair_color_orange face_color_rose_tan",
+      "changed_from": 5,
+      "changed_to": 9,
+      "endpoint_a_prompt_id": "ME_glasses_03_A",
+      "endpoint_b_prompt_id": "ME_glasses_03_B",
+      "pair_id": "ME_glasses_03",
+      "selection_hash": "0019b22f912928f90212dc2e6c61f93834a9c043e95b27895ebe6033761af370",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs11416201510034044037",
+        "cs11075382724480074668"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 6,
+        "face_shape": 4,
+        "hair_color": 2
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 2,
+        "face_shape": 2,
+        "glasses": 1,
+        "hair_color": 2
+      },
+      "attributes_b": {
+        "face_color": 2,
+        "face_shape": 2,
+        "glasses": 10,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_oval glasses_aviator_sunglasses hair_color_orange face_color_medium_brown",
+      "caption_b": "avatar face_shape_oval glasses_heart_glasses hair_color_orange face_color_medium_brown",
+      "changed_from": 1,
+      "changed_to": 10,
+      "endpoint_a_prompt_id": "ME_glasses_04_A",
+      "endpoint_b_prompt_id": "ME_glasses_04_B",
+      "pair_id": "ME_glasses_04",
+      "selection_hash": "00222a819b6bc1ab4b89463f4004cc03e6aefeab9a2e6294f30fc4b023a42816",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs10784718076894768552",
+        "cs10850080431875750871"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 2,
+        "face_shape": 2,
+        "hair_color": 2
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 1,
+        "face_shape": 3,
+        "glasses": 11,
+        "hair_color": 8
+      },
+      "attributes_b": {
+        "face_color": 1,
+        "face_shape": 3,
+        "glasses": 5,
+        "hair_color": 8
+      },
+      "caption_a": "avatar face_shape_long glasses_no_glasses hair_color_blue_gray face_color_dark_brown",
+      "caption_b": "avatar face_shape_long glasses_round_glasses hair_color_blue_gray face_color_dark_brown",
+      "changed_from": 11,
+      "changed_to": 5,
+      "endpoint_a_prompt_id": "ME_glasses_05_A",
+      "endpoint_b_prompt_id": "ME_glasses_05_B",
+      "pair_id": "ME_glasses_05",
+      "selection_hash": "0026dffe18829afa6a50f4750eccbd8f3b94cfa60601b3ca9b3472aebe0e99df",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs10469398243048467288",
+        "cs11138466041691299446"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 1,
+        "face_shape": 3,
+        "hair_color": 8
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 2,
+        "face_shape": 1,
+        "glasses": 10,
+        "hair_color": 7
+      },
+      "attributes_b": {
+        "face_color": 2,
+        "face_shape": 1,
+        "glasses": 3,
+        "hair_color": 7
+      },
+      "caption_a": "avatar face_shape_1 glasses_heart_glasses hair_color_black face_color_medium_brown",
+      "caption_b": "avatar face_shape_1 glasses_rimless_glasses hair_color_black face_color_medium_brown",
+      "changed_from": 10,
+      "changed_to": 3,
+      "endpoint_a_prompt_id": "ME_glasses_06_A",
+      "endpoint_b_prompt_id": "ME_glasses_06_B",
+      "pair_id": "ME_glasses_06",
+      "selection_hash": "002eb101d7c181918fa386086ba67e9fc49e224a20e63bccd1fd5936163c87cb",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs1006257874704815052",
+        "cs11027854170028178060"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 2,
+        "face_shape": 1,
+        "hair_color": 7
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 8,
+        "face_shape": 0,
+        "glasses": 11,
+        "hair_color": 4
+      },
+      "attributes_b": {
+        "face_color": 8,
+        "face_shape": 0,
+        "glasses": 5,
+        "hair_color": 4
+      },
+      "caption_a": "avatar face_shape_pointed glasses_no_glasses hair_color_golden_brown face_color_light_beige",
+      "caption_b": "avatar face_shape_pointed glasses_round_glasses hair_color_golden_brown face_color_light_beige",
+      "changed_from": 11,
+      "changed_to": 5,
+      "endpoint_a_prompt_id": "ME_glasses_07_A",
+      "endpoint_b_prompt_id": "ME_glasses_07_B",
+      "pair_id": "ME_glasses_07",
+      "selection_hash": "0034e55ca8280367b89ef026dea80efe85095be55979215984bb41e7183a3241",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs11180014585012796791",
+        "cs10228635870197665697"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 8,
+        "face_shape": 0,
+        "hair_color": 4
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 6,
+        "face_shape": 2,
+        "glasses": 1,
+        "hair_color": 9
+      },
+      "attributes_b": {
+        "face_color": 6,
+        "face_shape": 2,
+        "glasses": 11,
+        "hair_color": 9
+      },
+      "caption_a": "avatar face_shape_oval glasses_aviator_sunglasses hair_color_silver face_color_rose_tan",
+      "caption_b": "avatar face_shape_oval glasses_no_glasses hair_color_silver face_color_rose_tan",
+      "changed_from": 1,
+      "changed_to": 11,
+      "endpoint_a_prompt_id": "ME_glasses_08_A",
+      "endpoint_b_prompt_id": "ME_glasses_08_B",
+      "pair_id": "ME_glasses_08",
+      "selection_hash": "003c8415e61beea2f111af203342d8d4b6b931eed5358b42a0d791475a11239f",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs10505702260176044606",
+        "cs10109826066455069309"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 6,
+        "face_shape": 2,
+        "hair_color": 9
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 7,
+        "face_shape": 2,
+        "glasses": 1,
+        "hair_color": 8
+      },
+      "attributes_b": {
+        "face_color": 7,
+        "face_shape": 2,
+        "glasses": 11,
+        "hair_color": 8
+      },
+      "caption_a": "avatar face_shape_oval glasses_aviator_sunglasses hair_color_blue_gray face_color_peach_tan",
+      "caption_b": "avatar face_shape_oval glasses_no_glasses hair_color_blue_gray face_color_peach_tan",
+      "changed_from": 1,
+      "changed_to": 11,
+      "endpoint_a_prompt_id": "ME_glasses_09_A",
+      "endpoint_b_prompt_id": "ME_glasses_09_B",
+      "pair_id": "ME_glasses_09",
+      "selection_hash": "003ff2d5746a8283caed36bd45cc6ecf8e52a12fda13d4f295d18bab25fee919",
+      "target_attribute": "glasses",
+      "train_known_source_sample_ids": [
+        "cs11194965263667867057",
+        "cs10957962247854132804"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 7,
+        "face_shape": 2,
+        "hair_color": 8
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 8,
+        "face_shape": 0,
+        "glasses": 2,
+        "hair_color": 4
+      },
+      "attributes_b": {
+        "face_color": 8,
+        "face_shape": 0,
+        "glasses": 2,
+        "hair_color": 0
+      },
+      "caption_a": "avatar face_shape_pointed glasses_cat_eye_glasses hair_color_golden_brown face_color_light_beige",
+      "caption_b": "avatar face_shape_pointed glasses_cat_eye_glasses hair_color_light_blond face_color_light_beige",
+      "changed_from": 4,
+      "changed_to": 0,
+      "endpoint_a_prompt_id": "ME_hair_color_00_A",
+      "endpoint_b_prompt_id": "ME_hair_color_00_B",
+      "pair_id": "ME_hair_color_00",
+      "selection_hash": "0001985eb704919f71029a81dfd96fbc109c1b3ff5ea802f3553447805b9fd4b",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs1075474718017101696",
+        "cs11172342731392211264"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 8,
+        "face_shape": 0,
+        "glasses": 2
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 9,
+        "face_shape": 3,
+        "glasses": 2,
+        "hair_color": 8
+      },
+      "attributes_b": {
+        "face_color": 9,
+        "face_shape": 3,
+        "glasses": 2,
+        "hair_color": 9
+      },
+      "caption_a": "avatar face_shape_long glasses_cat_eye_glasses hair_color_blue_gray face_color_light_peach",
+      "caption_b": "avatar face_shape_long glasses_cat_eye_glasses hair_color_silver face_color_light_peach",
+      "changed_from": 8,
+      "changed_to": 9,
+      "endpoint_a_prompt_id": "ME_hair_color_01_A",
+      "endpoint_b_prompt_id": "ME_hair_color_01_B",
+      "pair_id": "ME_hair_color_01",
+      "selection_hash": "0005fb9e3e5a29e888508b5503df9c7cb25d94724de66d8914f253e0db912da4",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs10059686576172014583",
+        "cs1002188099677231796"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 9,
+        "face_shape": 3,
+        "glasses": 2
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 8,
+        "face_shape": 5,
+        "glasses": 11,
+        "hair_color": 4
+      },
+      "attributes_b": {
+        "face_color": 8,
+        "face_shape": 5,
+        "glasses": 11,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_wide glasses_no_glasses hair_color_golden_brown face_color_light_beige",
+      "caption_b": "avatar face_shape_wide glasses_no_glasses hair_color_orange face_color_light_beige",
+      "changed_from": 4,
+      "changed_to": 2,
+      "endpoint_a_prompt_id": "ME_hair_color_02_A",
+      "endpoint_b_prompt_id": "ME_hair_color_02_B",
+      "pair_id": "ME_hair_color_02",
+      "selection_hash": "00078bdf41c22db671361cdea424293ca05763c3555045a0f82be54926e416e6",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs11214081271557621871",
+        "cs10924431445302832993"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 8,
+        "face_shape": 5,
+        "glasses": 11
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 9,
+        "face_shape": 1,
+        "glasses": 11,
+        "hair_color": 7
+      },
+      "attributes_b": {
+        "face_color": 9,
+        "face_shape": 1,
+        "glasses": 11,
+        "hair_color": 3
+      },
+      "caption_a": "avatar face_shape_1 glasses_no_glasses hair_color_black face_color_light_peach",
+      "caption_b": "avatar face_shape_1 glasses_no_glasses hair_color_red face_color_light_peach",
+      "changed_from": 7,
+      "changed_to": 3,
+      "endpoint_a_prompt_id": "ME_hair_color_03_A",
+      "endpoint_b_prompt_id": "ME_hair_color_03_B",
+      "pair_id": "ME_hair_color_03",
+      "selection_hash": "0008116ed83a18cbb577290241ad7dfe011d5deb1cde1665379739fc7dfad351",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs11187907180283448625",
+        "cs11405895699509697365"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 9,
+        "face_shape": 1,
+        "glasses": 11
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 4,
+        "face_shape": 3,
+        "glasses": 4,
+        "hair_color": 1
+      },
+      "attributes_b": {
+        "face_color": 4,
+        "face_shape": 3,
+        "glasses": 4,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_long glasses_rectangular_glasses hair_color_golden_blond face_color_golden_tan",
+      "caption_b": "avatar face_shape_long glasses_rectangular_glasses hair_color_orange face_color_golden_tan",
+      "changed_from": 1,
+      "changed_to": 2,
+      "endpoint_a_prompt_id": "ME_hair_color_04_A",
+      "endpoint_b_prompt_id": "ME_hair_color_04_B",
+      "pair_id": "ME_hair_color_04",
+      "selection_hash": "000a3e9a09a1703772846b6089639653e06fc54522e63e69eca8d11550cb34dd",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs1074709937306584373",
+        "cs10858415946360288680"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 4,
+        "face_shape": 3,
+        "glasses": 4
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 4,
+        "face_shape": 3,
+        "glasses": 8,
+        "hair_color": 7
+      },
+      "attributes_b": {
+        "face_color": 4,
+        "face_shape": 3,
+        "glasses": 8,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_long glasses_narrow_sunglasses hair_color_black face_color_golden_tan",
+      "caption_b": "avatar face_shape_long glasses_narrow_sunglasses hair_color_orange face_color_golden_tan",
+      "changed_from": 7,
+      "changed_to": 2,
+      "endpoint_a_prompt_id": "ME_hair_color_05_A",
+      "endpoint_b_prompt_id": "ME_hair_color_05_B",
+      "pair_id": "ME_hair_color_05",
+      "selection_hash": "000e96f2eb68000fd289afe133ab719873ab3e98533f48eb915df68a55bef04d",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs10842886125637523821",
+        "cs11283540370079252239"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 4,
+        "face_shape": 3,
+        "glasses": 8
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 8,
+        "face_shape": 1,
+        "glasses": 3,
+        "hair_color": 1
+      },
+      "attributes_b": {
+        "face_color": 8,
+        "face_shape": 1,
+        "glasses": 3,
+        "hair_color": 5
+      },
+      "caption_a": "avatar face_shape_1 glasses_rimless_glasses hair_color_golden_blond face_color_light_beige",
+      "caption_b": "avatar face_shape_1 glasses_rimless_glasses hair_color_medium_brown face_color_light_beige",
+      "changed_from": 1,
+      "changed_to": 5,
+      "endpoint_a_prompt_id": "ME_hair_color_06_A",
+      "endpoint_b_prompt_id": "ME_hair_color_06_B",
+      "pair_id": "ME_hair_color_06",
+      "selection_hash": "00112bf9949e8536f80748bd022dcff9f7889eefe17d0994bd430ce848c8ad39",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs10794400298489066418",
+        "cs10074257825414818018"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 8,
+        "face_shape": 1,
+        "glasses": 3
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 6,
+        "face_shape": 5,
+        "glasses": 10,
+        "hair_color": 4
+      },
+      "attributes_b": {
+        "face_color": 6,
+        "face_shape": 5,
+        "glasses": 10,
+        "hair_color": 0
+      },
+      "caption_a": "avatar face_shape_wide glasses_heart_glasses hair_color_golden_brown face_color_rose_tan",
+      "caption_b": "avatar face_shape_wide glasses_heart_glasses hair_color_light_blond face_color_rose_tan",
+      "changed_from": 4,
+      "changed_to": 0,
+      "endpoint_a_prompt_id": "ME_hair_color_07_A",
+      "endpoint_b_prompt_id": "ME_hair_color_07_B",
+      "pair_id": "ME_hair_color_07",
+      "selection_hash": "001f6ef246709e10db5d0f5ec58b11831f1e93f54c6671d6e2cdf8eae9bb812f",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs1134426952921888321",
+        "cs11137050825127185515"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 6,
+        "face_shape": 5,
+        "glasses": 10
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 3,
+        "face_shape": 3,
+        "glasses": 6,
+        "hair_color": 8
+      },
+      "attributes_b": {
+        "face_color": 3,
+        "face_shape": 3,
+        "glasses": 6,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_long glasses_thick_rectangular_glasses hair_color_blue_gray face_color_warm_brown",
+      "caption_b": "avatar face_shape_long glasses_thick_rectangular_glasses hair_color_orange face_color_warm_brown",
+      "changed_from": 8,
+      "changed_to": 2,
+      "endpoint_a_prompt_id": "ME_hair_color_08_A",
+      "endpoint_b_prompt_id": "ME_hair_color_08_B",
+      "pair_id": "ME_hair_color_08",
+      "selection_hash": "00298c7db3df50b44ddb98a9ae4491dbed4baba65959b95ed4ca65a839b13cfe",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs11370610152692663488",
+        "cs10532196274570674538"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 3,
+        "face_shape": 3,
+        "glasses": 6
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 2,
+        "face_shape": 1,
+        "glasses": 11,
+        "hair_color": 4
+      },
+      "attributes_b": {
+        "face_color": 2,
+        "face_shape": 1,
+        "glasses": 11,
+        "hair_color": 9
+      },
+      "caption_a": "avatar face_shape_1 glasses_no_glasses hair_color_golden_brown face_color_medium_brown",
+      "caption_b": "avatar face_shape_1 glasses_no_glasses hair_color_silver face_color_medium_brown",
+      "changed_from": 4,
+      "changed_to": 9,
+      "endpoint_a_prompt_id": "ME_hair_color_09_A",
+      "endpoint_b_prompt_id": "ME_hair_color_09_B",
+      "pair_id": "ME_hair_color_09",
+      "selection_hash": "00318d3af0ccdf6cbfff5d4d77da2364754e7c6047290ed4d4771ad5a45011ea",
+      "target_attribute": "hair_color",
+      "train_known_source_sample_ids": [
+        "cs11493511398876547269",
+        "cs10057810017819967079"
+      ],
+      "unchanged_attribute_values": {
+        "face_color": 2,
+        "face_shape": 1,
+        "glasses": 11
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 4,
+        "face_shape": 1,
+        "glasses": 0,
+        "hair_color": 2
+      },
+      "attributes_b": {
+        "face_color": 3,
+        "face_shape": 1,
+        "glasses": 0,
+        "hair_color": 2
+      },
+      "caption_a": "avatar face_shape_1 glasses_oversized_glasses hair_color_orange face_color_golden_tan",
+      "caption_b": "avatar face_shape_1 glasses_oversized_glasses hair_color_orange face_color_warm_brown",
+      "changed_from": 4,
+      "changed_to": 3,
+      "endpoint_a_prompt_id": "ME_face_color_00_A",
+      "endpoint_b_prompt_id": "ME_face_color_00_B",
+      "pair_id": "ME_face_color_00",
+      "selection_hash": "0000b9f6631fd0b9257a28a5abee909e6b099d2767b3a56a2133f91618f172c4",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs10417722799003160765",
+        "cs10583599935548545977"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 1,
+        "glasses": 0,
+        "hair_color": 2
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 4,
+        "face_shape": 3,
+        "glasses": 5,
+        "hair_color": 1
+      },
+      "attributes_b": {
+        "face_color": 9,
+        "face_shape": 3,
+        "glasses": 5,
+        "hair_color": 1
+      },
+      "caption_a": "avatar face_shape_long glasses_round_glasses hair_color_golden_blond face_color_golden_tan",
+      "caption_b": "avatar face_shape_long glasses_round_glasses hair_color_golden_blond face_color_light_peach",
+      "changed_from": 4,
+      "changed_to": 9,
+      "endpoint_a_prompt_id": "ME_face_color_01_A",
+      "endpoint_b_prompt_id": "ME_face_color_01_B",
+      "pair_id": "ME_face_color_01",
+      "selection_hash": "0022fdd86b185744ad7d40542f99436bb4317fff9baa97918e777d87ccd0bdd2",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs10081743199099927175",
+        "cs10603444925146330635"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 3,
+        "glasses": 5,
+        "hair_color": 1
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 1,
+        "face_shape": 2,
+        "glasses": 6,
+        "hair_color": 6
+      },
+      "attributes_b": {
+        "face_color": 3,
+        "face_shape": 2,
+        "glasses": 6,
+        "hair_color": 6
+      },
+      "caption_a": "avatar face_shape_oval glasses_thick_rectangular_glasses hair_color_dark_brown face_color_dark_brown",
+      "caption_b": "avatar face_shape_oval glasses_thick_rectangular_glasses hair_color_dark_brown face_color_warm_brown",
+      "changed_from": 1,
+      "changed_to": 3,
+      "endpoint_a_prompt_id": "ME_face_color_02_A",
+      "endpoint_b_prompt_id": "ME_face_color_02_B",
+      "pair_id": "ME_face_color_02",
+      "selection_hash": "00262f2ea314c00a577c5d620a5999df43695bfc9882f5d654dfafde4bfae110",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs113239488699437069",
+        "cs11389333750234610633"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 2,
+        "glasses": 6,
+        "hair_color": 6
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 0,
+        "face_shape": 5,
+        "glasses": 11,
+        "hair_color": 1
+      },
+      "attributes_b": {
+        "face_color": 4,
+        "face_shape": 5,
+        "glasses": 11,
+        "hair_color": 1
+      },
+      "caption_a": "avatar face_shape_wide glasses_no_glasses hair_color_golden_blond face_color_deep_brown",
+      "caption_b": "avatar face_shape_wide glasses_no_glasses hair_color_golden_blond face_color_golden_tan",
+      "changed_from": 0,
+      "changed_to": 4,
+      "endpoint_a_prompt_id": "ME_face_color_03_A",
+      "endpoint_b_prompt_id": "ME_face_color_03_B",
+      "pair_id": "ME_face_color_03",
+      "selection_hash": "0026e4bfe91665aa54256520115e59537418fee20d9d232277ead5a4a094eeb9",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs1014402452433879920",
+        "cs10275989213283655469"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 5,
+        "glasses": 11,
+        "hair_color": 1
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 8,
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 3
+      },
+      "attributes_b": {
+        "face_color": 10,
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 3
+      },
+      "caption_a": "avatar face_shape_round glasses_no_glasses hair_color_red face_color_light_beige",
+      "caption_b": "avatar face_shape_round glasses_no_glasses hair_color_red face_color_pale_pink",
+      "changed_from": 8,
+      "changed_to": 10,
+      "endpoint_a_prompt_id": "ME_face_color_04_A",
+      "endpoint_b_prompt_id": "ME_face_color_04_B",
+      "pair_id": "ME_face_color_04",
+      "selection_hash": "002c7e7744c3d472106a20230291c86b59197b068bf0fc3900755efa15d33a4a",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs10291500350799165443",
+        "cs10511424994724799606"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 3
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 1,
+        "face_shape": 5,
+        "glasses": 11,
+        "hair_color": 0
+      },
+      "attributes_b": {
+        "face_color": 4,
+        "face_shape": 5,
+        "glasses": 11,
+        "hair_color": 0
+      },
+      "caption_a": "avatar face_shape_wide glasses_no_glasses hair_color_light_blond face_color_dark_brown",
+      "caption_b": "avatar face_shape_wide glasses_no_glasses hair_color_light_blond face_color_golden_tan",
+      "changed_from": 1,
+      "changed_to": 4,
+      "endpoint_a_prompt_id": "ME_face_color_05_A",
+      "endpoint_b_prompt_id": "ME_face_color_05_B",
+      "pair_id": "ME_face_color_05",
+      "selection_hash": "0030d32f1d78aeffe232362c31467360605b6bef91751e9d2ff402402743126d",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs10994940834206680489",
+        "cs10451727986639756830"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 5,
+        "glasses": 11,
+        "hair_color": 0
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 8,
+        "face_shape": 3,
+        "glasses": 3,
+        "hair_color": 3
+      },
+      "attributes_b": {
+        "face_color": 3,
+        "face_shape": 3,
+        "glasses": 3,
+        "hair_color": 3
+      },
+      "caption_a": "avatar face_shape_long glasses_rimless_glasses hair_color_red face_color_light_beige",
+      "caption_b": "avatar face_shape_long glasses_rimless_glasses hair_color_red face_color_warm_brown",
+      "changed_from": 8,
+      "changed_to": 3,
+      "endpoint_a_prompt_id": "ME_face_color_06_A",
+      "endpoint_b_prompt_id": "ME_face_color_06_B",
+      "pair_id": "ME_face_color_06",
+      "selection_hash": "003592764d4eaf89e7dca9b47e934da84898cea829ea6c8acb8469f66dba5f28",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs10478813662644811127",
+        "cs1108897559026792499"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 3,
+        "glasses": 3,
+        "hair_color": 3
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 1,
+        "face_shape": 3,
+        "glasses": 11,
+        "hair_color": 9
+      },
+      "attributes_b": {
+        "face_color": 2,
+        "face_shape": 3,
+        "glasses": 11,
+        "hair_color": 9
+      },
+      "caption_a": "avatar face_shape_long glasses_no_glasses hair_color_silver face_color_dark_brown",
+      "caption_b": "avatar face_shape_long glasses_no_glasses hair_color_silver face_color_medium_brown",
+      "changed_from": 1,
+      "changed_to": 2,
+      "endpoint_a_prompt_id": "ME_face_color_07_A",
+      "endpoint_b_prompt_id": "ME_face_color_07_B",
+      "pair_id": "ME_face_color_07",
+      "selection_hash": "0036c0bc45705df7ecd9ff13fb8438f5c4fd3c9d901b3a0d23f9534d1cfa57db",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs10506611887133717923",
+        "cs10235143751538088921"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 3,
+        "glasses": 11,
+        "hair_color": 9
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 1,
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 8
+      },
+      "attributes_b": {
+        "face_color": 0,
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 8
+      },
+      "caption_a": "avatar face_shape_round glasses_no_glasses hair_color_blue_gray face_color_dark_brown",
+      "caption_b": "avatar face_shape_round glasses_no_glasses hair_color_blue_gray face_color_deep_brown",
+      "changed_from": 1,
+      "changed_to": 0,
+      "endpoint_a_prompt_id": "ME_face_color_08_A",
+      "endpoint_b_prompt_id": "ME_face_color_08_B",
+      "pair_id": "ME_face_color_08",
+      "selection_hash": "0045222db645bdfe2c3437600645ae9ab2df323c73994c5f5b8d45e345de96e0",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs10232879792152138775",
+        "cs10803248751875906026"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 4,
+        "glasses": 11,
+        "hair_color": 8
+      }
+    },
+    {
+      "attributes_a": {
+        "face_color": 1,
+        "face_shape": 3,
+        "glasses": 5,
+        "hair_color": 3
+      },
+      "attributes_b": {
+        "face_color": 3,
+        "face_shape": 3,
+        "glasses": 5,
+        "hair_color": 3
+      },
+      "caption_a": "avatar face_shape_long glasses_round_glasses hair_color_red face_color_dark_brown",
+      "caption_b": "avatar face_shape_long glasses_round_glasses hair_color_red face_color_warm_brown",
+      "changed_from": 1,
+      "changed_to": 3,
+      "endpoint_a_prompt_id": "ME_face_color_09_A",
+      "endpoint_b_prompt_id": "ME_face_color_09_B",
+      "pair_id": "ME_face_color_09",
+      "selection_hash": "00468eeb852926e8b8365952b09f0eab0d2db855a6d1851f3e08bdc96cafda18",
+      "target_attribute": "face_color",
+      "train_known_source_sample_ids": [
+        "cs1142643981799857555",
+        "cs11239710428785475005"
+      ],
+      "unchanged_attribute_values": {
+        "face_shape": 3,
+        "glasses": 5,
+        "hair_color": 3
+      }
+    }
+  ],
+  "status": "FROZEN"
+}
