@@ -1,0 +1,3797 @@
+{
+  "ID_MAA": 0.5223684210526316,
+  "MacroPSR": 0.224,
+  "OOD_MAA": 0.425,
+  "PSR": {
+    "OOD1": {
+      "PSR": 0.0,
+      "p00": 113,
+      "p01": 1,
+      "p10": 11,
+      "p11": 0
+    },
+    "OOD2": {
+      "PSR": 0.4,
+      "p00": 10,
+      "p01": 61,
+      "p10": 4,
+      "p11": 50
+    },
+    "OOD3": {
+      "PSR": 0.056,
+      "p00": 55,
+      "p01": 0,
+      "p10": 63,
+      "p11": 7
+    },
+    "OOD4": {
+      "PSR": 0.44,
+      "p00": 42,
+      "p01": 24,
+      "p10": 4,
+      "p11": 55
+    }
+  },
+  "bootstrap": {
+    "all_five_seeds_clustered": true,
+    "resamples": 10000,
+    "scopes": {
+      "ID": {
+        "estimate": 0.5223684210526316,
+        "percentile_95": [
+          0.49835526315789475,
+          0.5463815789473685
+        ]
+      },
+      "OOD": {
+        "estimate": 0.42499999999999993,
+        "percentile_95": [
+          0.4010000000000001,
+          0.44900000000000007
+        ]
+      },
+      "OOD1": {
+        "estimate": 0.31,
+        "percentile_95": [
+          0.27399999999999997,
+          0.34600000000000003
+        ]
+      },
+      "OOD2": {
+        "estimate": 0.528,
+        "percentile_95": [
+          0.488,
+          0.568
+        ]
+      },
+      "OOD3": {
+        "estimate": 0.446,
+        "percentile_95": [
+          0.406,
+          0.486
+        ]
+      },
+      "OOD4": {
+        "estimate": 0.41600000000000004,
+        "percentile_95": [
+          0.382,
+          0.45
+        ]
+      }
+    },
+    "seed": 2026,
+    "unit": "prompt"
+  },
+  "matched_control_diagnostics": {
+    "applicability": "secondary diagnostic; primary MAA/MacroPSR unaffected",
+    "coverage": {
+      "both": 76,
+      "neither": 24,
+      "one_only": 0
+    },
+    "rows": [
+      {
+        "control_role": "ALL",
+        "first_attribute": "face_shape",
+        "first_attribute_accuracy": 0.2631578947368421,
+        "n": 190,
+        "ood_family": "OOD1",
+        "second_attribute": "glasses",
+        "second_attribute_accuracy": 0.39473684210526316
+      },
+      {
+        "control_role": "A_FIXED",
+        "first_attribute": "face_shape",
+        "first_attribute_accuracy": 0.16842105263157894,
+        "n": 95,
+        "ood_family": "OOD1",
+        "second_attribute": "glasses",
+        "second_attribute_accuracy": 0.7789473684210526
+      },
+      {
+        "control_role": "B_FIXED",
+        "first_attribute": "face_shape",
+        "first_attribute_accuracy": 0.35789473684210527,
+        "n": 95,
+        "ood_family": "OOD1",
+        "second_attribute": "glasses",
+        "second_attribute_accuracy": 0.010526315789473684
+      },
+      {
+        "control_role": "ALL",
+        "first_attribute": "face_shape",
+        "first_attribute_accuracy": 0.4368421052631579,
+        "n": 190,
+        "ood_family": "OOD2",
+        "second_attribute": "hair_color",
+        "second_attribute_accuracy": 0.8473684210526315
+      },
+      {
+        "control_role": "A_FIXED",
+        "first_attribute": "face_shape",
+        "first_attribute_accuracy": 0.5263157894736842,
+        "n": 95,
+        "ood_family": "OOD2",
+        "second_attribute": "hair_color",
+        "second_attribute_accuracy": 0.7789473684210526
+      },
+      {
+        "control_role": "B_FIXED",
+        "first_attribute": "face_shape",
+        "first_attribute_accuracy": 0.3473684210526316,
+        "n": 95,
+        "ood_family": "OOD2",
+        "second_attribute": "hair_color",
+        "second_attribute_accuracy": 0.9157894736842105
+      },
+      {
+        "control_role": "ALL",
+        "first_attribute": "glasses",
+        "first_attribute_accuracy": 0.6105263157894737,
+        "n": 190,
+        "ood_family": "OOD3",
+        "second_attribute": "face_color",
+        "second_attribute_accuracy": 0.19473684210526315
+      },
+      {
+        "control_role": "A_FIXED",
+        "first_attribute": "glasses",
+        "first_attribute_accuracy": 0.6736842105263158,
+        "n": 95,
+        "ood_family": "OOD3",
+        "second_attribute": "face_color",
+        "second_attribute_accuracy": 0.3473684210526316
+      },
+      {
+        "control_role": "B_FIXED",
+        "first_attribute": "glasses",
+        "first_attribute_accuracy": 0.5473684210526316,
+        "n": 95,
+        "ood_family": "OOD3",
+        "second_attribute": "face_color",
+        "second_attribute_accuracy": 0.042105263157894736
+      },
+      {
+        "control_role": "ALL",
+        "first_attribute": "hair_color",
+        "first_attribute_accuracy": 0.7684210526315789,
+        "n": 190,
+        "ood_family": "OOD4",
+        "second_attribute": "face_color",
+        "second_attribute_accuracy": 0.6052631578947368
+      },
+      {
+        "control_role": "A_FIXED",
+        "first_attribute": "hair_color",
+        "first_attribute_accuracy": 0.6210526315789474,
+        "n": 95,
+        "ood_family": "OOD4",
+        "second_attribute": "face_color",
+        "second_attribute_accuracy": 0.37894736842105264
+      },
+      {
+        "control_role": "B_FIXED",
+        "first_attribute": "hair_color",
+        "first_attribute_accuracy": 0.9157894736842105,
+        "n": 95,
+        "ood_family": "OOD4",
+        "second_attribute": "face_color",
+        "second_attribute_accuracy": 0.8315789473684211
+      }
+    ]
+  },
+  "prompt_level": [
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 0.4
+      },
+      "eam": 0.2,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_00",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_01",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_03",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_04",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_05",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_07",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.0,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_08",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_09",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_10",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_12",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_14",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_15",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.0,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_16",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_18",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_19",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.4,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_20",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 1.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_22",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.0,
+        "glasses": 0.8,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_23",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_A_FIXED_24",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_00",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_01",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_03",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_04",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_05",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_07",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_08",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.8,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_09",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_10",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_12",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.4,
+        "glasses": 0.2,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_14",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.8,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_15",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_16",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_18",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_19",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.8,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_20",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_22",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_23",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "AUDIT_ID_OOD1_B_FIXED_24",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.8,
+        "glasses": 0.8,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_01",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_03",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_04",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_05",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.6,
+        "glasses": 1.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_06",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.6,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_07",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_09",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_10",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.6,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_11",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_12",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_13",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.6,
+        "glasses": 1.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.4,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_15",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_17",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_18",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.8,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_19",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_20",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.2,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_21",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.8,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_22",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.6,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.6,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_A_FIXED_23",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.8,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_01",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_03",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_04",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.0,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_05",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_06",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.8,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_07",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_09",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_10",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_11",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.6,
+        "glasses": 0.2,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_12",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_13",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.8,
+        "glasses": 0.8,
+        "hair_color": 0.8
+      },
+      "eam": 0.4,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_15",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_17",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_18",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_19",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.0,
+        "glasses": 0.6,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_20",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.6,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_21",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_22",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.2,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "AUDIT_ID_OOD2_B_FIXED_23",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_00",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_01",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_02",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.4,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_04",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_05",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 0.6
+      },
+      "eam": 0.2,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_06",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_07",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.8,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_08",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_09",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_10",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_11",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_12",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_13",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_14",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.4,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_17",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_18",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_19",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_23",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.8,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.4,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_A_FIXED_24",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_00",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_01",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 1.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_02",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_04",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.8,
+        "glasses": 0.6,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_05",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_06",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_07",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_08",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_09",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_10",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_11",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 1.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_12",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.8,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_13",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_14",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_17",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 1.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_18",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_19",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 1.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_23",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "AUDIT_ID_OOD3_B_FIXED_24",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_00",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 1.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_01",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_02",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_03",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_05",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_06",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_07",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_08",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 0.8,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_09",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_10",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_11",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_13",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_14",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.6,
+        "glasses": 1.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.4,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_15",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_17",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_19",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_21",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_22",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 1.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_A_FIXED_23",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_00",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.0,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_01",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_02",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.0,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_03",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.2,
+        "glasses": 1.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_05",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_06",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_07",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 0.8
+      },
+      "eam": 0.4,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_08",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.8,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_09",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_10",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.0,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_11",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_13",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.4,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_14",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_15",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_17",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_19",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.0,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_21",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_22",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.4,
+      "ood_family": "OOD4",
+      "prompt_id": "AUDIT_ID_OOD4_B_FIXED_23",
+      "split": "ID"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_00",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_01",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_02",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_03",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_04",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_05",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_06",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_07",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_08",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_09",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_10",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_11",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.0,
+        "glasses": 0.2,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_12",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_13",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_14",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_15",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_16",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_17",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_18",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_19",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_20",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_21",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_22",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.2
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_23",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD1",
+      "prompt_id": "OOD_OOD1_24",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_00",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_01",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_02",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_03",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.8,
+        "glasses": 0.2,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_04",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.6,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_05",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_06",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_07",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_08",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_09",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.2,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_10",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.6,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_11",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.8,
+        "glasses": 0.2,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_12",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_13",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_14",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_15",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_16",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 1.0,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.4,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_17",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_18",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.2,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_19",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_20",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_21",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_22",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.2,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_23",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.4,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD2",
+      "prompt_id": "OOD_OOD2_24",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_00",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_01",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.4,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_02",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_03",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.0,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_04",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_05",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_06",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.4,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_07",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_08",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_09",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_10",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_11",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.6,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_12",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_13",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_14",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.0,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_15",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_16",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.6,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.2,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_17",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_18",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.6,
+        "glasses": 0.8,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_19",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_20",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 0.8
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_21",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.2,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_22",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_23",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.0,
+        "face_shape": 0.4,
+        "glasses": 0.4,
+        "hair_color": 1.0
+      },
+      "eam": 0.0,
+      "ood_family": "OOD3",
+      "prompt_id": "OOD_OOD3_24",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_00",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_01",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_02",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_03",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.8,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_04",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.0,
+        "glasses": 0.6,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_05",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_06",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 0.4
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_07",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.6,
+        "glasses": 0.6,
+        "hair_color": 0.6
+      },
+      "eam": 0.2,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_08",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.0,
+        "glasses": 0.4,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_09",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_10",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.2,
+        "glasses": 0.6,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_11",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.2,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_12",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_13",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_14",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.6,
+        "glasses": 0.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_15",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.0,
+        "glasses": 0.4,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_16",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.4,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_17",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.0,
+        "glasses": 0.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_18",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.2,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_19",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.2,
+        "glasses": 0.0,
+        "hair_color": 0.6
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_20",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_21",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_22",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.8,
+        "face_shape": 0.4,
+        "glasses": 0.6,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_23",
+      "split": "OOD"
+    },
+    {
+      "attributes": {
+        "face_color": 0.6,
+        "face_shape": 0.4,
+        "glasses": 0.0,
+        "hair_color": 0.4
+      },
+      "eam": 0.0,
+      "ood_family": "OOD4",
+      "prompt_id": "OOD_OOD4_24",
+      "split": "OOD"
+    }
+  ],
+  "secondary_metrics": {
+    "face_color": {
+      "balanced_accuracy": 0.3618614506782773,
+      "confusion_matrix": [
+        [
+          230,
+          2,
+          1,
+          0,
+          0,
+          72,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          29,
+          23,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          24,
+          19,
+          3,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          33,
+          18,
+          24,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          20,
+          58,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          8,
+          72,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          95,
+          3,
+          16,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          3,
+          42,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          40,
+          0,
+          3,
+          37,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          1,
+          23,
+          16,
+          7,
+          36,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          240,
+          28,
+          17
+        ]
+      ],
+      "label_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "macro_f1": 0.32164278138784436
+    },
+    "face_shape": {
+      "balanced_accuracy": 0.32717518000228163,
+      "confusion_matrix": [
+        [
+          33,
+          48,
+          0,
+          2,
+          0,
+          37,
+          5
+        ],
+        [
+          15,
+          46,
+          1,
+          6,
+          0,
+          37,
+          15
+        ],
+        [
+          1,
+          99,
+          45,
+          23,
+          8,
+          39,
+          90
+        ],
+        [
+          4,
+          58,
+          2,
+          19,
+          0,
+          33,
+          29
+        ],
+        [
+          0,
+          10,
+          5,
+          3,
+          145,
+          67,
+          85
+        ],
+        [
+          0,
+          19,
+          1,
+          2,
+          18,
+          60,
+          25
+        ],
+        [
+          0,
+          7,
+          4,
+          4,
+          21,
+          36,
+          53
+        ]
+      ],
+      "label_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "macro_f1": 0.30396750043210774
+    },
+    "glasses": {
+      "balanced_accuracy": 0.37439030799787815,
+      "confusion_matrix": [
+        [
+          11,
+          3,
+          9,
+          0,
+          1,
+          2,
+          2,
+          0,
+          4,
+          0,
+          1,
+          7
+        ],
+        [
+          0,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          2,
+          0
+        ],
+        [
+          4,
+          0,
+          15,
+          0,
+          8,
+          1,
+          8,
+          6,
+          6,
+          1,
+          2,
+          4
+        ],
+        [
+          71,
+          0,
+          4,
+          2,
+          107,
+          54,
+          8,
+          2,
+          5,
+          1,
+          1,
+          0
+        ],
+        [
+          6,
+          0,
+          0,
+          1,
+          36,
+          19,
+          0,
+          1,
+          0,
+          0,
+          0,
+          7
+        ],
+        [
+          5,
+          0,
+          0,
+          3,
+          39,
+          29,
+          0,
+          0,
+          0,
+          0,
+          0,
+          9
+        ],
+        [
+          3,
+          0,
+          7,
+          0,
+          3,
+          1,
+          3,
+          0,
+          7,
+          0,
+          1,
+          5
+        ],
+        [
+          5,
+          0,
+          17,
+          0,
+          10,
+          3,
+          11,
+          11,
+          10,
+          2,
+          2,
+          4
+        ],
+        [
+          0,
+          1,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          38,
+          0,
+          6,
+          0
+        ],
+        [
+          0,
+          3,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          13,
+          4,
+          26,
+          0
+        ],
+        [
+          4,
+          2,
+          5,
+          0,
+          0,
+          1,
+          1,
+          0,
+          54,
+          0,
+          152,
+          26
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          3,
+          22,
+          12,
+          0,
+          0,
+          0,
+          0,
+          258
+        ]
+      ],
+      "label_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "macro_f1": 0.31144870258617674
+    },
+    "hair_color": {
+      "balanced_accuracy": 0.8209294956759488,
+      "confusion_matrix": [
+        [
+          153,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          132
+        ],
+        [
+          3,
+          45,
+          0,
+          3,
+          26,
+          0,
+          0,
+          0,
+          0,
+          28
+        ],
+        [
+          0,
+          0,
+          51,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          56,
+          0,
+          18,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          95,
+          0,
+          0,
+          0,
+          0,
+          5
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          113,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          14,
+          226,
+          0,
+          0,
+          10
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          10,
+          55,
+          6,
+          4
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          115,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          85
+        ]
+      ],
+      "label_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "macro_f1": 0.8030420995938661
+    }
+  }
+}

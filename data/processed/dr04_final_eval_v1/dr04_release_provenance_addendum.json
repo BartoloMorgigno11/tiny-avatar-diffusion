@@ -1,0 +1,34 @@
+{
+  "derived_reporting_only": true,
+  "id_ood_gap": {
+    "bootstrap": {
+      "all_five_seeds_clustered": true,
+      "cluster_unit": "prompt",
+      "confidence_level": 0.95,
+      "id_ood_resampling": "independent",
+      "method": "percentile",
+      "repetitions": 10000,
+      "seed": 2026
+    },
+    "estimate": 0.09736842105263166,
+    "formula": "delta_maa = maa_id - maa_ood",
+    "percentile_95": [
+      0.06307763157894727,
+      0.13176578947368425
+    ]
+  },
+  "no_samples_regenerated": true,
+  "schema": "dr04_release_provenance_addendum",
+  "source_artifacts": {
+    "evaluator_checkpoint_sha256": "414d2e0bb597c53041f6cf695d965231ab1c4f38c9080b68c06f9c09dcf001dc",
+    "final_summary_path": "results/runs/dr04_final_conditioning_v1/final_conditioning_summary.json",
+    "final_summary_sha256": "307138ac4aa1d26a0b478ab2a1a1703fa248406187681896f4834147902e26c6",
+    "generator_checkpoint_sha256": "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb",
+    "plan_sha256": "5bff888428f42b72461e0de75a0cdd54205fdb69210b52e67993b038541cf585",
+    "prediction_manifest_path": "results/runs/dr04_final_conditioning_v1/manifests/predictions.jsonl",
+    "prediction_manifest_sha256": "ad50425719d571a3a518abfd5b22f85d8ce105147c05a8840ada8c975984d26f",
+    "vocabulary_path": "data/processed/dr01_v1/text/10k/vocab.json",
+    "vocabulary_sha256": "15f2feb538e6e13389bf6ff113c48ed7a9663e0aefd8416dcd4c6fc760d7041a"
+  },
+  "version": 1
+}

@@ -49,6 +49,20 @@ runs/
 results/*
 !results/runs/
 results/runs/*
+
+# DR04 canonical compact evidence only (generated PNG population remains local-only)
+!results/runs/dr04_final_conditioning_v1/
+results/runs/dr04_final_conditioning_v1/*
+!results/runs/dr04_final_conditioning_v1/final_conditioning_summary.json
+!results/runs/dr04_final_conditioning_v1/metrics.json
+!results/runs/dr04_final_conditioning_v1/manifests/
+results/runs/dr04_final_conditioning_v1/manifests/*
+!results/runs/dr04_final_conditioning_v1/manifests/generated_images.jsonl
+!results/runs/dr04_final_conditioning_v1/manifests/predictions.jsonl
+!results/runs/dr04_final_conditioning_v1/phase_status/
+results/runs/dr04_final_conditioning_v1/phase_status/*
+!results/runs/dr04_final_conditioning_v1/phase_status/execution_state.json
+
 !results/runs/dr05_final_efficiency_v1/
 !results/runs/dr05_final_efficiency_v1/**
 !results/runs/dr05_final_diversity_v1/

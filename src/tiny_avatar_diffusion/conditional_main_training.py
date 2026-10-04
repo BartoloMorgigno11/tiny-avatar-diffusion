@@ -5,10 +5,13 @@ from __future__ import annotations
 import argparse
 import copy
 import csv
+import errno
 import hashlib
 import json
+import os
 import random
 import time
+import uuid
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -44,6 +47,8 @@ TRAIN_MANIFEST = ROOT / "data" / "processed" / "dr01_v1" / "text" / "10k" / "tra
 CHECKPOINT_SCHEMA = "dr03_conditional_main_training_v1"
 VALIDATION_INTERVAL = 1_000
 MILESTONES = (5_000, 10_000, 15_000, 20_000)
+ATOMIC_REPLACE_ATTEMPTS = 6
+ATOMIC_REPLACE_INITIAL_DELAY_SECONDS = 0.05
 
 
 @dataclass(frozen=True)
@@ -144,12 +149,48 @@ class TrainingProgress:
             self.train_losses = []
 
 
+def _is_transient_windows_replace_error(error: OSError) -> bool:
+    """Return whether ``error`` is a retryable Windows sharing/access denial."""
+    return os.name == "nt" and (
+        isinstance(error, PermissionError)
+        or getattr(error, "winerror", None) in {5, 32, 33}
+        or error.errno in {errno.EACCES, errno.EPERM, errno.EBUSY}
+    )
+
+
 def atomic_save_checkpoint(path: Path, checkpoint: dict[str, Any]) -> None:
-    """Write a complete checkpoint then atomically replace the prior file."""
+    """Durably serialize then atomically replace ``path`` with bounded Windows retries.
+
+    Each invocation writes to a unique sibling temporary path, so stale files and
+    concurrent writers cannot collide on a shared ``.tmp`` name.  Only transient
+    Windows sharing/access denials around ``os.replace`` are retried; serialization
+    failures and non-Windows errors propagate immediately.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    torch.save(checkpoint, temporary)
-    temporary.replace(path)
+    temporary = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
+    try:
+        with temporary.open("wb") as stream:
+            torch.save(checkpoint, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        for attempt in range(ATOMIC_REPLACE_ATTEMPTS):
+            try:
+                os.replace(temporary, path)
+                return
+            except OSError as error:
+                if not _is_transient_windows_replace_error(error):
+                    raise
+                if attempt + 1 == ATOMIC_REPLACE_ATTEMPTS:
+                    raise PermissionError(
+                        f"atomic checkpoint replacement failed after {attempt + 1} attempts: {path}"
+                    ) from error
+                time.sleep(ATOMIC_REPLACE_INITIAL_DELAY_SECONDS * (2 ** attempt))
+    finally:
+        # Never remove another writer's uniquely named temporary file.
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def _rng_state() -> dict[str, Any]:
