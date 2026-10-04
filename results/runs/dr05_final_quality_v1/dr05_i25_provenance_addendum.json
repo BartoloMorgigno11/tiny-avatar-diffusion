@@ -1,0 +1,58 @@
+{
+  "schema": "dr05_i25_provenance_addendum",
+  "version": 1,
+  "run_identity": {
+    "status": "RECORDED",
+    "run_root": "results/runs/dr05_final_quality_v1",
+    "final_scientific_evaluation": true,
+    "phase2_status": "complete",
+    "phase3_status": "complete",
+    "phase4_status": "complete"
+  },
+  "phase2_code_gate": {
+    "status": "RECORDED",
+    "source": "src/tiny_avatar_diffusion/dr05_final_executor.py:204-221",
+    "required": {
+      "expected_manifest_row_count": true,
+      "referenced_file_exists_and_nonzero": true,
+      "manifest_status_complete": true,
+      "png_sha256": true,
+      "decoded_rgb_pixels_shape_32x32x3": true,
+      "pixel_sha256": true,
+      "generated_plan_row_and_conditioning_consistency": true,
+      "inventory_identity_construction": true,
+      "extra_file_scan": false,
+      "duplicate_manifest_path_scan": false,
+      "duplicate_sample_id_scan": false,
+      "global_union_consistency": false
+    },
+    "global_union_gate": {
+      "status": "ENFORCED_BY_CODE",
+      "source": "src/tiny_avatar_diffusion/dr05_final_executor.py:223-231",
+      "note": "Enforced when metrics constructs each union, after phase2; not a prerequisite for writing phase2.status=complete."
+    }
+  },
+  "reconstructed_integrity": {
+    "status": "RECONSTRUCTED_POST_HOC",
+    "method": "Read-only manifest, PNG SHA256, Pillow RGB decode, 32x32 shape, canonical-pixel SHA256, and filesystem inventory audit.",
+    "canonical_png_total": 20808,
+    "pools": {
+      "real_id": {"expected": 466, "observed": 466, "missing_files": 0, "extra_files": 0, "zero_byte": 0, "duplicate_paths": 0, "wrong_dimensions": 0, "wrong_mode": 0, "png_sha_mismatches": 0, "pixel_sha_mismatches": 0, "duplicate_sample_ids": 0, "missing_manifest_rows": 0, "unexpected_manifest_rows": 0, "plan_mismatches": 0, "inventory_sha256": "458316bea14d2b03585d80b9da460080c4e5ea48c38d20bd713bb0590cef1a0d"},
+      "real_ood": {"expected": 342, "observed": 342, "missing_files": 0, "extra_files": 0, "zero_byte": 0, "duplicate_paths": 0, "wrong_dimensions": 0, "wrong_mode": 0, "png_sha_mismatches": 0, "pixel_sha_mismatches": 0, "duplicate_sample_ids": 0, "missing_manifest_rows": 0, "unexpected_manifest_rows": 0, "plan_mismatches": 0, "inventory_sha256": "3a9b12440e19ad2df769e2d462ba9a1eba465740715a6bf32fcd77d7a292ab9b"},
+      "conditional_id": {"expected": 5767, "observed": 5767, "missing_files": 0, "extra_files": 0, "zero_byte": 0, "duplicate_paths": 0, "wrong_dimensions": 0, "wrong_mode": 0, "png_sha_mismatches": 0, "pixel_sha_mismatches": 0, "duplicate_sample_ids": 0, "missing_manifest_rows": 0, "unexpected_manifest_rows": 0, "plan_mismatches": 0, "inventory_sha256": "0898abb30b47cb8b89e623d1669bf0632ad84f4571a2bd692c644465a2513af0"},
+      "conditional_ood": {"expected": 4233, "observed": 4233, "missing_files": 0, "extra_files": 0, "zero_byte": 0, "duplicate_paths": 0, "wrong_dimensions": 0, "wrong_mode": 0, "png_sha_mismatches": 0, "pixel_sha_mismatches": 0, "duplicate_sample_ids": 0, "missing_manifest_rows": 0, "unexpected_manifest_rows": 0, "plan_mismatches": 0, "inventory_sha256": "4bff83642afa49742c9b37483ffb78391ffbaea842baa04854f085ecc9bd79c2"},
+      "unconditional_id": {"expected": 5767, "observed": 5767, "missing_files": 0, "extra_files": 0, "zero_byte": 0, "duplicate_paths": 0, "wrong_dimensions": 0, "wrong_mode": 0, "png_sha_mismatches": 0, "pixel_sha_mismatches": 0, "duplicate_sample_ids": 0, "missing_manifest_rows": 0, "unexpected_manifest_rows": 0, "plan_mismatches": 0, "inventory_sha256": "efeb6ace498a232b94de0b5e9dea1a275225a9778a08991a65b7ce4ee3ee0fd8"},
+      "unconditional_ood": {"expected": 4233, "observed": 4233, "missing_files": 0, "extra_files": 0, "zero_byte": 0, "duplicate_paths": 0, "wrong_dimensions": 0, "wrong_mode": 0, "png_sha_mismatches": 0, "pixel_sha_mismatches": 0, "duplicate_sample_ids": 0, "missing_manifest_rows": 0, "unexpected_manifest_rows": 0, "plan_mismatches": 0, "inventory_sha256": "8f42704de51b4d4cb7179c0830fb74e0b21f90f9afd42111ab15a6e10d72ba3c"}
+    }
+  },
+  "plan_binding": {"status": "RECORDED", "plan_sha256": "823224bc3230945da66fd97f87ba31fa2cdee40f8a102378c0a4d988a8a0a001", "metadata_sha256": "ccd365ab518b030bb1ad61fdb67c1cc5a4efdae0112cc9cfbf0c17f52b77a1e0", "rows": 10000, "id": 5767, "ood": 4233, "batches": 625, "batch_seed_range": [502026, 502650], "conditional_and_unconditional_manifest_plan_mismatches": 0},
+  "metric_configuration_provenance": {"status": "RECORDED_IN_FROZEN_PROTOCOL", "clean_fid_version": "0.1.35", "mode": "clean", "kid_num_subsets": 100, "kid_subset_seed": 2026, "kid_sampling": "without replacement", "kid_subset_size_rule": "min(1000, N_real, N_generated)", "pool_sizes": {"ID": {"N_real": 466, "N_gen": 5767, "m": 466}, "OOD": {"N_real": 342, "N_gen": 4233, "m": 342}, "GLOBAL": {"N_real": 808, "N_gen": 10000, "m": 808}}, "same_canonical_pools_for_kid_and_fid": {"status": "ENFORCED_BY_CODE", "source": "scripts/dr05_final_quality_evaluation.py:575-589"}},
+  "sealed_decode_accounting": {"status": "NOT_RECOVERABLE", "logical_population": {"ID_TEST": 466, "FINAL_OOD": 342, "TOTAL": 808}, "exact_source_decode_operations": "NOT_RECOVERABLE", "first_access_timestamps": "NOT_RECOVERABLE", "note": "The 808 canonical real outputs prove population materialization, not exactly 808 source decode operations."},
+  "manual_inspection_provenance": {"status": "NOT_RECORDED", "manual_visual_inspection": "NOT_RECORDED", "qualitative_curation": "NOT_RECORDED"},
+  "environment_provenance": {"status": "RUN_SPECIFIC_RECORDED", "run_environment": {"python": "3.12.4", "pytorch": "2.5.1+cu121", "numpy": "2.4.6", "scipy": "1.15.3", "clean_fid": "0.1.35", "lpips": "0.1.4"}, "hardware": {"status": "PROJECT_FROZEN_HARDWARE_EVIDENCE", "source": "data/processed/dr05_final_eval_v1/dr05_runtime_benchmark.json", "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU", "driver": "595.79", "cuda_build": "12.1"}, "current_machine_observation": "NOT_COLLECTED"},
+  "timing_provenance": {"status": "DERIVED", "overall_start_utc": "2026-10-02T17:36:25.842730Z", "overall_completion_utc": "2026-10-02T21:10:46.743684Z", "elapsed_seconds": 12860.900954, "source": "execution_state.json started and last_update", "real_canonicalization": "NOT_RECOVERABLE", "conditional_generation": "NOT_RECOVERABLE", "unconditional_generation": "NOT_RECOVERABLE", "phase2": "NOT_RECOVERABLE", "kid": "NOT_RECOVERABLE", "fid": "NOT_RECOVERABLE"},
+  "scientific_result_binding": {"status": "RECORDED_AND_RECONSTRUCTED_POST_HOC", "all_values_finite": true, "comparisons": {"conditional:ID": {"kid": 0.019295956939458847, "fid": 49.37773171781788, "real": "458316bea14d2b03585d80b9da460080c4e5ea48c38d20bd713bb0590cef1a0d", "generated": "0898abb30b47cb8b89e623d1669bf0632ad84f4571a2bd692c644465a2513af0"}, "conditional:OOD": {"kid": 0.019467167556285858, "fid": 58.702624366029426, "real": "3a9b12440e19ad2df769e2d462ba9a1eba465740715a6bf32fcd77d7a292ab9b", "generated": "4bff83642afa49742c9b37483ffb78391ffbaea842baa04854f085ecc9bd79c2"}, "conditional:GLOBAL": {"kid": 0.018365884199738503, "fid": 40.99542135937443, "real": "9ac027a88f32229daa4b226384caa0cb138be9d8912f0ab26696001fc8d4b840", "generated": "d2d6a191d34d5887112641b95c266d23e96f8f9d44f7723167b36319c20ebc85"}, "unconditional:ID": {"kid": 0.02868834137916565, "fid": 58.08331071638449, "real": "458316bea14d2b03585d80b9da460080c4e5ea48c38d20bd713bb0590cef1a0d", "generated": "efeb6ace498a232b94de0b5e9dea1a275225a9778a08991a65b7ce4ee0fd8"}, "unconditional:OOD": {"kid": 0.04378482326865196, "fid": 83.18393889462249, "real": "3a9b12440e19ad2df769e2d462ba9a1eba465740715a6bf32fcd77d7a292ab9b", "generated": "8f42704de51b4d4cb7179c0830fb74e0b21f90f9afd42111ab15a6e10d72ba3c"}, "unconditional:GLOBAL": {"kid": 0.03191326931118965, "fid": 53.19797715139188, "real": "9ac027a88f32229daa4b226384caa0cb138be9d8912f0ab26696001fc8d4b840", "generated": "5dfb5da2bf90a5cdf877ff575465f3443c35df6ce4792e9713c7c57f3f3a2e27"}}, "real_pool_identity_same_by_split": true, "manifest_hashes_match_state_inventory": true},
+  "unauthorized_evaluation_audit": {"status": "RECORDED_OR_NOT_RECORDED", "dr04_evaluator": "EXPLICIT_ZERO", "lpips": "EXPLICIT_ZERO", "minimal_edit": "EXPLICIT_ZERO", "ext_50k": "EXPLICIT_ZERO", "maa": "NOT_RECORDED", "macro_psr": "NOT_RECORDED", "l1_diversity": "NOT_RECORDED"},
+  "frozen_input_integrity": {"status": "RECORDED", "protocol": "706a191fff8f2fba1b263919385a6e55ad4579a5285a189cab5acf20ae38549f", "bindings": "603a9121f980b769621b628a0cf393dda17dd10a5e6aeca6e6e94bcc3e671ebf", "bindings_user_supplied_expected": "603a9121f980b769621b628a0cf393dda17dd10a5e6e94bcc3e671ebf", "bindings_user_supplied_expected_status": "INVALID_57_CHARACTER_DIGEST; actual hash is the 64-character value recorded by final_quality_summary.json", "conditional_checkpoint": "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb", "unconditional_checkpoint": "70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e", "evaluator": "414d2e0bb597c53041f6cf695d965231ab1c4f38c9080b68c06f9c09dcf001dc", "runtime_benchmark": "5b59c7c5662f1b93170175fe0bc945ee15a5fd68317fb36f2af21d6578120e5a", "generation_plan": "823224bc3230945da66fd97f87ba31fa2cdee40f8a102378c0a4d988a8a0a001", "plan_metadata": "ccd365ab518b030bb1ad61fdb67c1cc5a4efdae0112cc9cfbf0c17f52b77a1e0"},
+  "limitations": ["Exact source decode-operation counts and first-access timestamps were not persisted.", "Per-phase and per-metric timing was not persisted.", "No explicit manual-inspection or qualitative-curation record was found; absence is not evidence of non-occurrence.", "Hardware evidence is a frozen project benchmark, not an I25-specific hardware record."]
+}

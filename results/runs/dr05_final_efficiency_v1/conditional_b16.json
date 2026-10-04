@@ -1,0 +1,32 @@
+{
+  "batch_size": 16,
+  "checkpoint_path": "artifacts/checkpoints/conditional_main_ema_step20000.pt",
+  "checkpoint_sha256": "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb",
+  "clip_denoised": true,
+  "conditional": true,
+  "device": "cuda:0",
+  "diffusion_steps": 1000,
+  "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "model_type": "conditional",
+  "peak_allocated_bytes": 81506816,
+  "peak_allocated_mib": 77.73095703125,
+  "peak_reserved_bytes": 130023424,
+  "peak_reserved_mib": 124.0,
+  "precision": "FP32",
+  "primary_metric": "peak_cuda_allocated_memory",
+  "provenance": {
+    "cuda_runtime_version": "12.1",
+    "device_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "git_head": "ca47fd2f46e5926a02f9d4ed6193554acaf743a9",
+    "python_version": "3.12.4",
+    "pytorch_version": "2.5.1+cu121",
+    "timestamp_utc": "2026-10-03T09:57:34.795158+00:00"
+  },
+  "resolution": [
+    32,
+    32
+  ],
+  "sampler": "ancestral_ddpm_fixed_small",
+  "schema": "dr05_final_sampling_memory_v1",
+  "secondary_metric": "peak_cuda_reserved_memory"
+}

@@ -1,0 +1,94 @@
+{
+  "anti_double_count": {
+    "equations": {
+      "conditional_backbone_matches_unconditional_checkpoint": {
+        "left": 4595779,
+        "pass": true,
+        "residual": 0,
+        "right": 4595779
+      },
+      "conditional_unet_plus_text_encoder_equals_full_conditional": {
+        "left": 4723907,
+        "pass": true,
+        "residual": 0,
+        "right": 4723907
+      },
+      "unconditional_backbone_plus_cross_attention_equals_conditional_unet": {
+        "left": 4620931,
+        "pass": true,
+        "residual": 0,
+        "right": 4620931
+      },
+      "unconditional_backbone_plus_cross_attention_plus_text_encoder_equals_full_conditional": {
+        "left": 4723907,
+        "pass": true,
+        "residual": 0,
+        "right": 4723907
+      }
+    },
+    "evaluator_excluded_from_generator_counts": true,
+    "pass": true,
+    "rule": "The conditional generator is conditional U-Net plus text encoder; the conditional U-Net already contains the unconditional backbone and cross-attention, so those components must not be added again."
+  },
+  "checkpoint_provenance": {
+    "conditional_generator": {
+      "path": "artifacts/checkpoints/conditional_main_ema_step20000.pt",
+      "sha256": "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb"
+    },
+    "evaluation_instrument": {
+      "path": "artifacts/checkpoints/dr04_evaluator_epoch41.pt",
+      "sha256": "414d2e0bb597c53041f6cf695d965231ab1c4f38c9080b68c06f9c09dcf001dc"
+    },
+    "unconditional_generator": {
+      "path": "artifacts/checkpoints/unconditional_main_ema_step20000.pt",
+      "sha256": "70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e"
+    }
+  },
+  "classification": "D11 parameter-count evidence",
+  "conditional": {
+    "conditional_unet": {
+      "total_parameters": 4620931,
+      "trainable_parameters": 4620931
+    },
+    "cross_attention": {
+      "total_parameters": 25152,
+      "trainable_parameters": 25152
+    },
+    "full_system": {
+      "total_parameters": 4723907,
+      "trainable_parameters": 4723907
+    },
+    "text_encoder": {
+      "total_parameters": 102976,
+      "trainable_parameters": 102976
+    },
+    "unconditional_backbone": {
+      "total_parameters": 4595779,
+      "trainable_parameters": 4595779
+    }
+  },
+  "counting_method": {
+    "architecture_loading": "existing repository reconstruction helpers with strict PyTorch load_state_dict compatibility",
+    "device": "cpu",
+    "forward_inference_performed": false,
+    "shared_parameter_policy": "unique parameter objects are counted once across an explicit component set",
+    "total_parameters": "sum(p.numel() for p in module.parameters())",
+    "trainable_parameters": "sum(p.numel() for p in module.parameters() if p.requires_grad)"
+  },
+  "evaluation_instrument": {
+    "explicitly_excluded_from_generator_counts": true,
+    "total_parameters": 293064,
+    "trainable_parameters": 293064
+  },
+  "git_head": "ca47fd2f46e5926a02f9d4ed6193554acaf743a9",
+  "protocol": {
+    "path": "data/processed/dr05_final_eval_v1/dr05_final_protocol.json",
+    "sha256": "706a191fff8f2fba1b263919385a6e55ad4579a5285a189cab5acf20ae38549f"
+  },
+  "schema": "tiny_avatar_diffusion.dr05_parameter_count_summary",
+  "unconditional": {
+    "total_parameters": 4595779,
+    "trainable_parameters": 4595779
+  },
+  "version": 1
+}

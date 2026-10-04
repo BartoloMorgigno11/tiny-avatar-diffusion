@@ -1,0 +1,96 @@
+{
+  "aggregates": {
+    "GLOBAL_prompt_macro_lpips": 0.03617095261191328,
+    "ID_prompt_macro_lpips": 0.036734598668868114,
+    "OOD1_prompt_macro_lpips": 0.03856944183539599,
+    "OOD2_prompt_macro_lpips": 0.03931253510061652,
+    "OOD3_prompt_macro_lpips": 0.0381747223418206,
+    "OOD4_prompt_macro_lpips": 0.02520014314353466,
+    "OOD_equal_family_macro_lpips": 0.03531421060534194,
+    "OOD_prompt_macro_lpips": 0.03531421060534194
+  },
+  "bootstrap": {
+    "confidence_level": 0.95,
+    "method": "percentile",
+    "resamples": 10000,
+    "scopes": {
+      "ID": {
+        "estimate": 0.036734598668868114,
+        "percentile_95": [
+          0.035663168653424546,
+          0.0377540886825093
+        ]
+      },
+      "OOD": {
+        "estimate": 0.03531421060534194,
+        "percentile_95": [
+          0.03380818334654323,
+          0.03677022509957897
+        ]
+      },
+      "OOD1": {
+        "estimate": 0.03856944183539599,
+        "percentile_95": [
+          0.03648689214910847,
+          0.04025766636379994
+        ]
+      },
+      "OOD2": {
+        "estimate": 0.03931253510061652,
+        "percentile_95": [
+          0.03819422987508588,
+          0.040482802818831994
+        ]
+      },
+      "OOD3": {
+        "estimate": 0.0381747223418206,
+        "percentile_95": [
+          0.03521693052998744,
+          0.04104346009152942
+        ]
+      },
+      "OOD4": {
+        "estimate": 0.02520014314353466,
+        "percentile_95": [
+          0.02432950114184059,
+          0.026219176538661126
+        ]
+      }
+    },
+    "seed": 202605,
+    "unit": "prompt"
+  },
+  "interpretation": "Diversity values only; higher LPIPS is not automatically better.",
+  "population": {
+    "ID_prompts": 152,
+    "OOD_family_prompts": {
+      "OOD1": 25,
+      "OOD2": 25,
+      "OOD3": 25,
+      "OOD4": 25
+    },
+    "OOD_prompts": 100,
+    "images": 1260,
+    "pairs_per_prompt": 10,
+    "prompts": 252,
+    "seeds_per_prompt": 5,
+    "total_pairs": 2520
+  },
+  "run_identity": {
+    "input_range": "[-1,1]",
+    "lpips_net": "alex",
+    "lpips_package_version": "0.1.4",
+    "lpips_version": "0.1",
+    "native_resolution": [
+      32,
+      32
+    ],
+    "protocol_version": "v1",
+    "source_artifact_hashes": {
+      "final_conditioning_summary.json": "307138ac4aa1d26a0b478ab2a1a1703fa248406187681896f4834147902e26c6",
+      "metrics.json": "727eece28af8575d6e4dc6062279fb97e1dc7d3c58a40424bec16b110ca66580"
+    },
+    "source_dr04_root": "results\\runs\\dr04_final_conditioning_v1"
+  },
+  "schema": "dr05_final_diversity_v1"
+}

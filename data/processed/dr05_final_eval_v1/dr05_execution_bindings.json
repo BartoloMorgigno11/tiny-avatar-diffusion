@@ -1,0 +1,205 @@
+{
+  "bindings": {
+    "R_ID_count": {
+      "provenance": {
+        "resolution_method": "metadata_record_count",
+        "source_manifest_path": "data/processed/dr01_v1/text/10k/id_test.jsonl",
+        "source_manifest_sha256": "6b23a54ef90d74a0b6bdff0ac8054d4e8c4ec92ee6e6311f07316715e268adde"
+      },
+      "status": "resolved",
+      "value": 466
+    },
+    "R_OOD_count": {
+      "provenance": {
+        "resolution_method": "metadata_record_count",
+        "source_manifest_path": "data/processed/dr01_v1/text/10k/final_ood.jsonl",
+        "source_manifest_sha256": "8414c64ac13781c148fd38154bb04b684b841088f2e4243b7e03afb524bf070d"
+      },
+      "status": "resolved",
+      "value": 342
+    },
+    "benchmark_device": {
+      "status": "resolved",
+      "value": "cuda:0"
+    },
+    "cuda_version": {
+      "status": "resolved",
+      "value": "12.1"
+    },
+    "driver_version": {
+      "status": "resolved",
+      "value": "595.79"
+    },
+    "gpu_name": {
+      "status": "resolved",
+      "value": "NVIDIA GeForce RTX 4060 Laptop GPU"
+    },
+    "gpu_vram": {
+      "status": "resolved",
+      "value": 8585216000
+    },
+    "latency_id_val_prompt_id": {
+      "provenance": {
+        "caption_field": "caption",
+        "identifier_field": "image_id",
+        "selection_rule": "lexicographically_minimum_sample_id",
+        "source_manifest_path": "data/processed/dr01_v1/text/10k/id_val.jsonl",
+        "source_manifest_sha256": "34d610b9a9d3b8f20caf3004e93c154aa7646319006a53c2552b7d994850b487"
+      },
+      "status": "resolved",
+      "value": "cs10002930376453395152"
+    },
+    "latency_prompt_text": {
+      "provenance": {
+        "caption_field": "caption",
+        "identifier_field": "image_id",
+        "selection_rule": "lexicographically_minimum_sample_id",
+        "source_manifest_path": "data/processed/dr01_v1/text/10k/id_val.jsonl",
+        "source_manifest_sha256": "34d610b9a9d3b8f20caf3004e93c154aa7646319006a53c2552b7d994850b487"
+      },
+      "status": "resolved",
+      "value": "avatar face_shape_wide glasses_thick_rectangular_glasses hair_color_silver face_color_deep_brown"
+    },
+    "python_version": {
+      "status": "resolved",
+      "value": "3.12.4"
+    },
+    "pytorch_version": {
+      "status": "resolved",
+      "value": "2.5.1+cu121"
+    },
+    "quality_extended_ID_generated_count": {
+      "provenance": {
+        "allocation_method": "hamilton_largest_remainder",
+        "derived_from_bindings": [
+          "R_ID_count",
+          "R_OOD_count"
+        ],
+        "reference_ID_count": 466,
+        "reference_OOD_count": 342,
+        "target_total": 50000
+      },
+      "status": "resolved",
+      "value": 28837
+    },
+    "quality_extended_OOD_generated_count": {
+      "provenance": {
+        "allocation_method": "hamilton_largest_remainder",
+        "derived_from_bindings": [
+          "R_ID_count",
+          "R_OOD_count"
+        ],
+        "reference_ID_count": 466,
+        "reference_OOD_count": 342,
+        "target_total": 50000
+      },
+      "status": "resolved",
+      "value": 21163
+    },
+    "quality_main_ID_generated_count": {
+      "provenance": {
+        "allocation_method": "hamilton_largest_remainder",
+        "derived_from_bindings": [
+          "R_ID_count",
+          "R_OOD_count"
+        ],
+        "reference_ID_count": 466,
+        "reference_OOD_count": 342,
+        "target_total": 10000
+      },
+      "status": "resolved",
+      "value": 5767
+    },
+    "quality_main_OOD_generated_count": {
+      "provenance": {
+        "allocation_method": "hamilton_largest_remainder",
+        "derived_from_bindings": [
+          "R_ID_count",
+          "R_OOD_count"
+        ],
+        "reference_ID_count": 466,
+        "reference_OOD_count": 342,
+        "target_total": 10000
+      },
+      "status": "resolved",
+      "value": 4233
+    },
+    "timing_rng_seed_or_namespace": {
+      "provenance": {
+        "decision": "D16",
+        "purpose": "primary_batch1_latency",
+        "selection": "preregistered_before_benchmark"
+      },
+      "status": "resolved",
+      "value": {
+        "dedicated_rng_required": true,
+        "measured_runs": 10,
+        "measured_seeds": [
+          602029,
+          602030,
+          602031,
+          602032,
+          602033,
+          602034,
+          602035,
+          602036,
+          602037,
+          602038
+        ],
+        "namespace": "latency_primary_b1",
+        "run_index_start": 0,
+        "seed_base": 602026,
+        "seed_rule": "seed_base_plus_run_index",
+        "shared_between_models": true,
+        "total_runs": 13,
+        "warmup_runs": 3,
+        "warmup_seeds": [
+          602026,
+          602027,
+          602028
+        ]
+      }
+    },
+    "unconditional_checkpoint_path": {
+      "status": "resolved",
+      "value": "artifacts/checkpoints/unconditional_main_ema_step20000.pt"
+    },
+    "unconditional_checkpoint_sha256": {
+      "status": "resolved",
+      "value": "70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e"
+    }
+  },
+  "protocol": {
+    "path": "data/processed/dr05_final_eval_v1/dr05_final_protocol.json",
+    "protocol_name": "DR05-FINAL",
+    "protocol_version": "v1",
+    "sha256": "706a191fff8f2fba1b263919385a6e55ad4579a5285a189cab5acf20ae38549f"
+  },
+  "quality_prefix_allocations": {
+    "10000": {
+      "ID": 5767,
+      "OOD": 4233
+    },
+    "25000": {
+      "ID": 14418,
+      "OOD": 10582
+    },
+    "5000": {
+      "ID": 2884,
+      "OOD": 2116
+    },
+    "50000": {
+      "ID": 28837,
+      "OOD": 21163
+    }
+  },
+  "status": "partial",
+  "update_policy": {
+    "all_mandatory_bindings_audited_before_final_frozen": true,
+    "binding_resolution_requires_provenance": true,
+    "pending_bindings_resolved_only_before_corresponding_experiment": true,
+    "resolved_binding_must_not_silently_revert_or_change": true,
+    "results_must_not_select_or_alter_bindings": true,
+    "scientific_protocol_immutable": true
+  }
+}

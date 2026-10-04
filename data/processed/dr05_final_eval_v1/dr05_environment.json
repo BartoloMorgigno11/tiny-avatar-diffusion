@@ -1,0 +1,24 @@
+{
+  "clean_fid": "0.1.35",
+  "dependencies": {
+    "full_evaluation_environment": [
+      "clean-fid==0.1.35",
+      "lpips==0.1.4",
+      "scipy==1.15.3"
+    ],
+    "metric_specific_protocol_dependencies": [
+      "clean-fid==0.1.35",
+      "lpips==0.1.4"
+    ]
+  },
+  "driver": "595.79",
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "lpips": "0.1.4",
+  "numpy": "2.4.6",
+  "provenance_note": "This records the historical DR05 scientific execution environment. Clean-clone verification may use torch 2.5.1+cpu; CPU clean reproduction does not reproduce CUDA latency or memory measurements.",
+  "python": "3.12.4",
+  "pytorch": "2.5.1+cu121",
+  "scientific_results_recomputed": false,
+  "scipy": "1.15.3",
+  "torch_cuda": "12.1"
+}

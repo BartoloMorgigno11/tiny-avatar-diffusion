@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
+import tiny_avatar_diffusion.dr04_evaluator_splits as dr04_evaluator_splits
 
 from tiny_avatar_diffusion.dr04_evaluator_splits import (
     PROCESSED_ROOT,
@@ -93,12 +94,15 @@ def test_real_100k_split_invariants_and_order_independence() -> None:
     assert multi_by_split["REAL_GENERATOR_OOD_CEILING"] == multi_by_split["REAL_ID_CEILING"] == 0
 
 
-def test_manifest_and_config_hashes_are_stable_across_repeated_writes(tmp_path) -> None:
+def test_manifest_and_config_hashes_are_stable_across_repeated_writes(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     rows, errors = load_100k_manifests(PROCESSED_ROOT / "100k")
     assert not errors
     definitions = _definitions()
     assignments = build_assignments(rows, definitions)
-    first = write_outputs(assignments, definitions, tmp_path / "one", 2026)
-    second = write_outputs(assignments, definitions, tmp_path / "two", 2026)
+    repository_root = tmp_path / "repository"
+    repository_root.mkdir()
+    monkeypatch.setattr(dr04_evaluator_splits, "ROOT", repository_root)
+    first = write_outputs(assignments, definitions, repository_root / "one", 2026)
+    second = write_outputs(assignments, definitions, repository_root / "two", 2026)
     assert first["manifest_sha256"] == second["manifest_sha256"]
     assert first["config_sha256"] == second["config_sha256"]

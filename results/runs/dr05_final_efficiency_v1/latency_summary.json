@@ -1,0 +1,241 @@
+{
+  "conditions": [
+    {
+      "batch_size": 1,
+      "checkpoint_path": "artifacts/checkpoints/conditional_main_ema_step20000.pt",
+      "checkpoint_sha256": "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb",
+      "clip_denoised": true,
+      "conditional": true,
+      "diffusion_steps": 1000,
+      "measured_seeds": [
+        602029,
+        602030,
+        602031,
+        602032,
+        602033,
+        602034,
+        602035,
+        602036,
+        602037,
+        602038
+      ],
+      "model_type": "conditional",
+      "precision": "FP32",
+      "raw_measured_seconds_per_batch": [
+        9.494394200009992,
+        9.448877000017092,
+        8.342984799994156,
+        9.86980109999422,
+        8.727253799996106,
+        8.765898900019238,
+        9.492355199996382,
+        7.7521382000122685,
+        7.906855999986874,
+        8.033989699993981
+      ],
+      "resolution": [
+        32,
+        32
+      ],
+      "role": "PRIMARY_HEADLINE",
+      "sampler": "ancestral_ddpm_fixed_small",
+      "statistics": {
+        "images_per_second": 0.11433044885032334,
+        "max_seconds_per_image": 9.86980109999422,
+        "mean_seconds_per_image": 8.78345489000203,
+        "median_seconds_per_batch": 8.746576350007672,
+        "median_seconds_per_image": 8.746576350007672,
+        "min_seconds_per_image": 7.7521382000122685,
+        "std_seconds_per_image": 0.7226428924469329
+      },
+      "warmup_seeds": [
+        602026,
+        602027,
+        602028
+      ]
+    },
+    {
+      "batch_size": 1,
+      "checkpoint_path": "artifacts/checkpoints/unconditional_main_ema_step20000.pt",
+      "checkpoint_sha256": "70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e",
+      "clip_denoised": true,
+      "conditional": false,
+      "diffusion_steps": 1000,
+      "measured_seeds": [
+        602029,
+        602030,
+        602031,
+        602032,
+        602033,
+        602034,
+        602035,
+        602036,
+        602037,
+        602038
+      ],
+      "model_type": "unconditional",
+      "precision": "FP32",
+      "raw_measured_seconds_per_batch": [
+        8.308857199997874,
+        7.223050200002035,
+        8.418666300014593,
+        8.291033400018932,
+        7.633102099993266,
+        7.464626000000862,
+        7.9919387999980245,
+        6.966592699987814,
+        6.802139000006719,
+        7.502047399990261
+      ],
+      "resolution": [
+        32,
+        32
+      ],
+      "role": "PRIMARY_HEADLINE",
+      "sampler": "ancestral_ddpm_fixed_small",
+      "statistics": {
+        "images_per_second": 0.1321427317253904,
+        "max_seconds_per_image": 8.418666300014593,
+        "mean_seconds_per_image": 7.660205310001038,
+        "median_seconds_per_batch": 7.567574749991763,
+        "median_seconds_per_image": 7.567574749991763,
+        "min_seconds_per_image": 6.802139000006719,
+        "std_seconds_per_image": 0.5455716401735639
+      },
+      "warmup_seeds": [
+        602026,
+        602027,
+        602028
+      ]
+    },
+    {
+      "batch_size": 16,
+      "checkpoint_path": "artifacts/checkpoints/conditional_main_ema_step20000.pt",
+      "checkpoint_sha256": "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb",
+      "clip_denoised": true,
+      "conditional": true,
+      "diffusion_steps": 1000,
+      "measured_seeds": [
+        612029,
+        612030,
+        612031,
+        612032,
+        612033,
+        612034,
+        612035,
+        612036,
+        612037,
+        612038
+      ],
+      "model_type": "conditional",
+      "precision": "FP32",
+      "raw_measured_seconds_per_batch": [
+        9.574723300000187,
+        9.620240099990042,
+        9.606489700003294,
+        10.046714600000996,
+        10.281136899982812,
+        9.969518500001868,
+        13.99633160000667,
+        10.987353799981065,
+        10.528592400019988,
+        10.131672399991658
+      ],
+      "resolution": [
+        32,
+        32
+      ],
+      "role": "SECONDARY_ENGINEERING_THROUGHPUT",
+      "sampler": "ancestral_ddpm_fixed_small",
+      "statistics": {
+        "images_per_second": 1.5858552024010468,
+        "max_seconds_per_image": 0.8747707250004169,
+        "mean_seconds_per_image": 0.6546423331248661,
+        "median_seconds_per_batch": 10.089193499996327,
+        "median_seconds_per_image": 0.6305745937497704,
+        "min_seconds_per_image": 0.5984202062500117,
+        "std_seconds_per_image": 0.07794972592052506
+      },
+      "warmup_seeds": [
+        612026,
+        612027,
+        612028
+      ]
+    },
+    {
+      "batch_size": 16,
+      "checkpoint_path": "artifacts/checkpoints/unconditional_main_ema_step20000.pt",
+      "checkpoint_sha256": "70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e",
+      "clip_denoised": true,
+      "conditional": false,
+      "diffusion_steps": 1000,
+      "measured_seeds": [
+        612029,
+        612030,
+        612031,
+        612032,
+        612033,
+        612034,
+        612035,
+        612036,
+        612037,
+        612038
+      ],
+      "model_type": "unconditional",
+      "precision": "FP32",
+      "raw_measured_seconds_per_batch": [
+        8.947739499999443,
+        8.708498299994972,
+        9.393799700017553,
+        9.321533100010129,
+        8.73929749999661,
+        8.929100999986986,
+        8.664088899997296,
+        9.224030499986839,
+        8.722535399982007,
+        8.24922999998671
+      ],
+      "resolution": [
+        32,
+        32
+      ],
+      "role": "SECONDARY_ENGINEERING_THROUGHPUT",
+      "sampler": "ancestral_ddpm_fixed_small",
+      "statistics": {
+        "images_per_second": 1.811143211425173,
+        "max_seconds_per_image": 0.587112481251097,
+        "mean_seconds_per_image": 0.5556240868747409,
+        "median_seconds_per_batch": 8.834199249991798,
+        "median_seconds_per_image": 0.5521374531244874,
+        "min_seconds_per_image": 0.5155768749991694,
+        "std_seconds_per_image": 0.020745807048897967
+      },
+      "warmup_seeds": [
+        612026,
+        612027,
+        612028
+      ]
+    }
+  ],
+  "environment": {
+    "cuda_version": "12.1",
+    "device": "cuda:0",
+    "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "python_version": "3.12.4",
+    "pytorch_version": "2.5.1+cu121"
+  },
+  "git_head": "ca47fd2f46e5926a02f9d4ed6193554acaf743a9",
+  "prompt": {
+    "caption": "avatar face_shape_wide glasses_thick_rectangular_glasses hair_color_silver face_color_deep_brown",
+    "id": "cs10002930376453395152",
+    "source": "data/processed/dr01_v1/text/10k/id_val.jsonl"
+  },
+  "protocol_sha256": "706a191fff8f2fba1b263919385a6e55ad4579a5285a189cab5acf20ae38549f",
+  "schema": "dr05_final_latency_v1",
+  "timing": {
+    "measured_runs": 10,
+    "method": "cuda_synchronize + time.perf_counter + cuda_synchronize",
+    "std_convention": "population",
+    "warmups": 3
+  }
+}

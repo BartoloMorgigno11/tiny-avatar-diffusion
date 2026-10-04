@@ -1,0 +1,378 @@
+{
+  "anti_post_hoc_rules": {
+    "forbidden": [
+      "no metric substitution after results",
+      "no prompt cherry-picking",
+      "no seed cherry-picking",
+      "no removal of visually poor generations",
+      "no checkpoint replacement after final outputs are inspected",
+      "no generator modification to improve final evaluation",
+      "no artificial MAIN ID/OOD balancing",
+      "no minimal-edit contamination of diversity",
+      "no combined quality/conditioning/diversity scalar",
+      "no broad hyperparameter sweep",
+      "no result-driven promotion from 10k MAIN to 50k EXT"
+    ]
+  },
+  "checkpoints": {
+    "conditional": {
+      "canonical_path": "artifacts/checkpoints/conditional_main_ema_step20000.pt",
+      "expected_parameter_count": 4723907,
+      "selected_step": 20000,
+      "sha256": "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb",
+      "source_checkpoint_sha256": "0bad000254c59bef3b9cf3a2e33ccc10d263f6cea231841e71950a41b7bd3884",
+      "weight_variant": "EMA"
+    },
+    "dr04_evaluator": {
+      "canonical_path": "artifacts/checkpoints/dr04_evaluator_epoch41.pt",
+      "expected_parameter_count": 293064,
+      "selected_epoch": 41,
+      "sha256": "414d2e0bb597c53041f6cf695d965231ab1c4f38c9080b68c06f9c09dcf001dc",
+      "source_checkpoint_sha256": "3f97b8763dc8caa1148ff9434224cac619507f6a377b32bc742cd5fae204c50f"
+    }
+  },
+  "dependencies": {
+    "installation_extra": "eval",
+    "packages": {
+      "clean-fid": "0.1.35",
+      "lpips": "0.1.4"
+    }
+  },
+  "diversity": {
+    "configuration": {
+      "backbone": "AlexNet",
+      "input_range": "[-1,1]",
+      "input_resolution": "native 32x32",
+      "lpips_version": "0.1",
+      "metric": "LPIPS",
+      "package": "lpips",
+      "package_version": "0.1.4"
+    },
+    "formula": "D_i = 2/[S(S-1)] * sum_{a<b} LPIPS(x_ia, x_ib)",
+    "interpretation_invariants": [
+      "higher LPIPS must NEVER automatically be interpreted as better",
+      "diversity must be interpreted jointly with conditioning and quality"
+    ],
+    "panel": {
+      "excluded": [
+        "DR04 minimal-edit panel"
+      ],
+      "generation_seeds": [
+        2026,
+        2027,
+        2028,
+        2029,
+        2030
+      ],
+      "id_prompts": 152,
+      "ood_groups": {
+        "OOD1": 25,
+        "OOD2": 25,
+        "OOD3": 25,
+        "OOD4": 25
+      },
+      "ood_prompts": 100,
+      "pairwise_lpips_evaluations": 2520,
+      "primary_reporting": [
+        "D_ID",
+        "D_OOD"
+      ],
+      "prompt_source": "exact canonical DR04 main panel",
+      "prompts": 252,
+      "reporting_secondary": [
+        "global 252-prompt diversity",
+        "matched-control diagnostic"
+      ],
+      "samples_per_prompt": 5,
+      "total_generated_images": 1260,
+      "unordered_pairs_per_prompt": 10
+    },
+    "primary_aggregation": "macro mean over prompt-level D_i",
+    "sanity_debug_only": [
+      "L1"
+    ],
+    "uncertainty": {
+      "bootstrap_resamples": 10000,
+      "confidence_interval": "95% prompt-level bootstrap",
+      "descriptive_dispersion": "standard deviation of D_i across prompts",
+      "forbidden": [
+        "treating 2520 LPIPS pairwise distances as independent observations"
+      ],
+      "point_estimate": "macro mean of prompt-level D_i",
+      "resampling_unit": "one prompt-level D_i together with its five generations",
+      "seed": 202605,
+      "split_reporting": [
+        "ID",
+        "OOD",
+        "OOD1",
+        "OOD2",
+        "OOD3",
+        "OOD4"
+      ]
+    }
+  },
+  "efficiency": {
+    "latency": {
+      "benchmark_prompt": "pending execution binding from ID_VAL",
+      "conditional_unconditional_reporting": [
+        "conditional latency",
+        "unconditional latency",
+        "absolute overhead",
+        "percentage overhead"
+      ],
+      "configuration": {
+        "batch_size": 1,
+        "precision": "FP32",
+        "resolution": "32x32",
+        "sampler": "ancestral DDPM",
+        "timesteps": 1000
+      },
+      "exclude": [
+        "model loading",
+        "PNG serialization",
+        "disk I/O",
+        "evaluator inference"
+      ],
+      "headline": "median seconds/image",
+      "include": [
+        "prompt/tokenization",
+        "text encoding exactly once",
+        "full reverse diffusion",
+        "final GPU tensor"
+      ],
+      "measured_runs": 10,
+      "secondary": [
+        "mean",
+        "std",
+        "min",
+        "max"
+      ],
+      "synchronization": "CUDA synchronization before and after timed region",
+      "throughput_secondary": {
+        "batch_size": 16,
+        "timing_philosophy": "same rigorous timing philosophy"
+      },
+      "warmup_runs": 3
+    },
+    "memory": {
+      "configuration": {
+        "batch_size": 1,
+        "precision": "FP32",
+        "resolution": "32x32",
+        "sampler": "ancestral DDPM",
+        "timesteps": 1000
+      },
+      "headline": "peak CUDA allocated memory during batch-1 FP32 sampling, including model resident on GPU",
+      "primary_metric": "peak CUDA allocated memory",
+      "secondary": [
+        "peak CUDA reserved",
+        "pre-sampling allocated",
+        "incremental sampling memory",
+        "batch-16 peak sampling memory",
+        "training peak as contextual only"
+      ]
+    },
+    "parameter_counts": {
+      "anti_double_count_validation_required": true,
+      "conditional": {
+        "cross_attention": 25152,
+        "text_encoder": 102976,
+        "total": 4723907,
+        "unet_backbone": 4595779
+      },
+      "dr04_evaluator": 293064,
+      "source": "actually loaded canonical checkpoint architecture",
+      "unconditional": 4595779
+    }
+  },
+  "execution_bindings": {
+    "exact_quality_generated_id_ood_counts": {
+      "reason": "instantiate later from canonical sealed manifests",
+      "status": "pending"
+    },
+    "exact_r_id_count": {
+      "reason": "sealed manifest binding",
+      "status": "pending"
+    },
+    "exact_r_ood_count": {
+      "reason": "sealed manifest binding",
+      "status": "pending"
+    },
+    "final_hardware_environment_identity": {
+      "reason": "execution-time provenance",
+      "status": "pending"
+    },
+    "latency_benchmark_id_val_prompt": {
+      "reason": "bind exact prompt ID/text before benchmark execution",
+      "status": "pending"
+    },
+    "timing_rng_namespace_value": {
+      "reason": "dedicated namespace distinct from final-generation seeds",
+      "status": "pending"
+    },
+    "unconditional_checkpoint_path_hash": {
+      "reason": "canonical checkpoint does not yet exist",
+      "status": "pending"
+    }
+  },
+  "protocol_identity": {
+    "project": "Tiny Text-Conditioned Avatar Diffusion from Scratch",
+    "protocol_name": "DR05-FINAL",
+    "protocol_version": "v1",
+    "status": "frozen"
+  },
+  "quality": {
+    "conceptual_invariant": "quality != conditioning",
+    "conditional_reporting": {
+      "GLOBAL": "secondary",
+      "ID": "primary",
+      "OOD": "primary"
+    },
+    "generated_image_serialization": {
+      "canonical_generated_transform": "model tensor [-1,1] -> clamp -> map to [0,1] -> multiply by 255 -> nearest integer -> uint8 RGB PNG",
+      "canonical_real_transform": "RGB -> deterministic resize 32x32 -> bilinear interpolation -> antialias true -> uint8 RGB PNG",
+      "forbidden": [
+        "crop",
+        "augmentation",
+        "JPEG",
+        "manual resize to 299x299",
+        "double normalization"
+      ],
+      "format": "lossless PNG",
+      "representation": "32x32 RGB uint8",
+      "sample_manifest_fields": [
+        "sample_id",
+        "model",
+        "checkpoint",
+        "split",
+        "prompt",
+        "seed",
+        "shape",
+        "mode",
+        "dtype",
+        "png_sha256",
+        "canonical_pixel_sha256",
+        "status"
+      ]
+    },
+    "global_comparison_requirements": [
+      "same R_GLOBAL",
+      "same generated N",
+      "same resolution",
+      "same preprocessing",
+      "same metric implementation"
+    ],
+    "implementation": {
+      "feature_extractor": "Inception-v3",
+      "mode": "clean",
+      "package": "clean-fid",
+      "version": "0.1.35"
+    },
+    "metric": {
+      "primary": "KID",
+      "secondary": "FID"
+    },
+    "operational_kid": {
+      "kernel_statistic": "polynomial KID",
+      "kid_subset_seed": 2026,
+      "num_subsets": 100,
+      "record_later": [
+        "m",
+        "N_real",
+        "N_generated"
+      ],
+      "subset_sampling": "without replacement",
+      "subset_size": "min(1000, N_real, N_generated)",
+      "warning": "subset dispersion must NOT automatically be labeled 95% CI"
+    },
+    "prompt_distribution": {
+      "conditional_id": "empirical ID_TEST prompt distribution",
+      "conditional_ood": "empirical FINAL_OOD prompt distribution",
+      "global_conditional_pool": "follows R_GLOBAL proportions",
+      "if_n_exceeds_references": "deterministic repetition preserving empirical proportions",
+      "main_artificial_50_50_balancing": "forbidden"
+    },
+    "quality_rng": {
+      "batch_seed": "502026 + batch_index",
+      "canonical_generation_batch_size": 16,
+      "extended_50k_batches": "through batch 3125",
+      "kid_rng_namespace": 2026,
+      "main_10k_batches": "first 625 batches",
+      "quality_generation_seed_base": 502026,
+      "same_sequence_for": [
+        "conditional",
+        "unconditional"
+      ],
+      "technical_retry": "repeat entire failed batch using same seed only"
+    },
+    "real_references": {
+      "R_GLOBAL": "exact union R_ID ∪ R_OOD",
+      "R_ID": "full sealed ID_TEST",
+      "R_OOD": "full sealed FINAL_OOD",
+      "forbidden": "no TRAIN/VAL substitution"
+    },
+    "sample_budget": {
+      "conditional_unconditional_same_n": true,
+      "extended_maximum_per_model": 50000,
+      "main_per_model": 10000,
+      "nested_prefixes": [
+        5000,
+        10000,
+        25000,
+        50000
+      ],
+      "promotion_rule": "50k continuation is structural and pre-registered only, never result-driven"
+    },
+    "split_allocation": {
+      "conditional_pool": "ID/OOD proportional to |R_ID| : |R_OOD| for every relevant prefix",
+      "exact_counts": "pending sealed-manifest instantiation",
+      "within_split": "empirical prompt distribution"
+    }
+  },
+  "sealed_data_policy": {
+    "allowed_before_authorization": [
+      "metadata already permitted by upstream protocol",
+      "ID_VAL",
+      "COMP_VAL",
+      "synthetic fixtures"
+    ],
+    "final_ood_image_content": "sealed",
+    "forbidden_before_authorization": [
+      "decode ID_TEST",
+      "render ID_TEST",
+      "evaluate ID_TEST",
+      "decode FINAL_OOD",
+      "render FINAL_OOD",
+      "evaluate FINAL_OOD"
+    ],
+    "id_test_image_content": "sealed",
+    "materializer_data_access": "metadata/protocol files only; no final image access"
+  },
+  "unconditional_baseline": {
+    "checkpoint_status": "pending",
+    "fairness_requirements": [
+      "same 32x32 resolution",
+      "same applicable U-Net backbone",
+      "same diffusion schedule",
+      "same training-image budget",
+      "same optimizer family/logic",
+      "same successful-step budget",
+      "same precision policy",
+      "same final quality sample budget"
+    ],
+    "required": true
+  },
+  "upstream": {
+    "dr04_closure_commit": "ca47fd2f46e5926a02f9d4ed6193554acaf743a9",
+    "dr04_freeze_manifest": {
+      "path": "data/processed/dr04_final_eval_v1/dr04_freeze_manifest.json",
+      "sha256": "c849a50ae342803707c20090d8ed5cd1383ceac9854d2e6b035a2519ee6b4af6"
+    },
+    "dr04_main_prompt_panel": {
+      "path": "data/processed/dr04_final_eval_v1/final_prompt_panel_manifest.json"
+    },
+    "dr04_seed_manifest": {
+      "path": "data/processed/dr04_final_eval_v1/seed_manifest.json"
+    }
+  }
+}

@@ -1,0 +1,613 @@
+{
+  "bindings_sha256_after": "603a9121f980b769621b628a0cf393dda17dd10a5e6aeca6e6e94bcc3e671ebf",
+  "bindings_sha256_before": "e7215461790cb3bbcea89ccef579b9c91b02c8de7734c2c086654653c1d23c7e",
+  "checkpoints": {
+    "conditional": {
+      "path": "artifacts/checkpoints/conditional_main_ema_step20000.pt",
+      "sha256": "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb"
+    },
+    "unconditional": {
+      "path": "artifacts/checkpoints/unconditional_main_ema_step20000.pt",
+      "sha256": "70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e"
+    }
+  },
+  "compliance": {
+    "comp_val_images_opened": 0,
+    "disk_serialization_inside_timed_regions": false,
+    "evaluator_runs": 0,
+    "fid_runs": 0,
+    "final_ood_images_opened": 0,
+    "id_test_images_opened": 0,
+    "id_val_images_opened": 0,
+    "kid_runs": 0,
+    "lpips_runs": 0,
+    "saved_generated_images": 0
+  },
+  "environment": {
+    "benchmark_device": "cuda:0",
+    "cuda_version": "12.1",
+    "driver_reported_cuda_compatibility": "13.2",
+    "driver_version": "595.79",
+    "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "gpu_vram_bytes": 8585216000,
+    "python_version": "3.12.4",
+    "pytorch_version": "2.5.1+cu121"
+  },
+  "primary": {
+    "comparison": {
+      "absolute_median_seconds_per_image": 1.0644245500006946,
+      "percent_median_overhead": 18.600756953341048
+    },
+    "conditional": {
+      "latency_summary": {
+        "max_images_per_second": 0.15692314143051625,
+        "max_seconds_per_image": 7.376107199990656,
+        "mean_images_per_second": 0.1458545231087996,
+        "mean_seconds_per_image": 6.856146650001756,
+        "median_images_per_second": 0.14737772198254112,
+        "median_seconds_per_image": 6.786904299995513,
+        "min_images_per_second": 0.13557286694548945,
+        "min_seconds_per_image": 6.372546400001738,
+        "std_images_per_second": 0.007654490194340196,
+        "std_seconds_per_image": 0.36131851142463095
+      },
+      "measured_seeds": [
+        602029,
+        602030,
+        602031,
+        602032,
+        602033,
+        602034,
+        602035,
+        602036,
+        602037,
+        602038
+      ],
+      "memory_summary": {
+        "maximum_peak_allocated_bytes": 31267328,
+        "maximum_peak_reserved_bytes": 41943040,
+        "median_incremental_peak_allocated_bytes": 3793920.0,
+        "median_peak_allocated_bytes": 31267328.0,
+        "median_pre_sampling_allocated_bytes": 27473408.0
+      },
+      "observations": [
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 6.6821047000121325,
+          "seed": 602029
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.140419000003021,
+          "seed": 602030
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 6.472170499997446,
+          "seed": 602031
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 6.891703899978893,
+          "seed": 602032
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.210348699998576,
+          "seed": 602033
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.376107199990656,
+          "seed": 602034
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.326992600021185,
+          "seed": 602035
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 6.536705400008941,
+          "seed": 602036
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 6.372546400001738,
+          "seed": 602037
+        },
+        {
+          "incremental_peak_allocated_bytes": 3793920,
+          "peak_allocated_bytes": 31267328,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 6.552368100004969,
+          "seed": 602038
+        }
+      ],
+      "warmup_seeds": [
+        602026,
+        602027,
+        602028
+      ]
+    },
+    "configuration": {
+      "batch_size": 1,
+      "clip_denoised": true,
+      "execution_order": [
+        "conditional_b1",
+        "unconditional_b1"
+      ],
+      "measured_runs": 10,
+      "precision": "FP32",
+      "prompt": {
+        "caption": "avatar face_shape_wide glasses_thick_rectangular_glasses hair_color_silver face_color_deep_brown",
+        "id": "cs10002930376453395152"
+      },
+      "resolution": [
+        32,
+        32
+      ],
+      "rng": {
+        "batch_size": 1,
+        "measured_seeds": [
+          602029,
+          602030,
+          602031,
+          602032,
+          602033,
+          602034,
+          602035,
+          602036,
+          602037,
+          602038
+        ],
+        "namespace": "latency_primary_b1",
+        "seed_base": 602026,
+        "warmup_seeds": [
+          602026,
+          602027,
+          602028
+        ]
+      },
+      "sampler": "ancestral_ddpm_fixed_small",
+      "timesteps": 1000,
+      "warmups": 3
+    },
+    "unconditional": {
+      "latency_summary": {
+        "max_images_per_second": 0.18249351732847963,
+        "max_seconds_per_image": 6.296534599998267,
+        "mean_images_per_second": 0.17338744281494645,
+        "mean_seconds_per_image": 5.767430350001087,
+        "median_images_per_second": 0.17474957299721547,
+        "median_seconds_per_image": 5.722479749994818,
+        "min_images_per_second": 0.15881751844900133,
+        "min_seconds_per_image": 5.479646699997829,
+        "std_images_per_second": 0.006688893564530728,
+        "std_seconds_per_image": 0.2304561862445477
+      },
+      "measured_seeds": [
+        602029,
+        602030,
+        602031,
+        602032,
+        602033,
+        602034,
+        602035,
+        602036,
+        602037,
+        602038
+      ],
+      "memory_summary": {
+        "maximum_peak_allocated_bytes": 30732288,
+        "maximum_peak_reserved_bytes": 41943040,
+        "median_incremental_peak_allocated_bytes": 3778560.0,
+        "median_peak_allocated_bytes": 30732288.0,
+        "median_pre_sampling_allocated_bytes": 26953728.0
+      },
+      "observations": [
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 5.727886799984844,
+          "seed": 602029
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 5.717072700004792,
+          "seed": 602030
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 5.810230100003537,
+          "seed": 602031
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 5.819260199990822,
+          "seed": 602032
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 5.57933150001918,
+          "seed": 602033
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 5.479646699997829,
+          "seed": 602034
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 5.550465800013626,
+          "seed": 602035
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 5.667195399990305,
+          "seed": 602036
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 6.296534599998267,
+          "seed": 602037
+        },
+        {
+          "incremental_peak_allocated_bytes": 3778560,
+          "peak_allocated_bytes": 30732288,
+          "peak_reserved_bytes": 41943040,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 6.026679700007662,
+          "seed": 602038
+        }
+      ],
+      "warmup_seeds": [
+        602026,
+        602027,
+        602028
+      ]
+    }
+  },
+  "protocol_sha256": "706a191fff8f2fba1b263919385a6e55ad4579a5285a189cab5acf20ae38549f",
+  "schema": "dr05_runtime_benchmark",
+  "secondary_batch16": {
+    "conditional": {
+      "latency_summary": {
+        "max_images_per_second": 2.200164079984007,
+        "max_seconds_per_image": 0.5356055937500059,
+        "mean_images_per_second": 2.0844656242902806,
+        "mean_seconds_per_image": 0.47973926187460164,
+        "median_images_per_second": 2.1077720167906833,
+        "median_seconds_per_image": 0.4745834656241641,
+        "min_images_per_second": 1.8670454746347371,
+        "min_seconds_per_image": 0.4545115562505089,
+        "std_images_per_second": 0.106766428834036,
+        "std_seconds_per_image": 0.025569066847346722
+      },
+      "measured_seeds": [
+        612029,
+        612030,
+        612031,
+        612032,
+        612033,
+        612034,
+        612035,
+        612036,
+        612037,
+        612038
+      ],
+      "memory_summary": {
+        "maximum_peak_allocated_bytes": 81506816,
+        "maximum_peak_reserved_bytes": 130023424,
+        "median_incremental_peak_allocated_bytes": 54033408.0,
+        "median_peak_allocated_bytes": 81506816.0,
+        "median_pre_sampling_allocated_bytes": 27473408.0
+      },
+      "observations": [
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 8.569689500000095,
+          "seed": 612029
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 8.146497800014913,
+          "seed": 612030
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.272184900008142,
+          "seed": 612031
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.458856199984439,
+          "seed": 612032
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.875207799981581,
+          "seed": 612033
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.7640652999980375,
+          "seed": 612034
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.296318899985636,
+          "seed": 612035
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.346891199995298,
+          "seed": 612036
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.300755599979311,
+          "seed": 612037
+        },
+        {
+          "incremental_peak_allocated_bytes": 54033408,
+          "peak_allocated_bytes": 81506816,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 27473408,
+          "seconds": 7.727814699988812,
+          "seed": 612038
+        }
+      ],
+      "warmup_seeds": [
+        612026,
+        612027,
+        612028
+      ]
+    },
+    "configuration": {
+      "batch_size": 16,
+      "clip_denoised": true,
+      "execution_order": [
+        "conditional_b16",
+        "unconditional_b16"
+      ],
+      "measured_runs": 10,
+      "precision": "FP32",
+      "prompt": {
+        "caption": "avatar face_shape_wide glasses_thick_rectangular_glasses hair_color_silver face_color_deep_brown",
+        "id": "cs10002930376453395152"
+      },
+      "resolution": [
+        32,
+        32
+      ],
+      "rng": {
+        "batch_size": 16,
+        "measured_seeds": [
+          612029,
+          612030,
+          612031,
+          612032,
+          612033,
+          612034,
+          612035,
+          612036,
+          612037,
+          612038
+        ],
+        "namespace": "latency_secondary_b16",
+        "seed_base": 612026,
+        "warmup_seeds": [
+          612026,
+          612027,
+          612028
+        ]
+      },
+      "sampler": "ancestral_ddpm_fixed_small",
+      "timesteps": 1000,
+      "warmups": 3
+    },
+    "unconditional": {
+      "latency_summary": {
+        "max_images_per_second": 2.3161636651599267,
+        "max_seconds_per_image": 0.4869801937493321,
+        "mean_images_per_second": 2.1752342795965953,
+        "mean_seconds_per_image": 0.4597205962501903,
+        "median_images_per_second": 2.1938599996579167,
+        "median_seconds_per_image": 0.45582200625085534,
+        "min_images_per_second": 2.0534716048733994,
+        "min_seconds_per_image": 0.4317484187504306,
+        "std_images_per_second": 0.08488698029456739,
+        "std_seconds_per_image": 0.01795552952035691
+      },
+      "measured_seeds": [
+        612029,
+        612030,
+        612031,
+        612032,
+        612033,
+        612034,
+        612035,
+        612036,
+        612037,
+        612038
+      ],
+      "memory_summary": {
+        "maximum_peak_allocated_bytes": 80759808,
+        "maximum_peak_reserved_bytes": 130023424,
+        "median_incremental_peak_allocated_bytes": 53806080.0,
+        "median_peak_allocated_bytes": 80759808.0,
+        "median_pre_sampling_allocated_bytes": 26953728.0
+      },
+      "observations": [
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.315827100013848,
+          "seed": 612029
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.689852200011956,
+          "seed": 612030
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.791683099989314,
+          "seed": 612031
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.557225199998356,
+          "seed": 612032
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.149781400017673,
+          "seed": 612033
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.050577299989527,
+          "seed": 612034
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.667928899987601,
+          "seed": 612035
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.270477100013522,
+          "seed": 612036
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 7.153968400001759,
+          "seed": 612037
+        },
+        {
+          "incremental_peak_allocated_bytes": 53806080,
+          "peak_allocated_bytes": 80759808,
+          "peak_reserved_bytes": 130023424,
+          "pre_sampling_allocated_bytes": 26953728,
+          "seconds": 6.907974700006889,
+          "seed": 612038
+        }
+      ],
+      "warmup_seeds": [
+        612026,
+        612027,
+        612028
+      ]
+    }
+  },
+  "version": 1
+}

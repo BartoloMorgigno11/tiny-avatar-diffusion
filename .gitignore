@@ -33,11 +33,38 @@ checkpoints/
 *.ckpt
 *.pt
 *.pth
+!artifacts/
+!artifacts/checkpoints/
+!artifacts/checkpoints/conditional_main_ema_step20000.pt
+!artifacts/checkpoints/unconditional_main_ema_step20000.pt
+!artifacts/checkpoints/dr04_evaluator_epoch41.pt
 
 # Temporary experimental outputs
 outputs/
 results/
 runs/
+
+# DR05 canonical result artifacts (all other results remain local-only)
+!results/
+results/*
+!results/runs/
+results/runs/*
+!results/runs/dr05_final_efficiency_v1/
+!results/runs/dr05_final_efficiency_v1/**
+!results/runs/dr05_final_diversity_v1/
+!results/runs/dr05_final_diversity_v1/**
+!results/runs/dr05_final_quality_v1/
+results/runs/dr05_final_quality_v1/*
+!results/runs/dr05_final_quality_v1/final_quality_summary.json
+!results/runs/dr05_final_quality_v1/dr05_i25_provenance_addendum.json
+!results/runs/dr05_final_quality_v1/manifests/
+!results/runs/dr05_final_quality_v1/manifests/**
+!results/runs/dr05_final_quality_v1/phase_status/
+!results/runs/dr05_final_quality_v1/phase_status/**
+
+# DR05 local-only legacy scripts
+scripts/dr05_sampling_throughput_benchmark.py
+scripts/dr05_unconditional_preflight_r1.py
 
 # Local DR03 experimental evidence (canonical compact evidence remains trackable)
 reports/dr03_amp_recovery_validation/
