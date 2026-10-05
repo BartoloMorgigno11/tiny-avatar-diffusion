@@ -5,7 +5,11 @@ from dataclasses import asdict
 import pytest
 import torch
 
-from tiny_avatar_diffusion.conditional_main_training import TrainingProgress, atomic_save_checkpoint
+import tiny_avatar_diffusion.unconditional_main_training as unconditional_training
+from tiny_avatar_diffusion.conditional_main_training import (
+    TrainingProgress,
+    atomic_save_checkpoint,
+)
 from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule
 from tiny_avatar_diffusion.unconditional_main_training import (
     CANONICAL_RUN_ID,
@@ -92,7 +96,10 @@ def test_successful_and_skipped_amp_attempts_have_correct_ema_accounting():
     assert all(torch.equal(ema.state_dict()[name], before_skip[name]) for name in before_skip)
 
 
-def test_checkpoint_round_trip_restores_raw_ema_optimizer_config_and_progress(tmp_path):
+def test_checkpoint_round_trip_restores_raw_ema_optimizer_config_and_progress(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(unconditional_training, "_git_head", lambda: "a" * 40)
     config = UnconditionalMainConfig()
     model, optimizer, ema, progress = _components()
     progress.step, progress.images_seen, progress.batch_offset = 2, 64, 32
@@ -110,6 +117,7 @@ def test_checkpoint_round_trip_restores_raw_ema_optimizer_config_and_progress(tm
     assert checkpoint["schema"] == CHECKPOINT_SCHEMA
     assert checkpoint["config"] == asdict(config)
     assert checkpoint["provenance"]["split_role"] == "TRAIN"
+    assert checkpoint["provenance"]["git_commit"] == "a" * 40
     assert restored_progress.step == 2 and restored_progress.images_seen == 64
     assert all(torch.equal(model.state_dict()[key], restored_model.state_dict()[key]) for key in model.state_dict())
     assert all(torch.equal(ema.state_dict()[key], restored_ema.state_dict()[key]) for key in ema.state_dict())
@@ -125,7 +133,10 @@ def test_d18_only_admits_ema_at_exactly_20000_successful_updates():
     assert not canonical_checkpoint_ready(progress)
 
 
-def test_synthetic_resume_matches_uninterrupted_without_counter_or_ema_duplication():
+def test_synthetic_resume_matches_uninterrupted_without_counter_or_ema_duplication(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(unconditional_training, "_git_head", lambda: "a" * 40)
     def update(model, optimizer, ema, progress, generator):
         optimizer.zero_grad(set_to_none=True)
         loss = unconditional_diffusion_loss(model, LinearDDPMSchedule(), torch.full((1, 3, 32, 32), 0.25), generator=generator)

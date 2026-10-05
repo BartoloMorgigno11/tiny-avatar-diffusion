@@ -1,6 +1,7 @@
 """Dedicated DR05-D12 final latency producer; execute only with separate authorization."""
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import platform
@@ -9,10 +10,18 @@ from pathlib import Path
 
 import torch
 
-from scripts.dr05_materialize_canonical_checkpoints import _conditional_models_from_artifact, _unconditional_model_from_artifact
+from scripts.dr05_materialize_canonical_checkpoints import (
+    _conditional_models_from_artifact,
+    _unconditional_model_from_artifact,
+)
 from tiny_avatar_diffusion.conditional_sampling import conditional_sample
 from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule
-from tiny_avatar_diffusion.dr05_latency import CANONICAL_CONDITIONS, benchmark_condition, condition_record, write_latency_summary
+from tiny_avatar_diffusion.dr05_latency import (
+    CANONICAL_CONDITIONS,
+    benchmark_condition,
+    condition_record,
+    write_latency_summary,
+)
 from tiny_avatar_diffusion.tokenizer import WhitespaceTokenizer
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,5 +76,10 @@ def run() -> dict:
     write_latency_summary(OUTPUT_ROOT, artifact)
     return artifact
 
-if __name__ == "__main__":
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
     print(json.dumps(run(), indent=2, sort_keys=True))
+
+if __name__ == "__main__":
+    main()

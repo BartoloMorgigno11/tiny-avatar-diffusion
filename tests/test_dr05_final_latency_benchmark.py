@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -8,9 +11,39 @@ import pytest
 import torch
 from torch import nn
 
-from tiny_avatar_diffusion.dr05_latency import CANONICAL_CONDITIONS, LATENCY_FILENAME, benchmark_condition, condition_record, measure_once, summarize, validate_condition, write_latency_summary
 from tiny_avatar_diffusion.conditional_sampling import conditional_sample
 from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule
+from tiny_avatar_diffusion.dr05_latency import (
+    CANONICAL_CONDITIONS,
+    LATENCY_FILENAME,
+    benchmark_condition,
+    condition_record,
+    measure_once,
+    summarize,
+    validate_condition,
+    write_latency_summary,
+)
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_module_help_exits_before_benchmark_execution():
+    output = ROOT / "results/runs/dr05_final_efficiency_v1/latency_summary.json"
+    before = output.read_bytes()
+    environment = os.environ.copy()
+    environment["CUDA_VISIBLE_DEVICES"] = ""
+    result = subprocess.run(
+        [sys.executable, "-m", "scripts.dr05_final_latency_benchmark", "--help"],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert "usage:" in result.stdout.lower()
+    assert output.read_bytes() == before
 
 
 def test_warmups_are_excluded_and_measurement_geometry(monkeypatch):
@@ -96,6 +129,7 @@ def test_complete_four_condition_schema_and_binding_sentinel(tmp_path: Path):
 
 def test_timed_helper_has_no_non_sampling_dependencies():
     import inspect
+
     import tiny_avatar_diffusion.dr05_latency as latency
     source = inspect.getsource(latency.measure_once).lower()
     for forbidden in ("png", "pil", "save", "evaluator", "kid", "fid", "lpips"):

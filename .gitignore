@@ -76,8 +76,7 @@ results/runs/dr05_final_quality_v1/*
 !results/runs/dr05_final_quality_v1/phase_status/
 !results/runs/dr05_final_quality_v1/phase_status/**
 
-# DR05 local-only legacy scripts
-scripts/dr05_sampling_throughput_benchmark.py
+# DR05 local-only historical script
 scripts/dr05_unconditional_preflight_r1.py
 
 # Local DR03 experimental evidence (canonical compact evidence remains trackable)

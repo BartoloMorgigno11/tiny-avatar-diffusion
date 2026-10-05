@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
-import shutil
 import subprocess
 import tomllib
 from pathlib import Path
@@ -85,7 +84,9 @@ def test_quality_diversity_and_efficiency_invariants():
     assert protocol["efficiency"]["memory"]["primary_metric"] == "peak CUDA allocated memory"
 
 
-def test_pending_sealing_rules_and_determinism(tmp_path: Path):
+def test_pending_sealing_rules_and_determinism(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     first = sha256()
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyproject["project"]["optional-dependencies"]["eval"] == [
@@ -94,6 +95,7 @@ def test_pending_sealing_rules_and_determinism(tmp_path: Path):
         "scipy==1.15.3",
     ]
     materializer = load_materializer()
+    monkeypatch.setattr(materializer, "verify_dr04_closure_ancestry", lambda: None)
     output, digest = materializer.materialize(tmp_path / "dr05_final_protocol.json")
     assert output.read_bytes() == PROTOCOL.read_bytes()
     assert digest == first
@@ -114,46 +116,47 @@ def test_pending_sealing_rules_and_determinism(tmp_path: Path):
     assert not any(Path(value).is_absolute() for value in strings(protocol))
 
 
-def test_dr04_closure_commit_must_be_an_ancestor(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    exact = load_materializer()
-    exact.verify_inputs()
+def _temporary_git_repository(path: Path, message: str) -> str:
+    path.mkdir()
+    subprocess.run(["git", "init"], cwd=path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.name", "DR05 protocol test"], cwd=path, check=True
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "dr05-protocol-test@invalid"],
+        cwd=path,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", message], cwd=path, check=True
+    )
+    return subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=path, text=True
+    ).strip()
 
+
+def test_dr04_closure_commit_must_be_an_ancestor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     descendant_root = tmp_path / "descendant"
-    subprocess.run(["git", "clone", "--no-local", str(ROOT), str(descendant_root)], check=True)
-    subprocess.run(["git", "config", "user.name", "DR05 protocol test"], cwd=descendant_root, check=True)
-    subprocess.run(["git", "config", "user.email", "dr05-protocol-test@invalid"], cwd=descendant_root, check=True)
-    subprocess.run(["git", "commit", "--allow-empty", "-m", "descendant"], cwd=descendant_root, check=True)
-    assert subprocess.run(
-        ["git", "merge-base", "--is-ancestor", exact.DR04_CLOSURE_COMMIT, "HEAD"], cwd=descendant_root, check=False
-    ).returncode == 0
+    closure_commit = _temporary_git_repository(descendant_root, "closure")
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", "later"],
+        cwd=descendant_root,
+        check=True,
+    )
     descendant = load_materializer()
     monkeypatch.setattr(descendant, "ROOT", descendant_root)
-    shutil.copy2(ROOT / "pyproject.toml", descendant_root / "pyproject.toml")
-    for name, relative_path in {
-        "FREEZE_MANIFEST": "data/processed/dr04_final_eval_v1/dr04_freeze_manifest.json",
-        "PANEL_MANIFEST": "data/processed/dr04_final_eval_v1/final_prompt_panel_manifest.json",
-        "SEED_MANIFEST": "data/processed/dr04_final_eval_v1/seed_manifest.json",
-        "CONDITIONAL_CHECKPOINT": "artifacts/checkpoints/conditional_main_ema_step20000.pt",
-        "EVALUATOR_CHECKPOINT": "artifacts/checkpoints/dr04_evaluator_epoch41.pt",
-    }.items():
-        source = ROOT / relative_path
-        target = descendant_root / relative_path
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if not target.exists():
-            shutil.copy2(source, target)
-        monkeypatch.setattr(descendant, name, target)
-    descendant.verify_inputs()
+    monkeypatch.setattr(descendant, "DR04_CLOSURE_COMMIT", closure_commit)
+    descendant.verify_dr04_closure_ancestry()
 
     unrelated_root = tmp_path / "unrelated"
-    unrelated_root.mkdir()
-    subprocess.run(["git", "init"], cwd=unrelated_root, check=True)
-    subprocess.run(["git", "config", "user.name", "DR05 protocol test"], cwd=unrelated_root, check=True)
-    subprocess.run(["git", "config", "user.email", "dr05-protocol-test@invalid"], cwd=unrelated_root, check=True)
-    subprocess.run(["git", "commit", "--allow-empty", "-m", "unrelated"], cwd=unrelated_root, check=True)
+    _temporary_git_repository(unrelated_root, "unrelated")
     unrelated = load_materializer()
     monkeypatch.setattr(unrelated, "ROOT", unrelated_root)
+    monkeypatch.setattr(unrelated, "DR04_CLOSURE_COMMIT", closure_commit)
     with pytest.raises(ValueError, match="not an ancestor"):
-        unrelated.verify_inputs()
+        unrelated.verify_dr04_closure_ancestry()
 
 
 def test_environment_artifact_records_frozen_provenance():

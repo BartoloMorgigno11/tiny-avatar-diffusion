@@ -4,7 +4,6 @@ data/processed/dr01_v1/text/10k/id_val.jsonl text eol=lf
 data/processed/dr04_final_eval_v1/dr04_freeze_manifest.json text eol=crlf
 data/processed/dr05_final_eval_v1/dr05_main_quality_generation_plan.jsonl text eol=crlf
 data/processed/dr05_final_eval_v1/dr05_main_quality_generation_plan_meta.json text eol=crlf
-notebooks/05_quality_diversity_efficiency.ipynb text eol=crlf
 results/runs/dr05_final_diversity_v1/pair_records.jsonl text eol=crlf
 results/runs/dr05_final_diversity_v1/prompt_records.jsonl text eol=crlf
 results/runs/dr05_final_diversity_v1/diversity_summary.json text eol=crlf

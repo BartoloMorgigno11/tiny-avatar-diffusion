@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from tiny_avatar_diffusion.conditional_sampling import conditional_sample
-from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule
+from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule, ObservedSample
 from tiny_avatar_diffusion.text_conditioning import TextConditioningEncoder
 from tiny_avatar_diffusion.unet import ConditionalTinyUNet
 
@@ -134,6 +134,50 @@ def test_conditional_sampling_is_deterministic_and_seed_sensitive() -> None:
 
     assert torch.equal(first, repeated)
     assert not torch.equal(first, different_seed)
+
+
+def test_conditional_snapshots_do_not_change_sample_rng_or_forward_count() -> None:
+    text_encoder, denoiser, schedule = _components()
+    input_ids, mask = _real_prompt(ID_VAL)
+    x_t = torch.randn(1, 3, 32, 32, generator=torch.Generator().manual_seed(20))
+    plain_generator = torch.Generator().manual_seed(21)
+    observed_generator = torch.Generator().manual_seed(21)
+    plain = conditional_sample(
+        schedule,
+        text_encoder,
+        denoiser,
+        input_ids,
+        mask,
+        x_T=x_t,
+        generator=plain_generator,
+    )
+    calls: list[int] = []
+    handle = denoiser.register_forward_hook(lambda *_: calls.append(1))
+    try:
+        observed = conditional_sample(
+            schedule,
+            text_encoder,
+            denoiser,
+            input_ids,
+            mask,
+            x_T=x_t,
+            generator=observed_generator,
+            snapshot_timesteps=[3, 1, 1],
+        )
+    finally:
+        handle.remove()
+    assert isinstance(plain, torch.Tensor)
+    assert isinstance(observed, ObservedSample)
+    assert torch.equal(observed.sample, plain)
+    assert torch.equal(observed_generator.get_state(), plain_generator.get_state())
+    assert calls == [1] * 4
+    assert [item.timestep for item in observed.snapshots] == [3, 1]
+    final_before_mutation = observed.sample.clone()
+    for item in observed.snapshots:
+        assert item.predicted_x_start.device.type == "cpu"
+        assert not item.predicted_x_start.requires_grad
+        item.predicted_x_start.zero_()
+    assert torch.equal(observed.sample, final_before_mutation)
 
 
 def test_conditional_sampling_is_sensitive_to_two_real_dr01_captions() -> None:

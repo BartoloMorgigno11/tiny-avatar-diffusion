@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "processed" / "dr04_final_eval_v1"
 
@@ -51,9 +50,18 @@ def test_checkpoint_and_access_contract():
 
 def test_closed_freeze_manifest_and_notebook_portability():
     freeze = load("dr04_freeze_manifest.json")
-    notebook = (ROOT / "notebooks" / "04_conditioning_compositional_evaluation.ipynb").read_text(encoding="utf-8")
+    notebook_names = {
+        "01_data_and_protocol.ipynb",
+        "02_model_and_diffusion.ipynb",
+        "03_evaluation_and_results.ipynb",
+        "04_interactive_generation.ipynb",
+    }
+    notebook_root = ROOT / "notebooks"
     assert freeze["status"] == "CLOSED"
     assert freeze["closure_audit_status"] == "PASS"
     assert not freeze["final_generation_executed"]
-    assert "C:\\Users\\" not in notebook
-    assert "300 prompts" not in notebook
+    assert {path.name for path in notebook_root.glob("*.ipynb")} == notebook_names
+    for name in notebook_names:
+        notebook = (notebook_root / name).read_text(encoding="utf-8")
+        assert "C:\\Users\\" not in notebook
+        assert "300 prompts" not in notebook

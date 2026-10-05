@@ -1,12 +1,30 @@
 from __future__ import annotations
+
 import json
+import sys
+
 import pytest
 import torch
-import sys
+
 import tiny_avatar_diffusion.checkpoint_selection as selector
-from tiny_avatar_diffusion.checkpoint_selection import ALLOWED_SPLITS, build_manifest, image_name, select, write_atomic, load_or_initialize_progress, write_selection_markdown, execution_identity, expected_complete, tensor_to_png, compute_kid, sample_per_seed, generate_split, load_ema_checkpoint
+from tiny_avatar_diffusion.checkpoint_selection import (
+    build_manifest,
+    compute_kid,
+    execution_identity,
+    expected_complete,
+    generate_split,
+    image_name,
+    load_ema_checkpoint,
+    load_or_initialize_progress,
+    sample_per_seed,
+    select,
+    tensor_to_png,
+    write_atomic,
+    write_selection_markdown,
+)
 from tiny_avatar_diffusion.text_conditioning import TextConditioningEncoder
 from tiny_avatar_diffusion.unet import ConditionalTinyUNet
+
 
 def test_manifest_is_deterministic_and_validation_only(tmp_path):
     a=build_manifest(tmp_path/'a.json',count=2); b=build_manifest(tmp_path/'b.json',count=2)
@@ -33,7 +51,8 @@ def test_progress_rejects_identity_change_and_selection_markdown(tmp_path):
     with pytest.raises(ValueError): load_or_initialize_progress(path,{**identity,'config_sha256':'b'})
     output=tmp_path/'selection.md'; write_selection_markdown(output,{'status':'CONFLICT','selected_step':None,'weight_set':None},identity=identity,results={}); assert 'No checkpoint frozen' in output.read_text()
 
-def test_identity_hash_is_stable_and_changes_with_checkpoint_or_batch(tmp_path):
+def test_identity_hash_is_stable_and_changes_with_checkpoint_or_batch(monkeypatch,tmp_path):
+    monkeypatch.setattr(selector.subprocess,'check_output',lambda *args,**kwargs:'a'*40+'\n')
     checkpoint=tmp_path/'x.pt'; checkpoint.write_bytes(b'x')
     a=execution_identity(run_id='r',manifest_sha256='m',checkpoints={5000:checkpoint},sampling_batch_size=8)
     b=execution_identity(run_id='r',manifest_sha256='m',checkpoints={5000:checkpoint},sampling_batch_size=8)
@@ -94,6 +113,7 @@ def test_production_ema_loader_never_uses_raw(tmp_path):
     with pytest.raises(ValueError): load_ema_checkpoint(path,expected_step=10000,device=torch.device('cpu'))
 
 def _mock_cli(monkeypatch,tmp_path,kids,fail=False):
+    monkeypatch.setattr(selector.subprocess,'check_output',lambda *args,**kwargs:'a'*40+'\n')
     run=tmp_path/'r'; run.mkdir(exist_ok=True)
     for step in (5000,10000,15000,20000): (run/f'milestone_{step:05d}.pt').write_bytes(str(step).encode())
     monkeypatch.setattr(selector,'load_ema_checkpoint',lambda *a,**k:(object(),object()))
@@ -120,4 +140,4 @@ def test_cli_mock_failure_and_compatible_resume(monkeypatch,tmp_path):
     kids={(s,split):.2 for s in (5000,10000,15000,20000) for split in ('id_val','comp_val')}; out,_=_mock_cli(monkeypatch,tmp_path,kids,fail=True)
     with pytest.raises(RuntimeError): selector.main()
     assert json.loads((out/'progress.json').read_text())['status']=='FAILED'
-    out,calls=_mock_cli(monkeypatch,tmp_path,kids); selector.main(); assert json.loads((out/'progress.json').read_text())['status']=='COMPLETE'
+    out,_calls=_mock_cli(monkeypatch,tmp_path,kids); selector.main(); assert json.loads((out/'progress.json').read_text())['status']=='COMPLETE'

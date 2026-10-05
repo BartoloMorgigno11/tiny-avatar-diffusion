@@ -11,10 +11,16 @@ dependencies = [
     "torch==2.5.1",
 ]
 
+[project.scripts]
+tiny-avatar = "tiny_avatar_diffusion.cli:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest",
     "ruff",
+]
+demo = [
+    "streamlit>=1.32,<2",
 ]
 notebook = [
     "matplotlib",

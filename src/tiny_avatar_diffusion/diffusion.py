@@ -7,13 +7,44 @@ Python indices ``t = 0, ..., T - 1`` represent mathematical DDPM steps
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 
 import torch
 from torch import nn
 
 COSINE_OFFSET = 0.008
 COSINE_MAX_BETA = 0.999
+
+
+@dataclass(frozen=True)
+class SamplingSnapshot:
+    """Detached CPU copy of a predicted ``x_0`` estimate at one timestep."""
+
+    timestep: int
+    predicted_x_start: torch.Tensor
+
+
+@dataclass(frozen=True)
+class ObservedSample:
+    """Final sample plus requested observational predicted-``x_0`` snapshots."""
+
+    sample: torch.Tensor
+    snapshots: tuple[SamplingSnapshot, ...]
+
+
+def normalize_snapshot_timesteps(
+    timesteps: Iterable[int] | None, num_timesteps: int
+) -> tuple[int, ...]:
+    """Validate and normalize requested observations into sampling order."""
+    if timesteps is None:
+        return ()
+    values = tuple(timesteps)
+    if any(type(value) is not int for value in values):
+        raise TypeError("snapshot timesteps must be integers")
+    if any(value < 0 or value >= num_timesteps for value in values):
+        raise ValueError(f"snapshot timesteps must be in [0, {num_timesteps})")
+    return tuple(sorted(set(values), reverse=True))
 
 
 def _extract(coefficients: torch.Tensor, timesteps: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -234,6 +265,86 @@ class LinearDDPMSchedule(nn.Module):
                 )["sample"]
 
         return x_t
+
+
+def unconditional_sample(
+    schedule: LinearDDPMSchedule,
+    model: nn.Module,
+    *,
+    x_T: torch.Tensor | None = None,
+    generator: torch.Generator | None = None,
+    image_shape: tuple[int, int, int, int] = (1, 3, 32, 32),
+    clip_denoised: bool = True,
+    snapshot_timesteps: Iterable[int] | None = None,
+) -> torch.Tensor | ObservedSample:
+    """Run the canonical unconditional ancestral DDPM sampler.
+
+    This is the reusable form of the unconditional reverse loop used by the
+    frozen DR05 evaluation scripts. Initial and reverse noise are drawn in
+    FP32 from the caller-provided generator, and only reconstructed ``x_0`` is
+    clipped by the existing reverse-step primitive.
+    """
+    try:
+        device = next(model.parameters()).device
+    except StopIteration as error:
+        raise ValueError("model must have parameters") from error
+    if len(image_shape) != 4 or image_shape[0] <= 0 or image_shape[1:] != (3, 32, 32):
+        raise ValueError("image_shape must be [B, 3, 32, 32] with a non-empty batch")
+    if x_T is None:
+        x_t = torch.randn(
+            image_shape,
+            device=device,
+            dtype=torch.float32,
+            generator=generator,
+        )
+    else:
+        if x_T.shape != image_shape:
+            raise ValueError("x_T must match image_shape")
+        if x_T.device != device:
+            raise ValueError("x_T must be on the model device")
+        if x_T.dtype != torch.float32:
+            raise ValueError("x_T must have dtype torch.float32")
+        x_t = x_T
+
+    requested_snapshots = normalize_snapshot_timesteps(
+        snapshot_timesteps, schedule.betas.shape[0]
+    )
+    requested_set = set(requested_snapshots)
+    snapshots: list[SamplingSnapshot] = []
+    with torch.inference_mode():
+        for timestep in range(schedule.betas.shape[0] - 1, -1, -1):
+            timesteps = torch.full(
+                (x_t.shape[0],), timestep, dtype=torch.long, device=device
+            )
+            predicted_noise = model(x_t, timesteps)
+            reverse_noise = torch.randn(
+                x_t.shape,
+                device=device,
+                dtype=torch.float32,
+                generator=generator,
+            )
+            step = schedule.p_sample_from_noise(
+                x_t,
+                timesteps,
+                predicted_noise,
+                noise=reverse_noise,
+                clip_denoised=clip_denoised,
+            )
+            if timestep in requested_set:
+                with torch.inference_mode(False):
+                    predicted_x_start = (
+                        step["predicted_x_start"].detach().clone().cpu()
+                    )
+                snapshots.append(
+                    SamplingSnapshot(
+                        timestep=timestep,
+                        predicted_x_start=predicted_x_start,
+                    )
+                )
+            x_t = step["sample"]
+    if not requested_snapshots:
+        return x_t
+    return ObservedSample(sample=x_t, snapshots=tuple(snapshots))
 
 
 class CosineDDPMSchedule(LinearDDPMSchedule):
