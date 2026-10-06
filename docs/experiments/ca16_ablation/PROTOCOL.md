@@ -26,20 +26,54 @@ Candidate checkpoints are 5k, 10k, 15k, and 20k successful-step milestones. Sele
 4. lowest COMP_VAL KID;
 5. earlier milestone.
 
-The role and order of COMP_VAL KID as the fourth tie-break are frozen. Its exact prospective pool size, sampling rule, and operational manifest remain open and must be frozen in R2 before training; model outputs must not influence that choice. KID measures distributional image quality, not prompt adherence.
+The role and order of COMP_VAL KID as the fourth tie-break are frozen. Its R2 pool, sampling rule, and seed mapping are frozen below. KID measures distributional image quality, not prompt adherence.
 
 The primary COMP aggregation is family-macro. Frozen 10k COMP membership counts after precedence are CV1 = 66, CV2 = 139, CV3 = 52, and CV4 = 82 across 338 unique COMP_VAL records. One record satisfies more than one COMP definition, so the membership counts sum to 339. Record-micro aggregation would therefore weight families unequally, especially CV2. The primary aggregation is:
 
 `MAA_COMP = (MAA_CV1 + MAA_CV2 + MAA_CV3 + MAA_CV4) / 4`.
 
-The robust conditioning panel will use 100 ID_VAL prompts and 100 COMP_VAL prompts, with 25 prompts from each of CV1--CV4. A COMP_VAL example belonging to multiple COMP definitions is ineligible for a family-specific conditioning panel. Selected models use the same prompts, generation seeds `2026`--`2030`, sampler/settings, and aggregation rules.
+## R2 frozen evaluation-panel design
 
-Quality is a KID-based guardrail on a separate prospectively frozen, distribution-preserving manifest; the balanced/coverage-aware conditioning panel is not its sole representative pool. Diversity follows the V1 LPIPS-style prompt-macro philosophy where feasible, with no arbitrary diversity threshold. Efficiency reporting includes parameter count, sampling latency, images/sec, peak CUDA allocated memory, and peak CUDA reserved memory.
+All R2 and later development manifests may use only `ID_VAL` and `COMP_VAL`. `ID_TEST` and `FINAL_OOD` are denied by default and must be rejected by a future implementation allowlist; they are not inputs to any R2/R3 development panel.
 
-## Reproducibility and open protocol items
+### Stable record identity
+
+The stable record key is `(dataset_variant, split_role, image_id)`, serialized canonically as `<dataset_variant>|<split_role>|<image_id>`. `source_image_path` is retained only as provenance. Artifact order, row position, and manifest position are not stable identity inputs.
+
+### Robust conditioning and diversity panel
+
+The robust COMP panel contains 100 unique prompts: 25 from each of CV1, CV2, CV3, and CV4. The one multi-definition `COMP_VAL` record is excluded from this panel before selection. For each family, eligible records are ordered by ascending `SHA256("2026|COMP_ROBUST|<family>|<stable_record_key>")`; the first 25 are selected. Expected eligible counts after the exclusion are CV1=65, CV2=139, CV3=52, and CV4=81. This procedure depends only on frozen data and annotations, never on model outputs.
+
+The robust ID panel contains 100 `ID_VAL` prompts selected by a deterministic, ground-truth-only coverage-aware greedy procedure over all four attributes. Attribute contributions are normalized so that attributes contribute equally; at each selection the rule prioritizes the most undercovered equal-class target. Ties are broken by ascending `SHA256("2026|ID_ROBUST|<stable_record_key>")`. R2C must specify the exact deterministic formula and audit outputs, without random sampling, natural-distribution sampling, or model-performance inputs.
+
+The robust 100 ID and 100 COMP prompts are also the diversity panel. For each prompt, reuse the same robust-conditioning samples generated with seeds 2026, 2027, 2028, 2029, and 2030: five images and all 10 unordered LPIPS pairs, with no additional diversity-only samples.
+
+Diversity follows V1 LPIPS semantics: LPIPS `alex` / version `0.1` on RGB 32x32 images in `[-1, 1]`; compute the mean pairwise score per prompt. Report ID diversity as the macro mean over its 100 prompts. Report COMP diversity per family and then as an equal-family macro. Use a 10,000-replicate prompt-level percentile bootstrap with seed 202605, preserving COMP family structure. This is a matched ablation guardrail, not a natural-distribution estimate.
+
+### Checkpoint-selection panel and KID tie-break
+
+After removing the 100 robust ID records, the remaining 366 `ID_VAL` records form the ID selection candidate pool. Order them by ascending `SHA256("2026|ID_SELECTION|<stable_record_key>")` and select the first 256, leaving 110 unselected.
+
+After removing the 100 robust COMP records and the one excluded multi-definition record, all remaining 237 `COMP_VAL` records form the COMP selection panel. This makes the conditioning-selection source sets strictly disjoint from the robust conditioning/diversity source sets.
+
+Use these same 237 COMP sources for the checkpoint-selection KID tie-break. For each candidate milestone and model, generate one image per prompt using canonical manifest index `i` with seed `2026+i`. KID is the fourth checkpoint tie-breaker only and is an image-distribution quality measure, not a conditioning-adherence measure.
+
+### Prospective quality guardrail
+
+For every selected model, create a separate prospective quality-generation manifest covering all 466 `ID_VAL` and all 338 `COMP_VAL` prompts (804 prompts total), with one output per source record. Use canonical manifest index `i` and seed `2026+i`, identically across all six selected models. Report `KID_ID`, `KID_COMP`, and `KID_GLOBAL` on their respective ID, COMP, and union source sets; preserve FID as a secondary diagnostic if the existing infrastructure produces it unchanged.
+
+Quality and conditioning evaluations use separate prospective generation manifests, although their validation source records may overlap. The quality guardrail therefore explicitly permits source-record overlap with the conditioning and checkpoint-selection panels while keeping the generated artifacts distinct. It must not use `ID_TEST` or `FINAL_OOD`.
+
+### Frozen panel-purpose separation
+
+| Purpose | Sources and size | Use |
+| --- | --- | --- |
+| Checkpoint selection | 256 ID + 237 COMP candidate-milestone prompts | MAA/MacroPSR selection; COMP KID as fourth tie-breaker |
+| Robust conditioning and diversity | 100 ID + 100 COMP, with COMP 25 per family | MAA, MacroPSR, diagnostics, and matched LPIPS diversity |
+| Prospective final quality | All 466 ID + all 338 COMP; one output per source | KID diagnostics and unchanged secondary FID when available |
+
+## Reproducibility and retained scientific boundaries
 
 All run-level provenance, checkpoint-selection inputs, prompt identities, generation seeds, aggregation outputs, and deviations must be retained so the pairing and selection rule are auditable.
 
-**OPEN — TO BE FROZEN IN R2 BEFORE TRAINING:** exact prospective COMP_VAL KID tie-break pool size, sampling rule, and manifest; and exact size and sampling rule for the separate distribution-preserving quality-guardrail pool. No model outputs may influence either choice.
-
-**OPEN — TO BE FROZEN BEFORE FULL TRAINING:** exact diversity prompt-count/panel rule.
+Exact implementation manifests and the deterministic audit outputs for the frozen rules are R2C implementation deliverables; they do not reopen the panel-design decisions above. Exact parameter count, actual results, whether 100k steps, 64x64 resolution, CFG, larger models, a different objective, longer training, or a post-CA16 follow-up are warranted remain outside this focused ablation.
