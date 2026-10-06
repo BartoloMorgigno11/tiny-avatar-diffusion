@@ -147,7 +147,7 @@ class TextConditioningEncoder(nn.Module):
 
 
 class ImageTextCrossAttention(nn.Module):
-    """Frozen DR03 V1 image-query to text-key/value cross-attention."""
+    """V1 image-query to text-key/value cross-attention for positive H x W maps."""
 
     def __init__(
         self,
@@ -188,17 +188,19 @@ class ImageTextCrossAttention(nn.Module):
         *,
         return_attention: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-        """Cross-attend 8x8 image queries to valid text keys and values.
+        """Cross-attend positive-spatial image queries to valid text keys and values.
 
         ``context_mask`` retains DR01 semantics: 1 is a valid token and 0 is a
         PAD token. It is applied only across the text-key dimension of scores.
         """
         if not isinstance(image_features, torch.Tensor) or image_features.ndim != 4:
             raise ValueError("image_features must be a rank-4 torch Tensor")
-        if image_features.shape[1:] != (self.image_channels, 8, 8):
+        if image_features.shape[1] != self.image_channels:
             raise ValueError(
-                f"image_features must have shape [B, {self.image_channels}, 8, 8]"
+                f"image_features must have channel dimension {self.image_channels}"
             )
+        if image_features.shape[2] <= 0 or image_features.shape[3] <= 0:
+            raise ValueError("image_features spatial dimensions H and W must be positive")
         if not isinstance(context, torch.Tensor) or context.ndim != 3:
             raise ValueError("context must be a rank-3 torch Tensor")
         if context.shape[0] != image_features.shape[0]:

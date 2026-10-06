@@ -1,3 +1,5 @@
+import math
+
 import pytest
 import torch
 
@@ -7,6 +9,46 @@ from tiny_avatar_diffusion.text_conditioning import (
     TextConditioningEncoder,
     sinusoidal_positional_encoding,
 )
+
+
+def _frozen_v1_8x8_reference(
+    block: ImageTextCrossAttention,
+    image_features: torch.Tensor,
+    context: torch.Tensor,
+    context_mask: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Independent local transcription of the frozen V1 8x8 forward mathematics."""
+    assert image_features.shape[1:] == (128, 8, 8)
+    batch_size, _, height, width = image_features.shape
+    spatial_positions = height * width
+    image_sequence = image_features.permute(0, 2, 3, 1).reshape(
+        batch_size, spatial_positions, block.image_channels
+    )
+    queries = block.query_projection(block.visual_norm(image_sequence))
+    keys = block.key_projection(context)
+    values = block.value_projection(context)
+
+    def split_heads(sequence: torch.Tensor) -> torch.Tensor:
+        return sequence.reshape(
+            batch_size, sequence.shape[1], block.num_heads, block.head_dim
+        ).transpose(1, 2)
+
+    queries = split_heads(queries)
+    keys = split_heads(keys)
+    values = split_heads(values)
+    scores = torch.matmul(queries, keys.transpose(-2, -1)) / math.sqrt(block.head_dim)
+    valid_keys = context_mask.to(dtype=torch.bool)[:, None, None, :]
+    scores = scores.masked_fill(~valid_keys, torch.finfo(scores.dtype).min)
+    attention_weights = torch.softmax(scores, dim=-1)
+    attended = torch.matmul(attention_weights, values)
+    attended = attended.transpose(1, 2).reshape(
+        batch_size, spatial_positions, block.attention_dim
+    )
+    output_sequence = image_sequence + block.output_projection(attended)
+    output = output_sequence.reshape(batch_size, height, width, block.image_channels).permute(
+        0, 3, 1, 2
+    )
+    return output, attention_weights
 
 
 def test_frozen_configuration_defaults_and_invalid_values() -> None:
@@ -186,6 +228,76 @@ def test_cross_attention_parameter_count() -> None:
     block = ImageTextCrossAttention()
 
     assert sum(parameter.numel() for parameter in block.parameters() if parameter.requires_grad) == 25_152
+    assert tuple(name for name, _ in block.named_parameters()) == (
+        "visual_norm.weight",
+        "visual_norm.bias",
+        "query_projection.weight",
+        "query_projection.bias",
+        "key_projection.weight",
+        "key_projection.bias",
+        "value_projection.weight",
+        "value_projection.bias",
+        "output_projection.weight",
+        "output_projection.bias",
+    )
+
+
+def test_cross_attention_8x8_matches_independent_frozen_v1_reference_exactly() -> None:
+    torch.manual_seed(2026)
+    block = ImageTextCrossAttention().eval()
+    image = torch.randn(2, 128, 8, 8)
+    context = torch.randn(2, 7, 64)
+    mask = torch.tensor([[1, 1, 1, 1, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1]])
+
+    expected_output, expected_attention = _frozen_v1_8x8_reference(block, image, context, mask)
+    actual_output, actual_attention = block(image, context, mask, return_attention=True)
+
+    assert torch.equal(actual_output, expected_output)
+    assert torch.equal(actual_attention, expected_attention)
+
+
+@pytest.mark.parametrize(("height", "width"), [(8, 8), (16, 16), (8, 16)])
+def test_cross_attention_supports_positive_spatial_maps(
+    height: int, width: int
+) -> None:
+    block = ImageTextCrossAttention().eval()
+    image = torch.randn(2, 128, height, width)
+    context = torch.randn(2, 4, 64)
+    mask = torch.tensor([[1, 1, 0, 0], [1, 1, 1, 0]], dtype=torch.long)
+
+    output, attention = block(image, context, mask, return_attention=True)
+
+    assert output.shape == image.shape
+    assert attention.shape == (2, 4, height * width, 4)
+    assert torch.isfinite(output).all() and torch.isfinite(attention).all()
+    assert torch.allclose(attention[0, ..., 2:], torch.zeros_like(attention[0, ..., 2:]))
+    assert torch.allclose(attention[1, ..., 3:], torch.zeros_like(attention[1, ..., 3:]))
+    assert torch.allclose(attention.sum(dim=-1), torch.ones_like(attention[..., 0]))
+
+
+def test_cross_attention_16x16_gradient_flow_reaches_inputs_and_all_parameters() -> None:
+    block = ImageTextCrossAttention()
+    image = torch.randn(1, 128, 16, 16, requires_grad=True)
+    context = torch.randn(1, 4, 64, requires_grad=True)
+    mask = torch.tensor([[1, 1, 1, 0]], dtype=torch.long)
+
+    block(image, context, mask).square().mean().backward()
+
+    assert image.grad is not None and torch.isfinite(image.grad).all()
+    assert context.grad is not None and torch.isfinite(context.grad).all()
+    for parameter in (
+        block.visual_norm.weight,
+        block.visual_norm.bias,
+        block.query_projection.weight,
+        block.query_projection.bias,
+        block.key_projection.weight,
+        block.key_projection.bias,
+        block.value_projection.weight,
+        block.value_projection.bias,
+        block.output_projection.weight,
+        block.output_projection.bias,
+    ):
+        assert parameter.grad is not None and torch.isfinite(parameter.grad).all()
 
 
 def test_cross_attention_uses_a_genuine_visual_residual_path() -> None:
@@ -285,8 +397,8 @@ def test_cross_attention_is_text_sensitive_and_deterministic() -> None:
 @pytest.mark.parametrize(
     ("image", "context", "mask", "message"),
     [
-        (torch.randn(1, 64, 8, 8), torch.randn(1, 3, 64), torch.ones(1, 3), "shape"),
-        (torch.randn(1, 128, 4, 4), torch.randn(1, 3, 64), torch.ones(1, 3), "shape"),
+        (torch.randn(1, 64, 8, 16), torch.randn(1, 3, 64), torch.ones(1, 3), "channel dimension"),
+        (torch.randn(1, 128, 0, 8), torch.randn(1, 3, 64), torch.ones(1, 3), "spatial dimensions"),
         (torch.randn(1, 128, 8, 8), torch.randn(1, 3, 32), torch.ones(1, 3), "final dimension"),
         (torch.randn(1, 128, 8, 8), torch.randn(2, 3, 64), torch.ones(2, 3), "batch size"),
         (torch.randn(1, 128, 8, 8), torch.randn(1, 3, 64), torch.ones(1, 2), "context_mask"),
@@ -298,3 +410,13 @@ def test_cross_attention_rejects_invalid_shapes(
 ) -> None:
     with pytest.raises(ValueError, match=message):
         ImageTextCrossAttention()(image, context, mask)
+
+
+def test_cross_attention_preserves_context_rank_and_mask_value_validation() -> None:
+    image = torch.randn(1, 128, 8, 16)
+    block = ImageTextCrossAttention()
+
+    with pytest.raises(ValueError, match="rank-3"):
+        block(image, torch.randn(1, 64), torch.ones(1, 1))
+    with pytest.raises(ValueError, match="DR01 values"):
+        block(image, torch.randn(1, 3, 64), torch.tensor([[1, 2, 0]]))
