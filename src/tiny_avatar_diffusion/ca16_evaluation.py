@@ -544,29 +544,26 @@ def evaluator_identity(
     freeze_path: Path = EVALUATOR_FREEZE,
     checkpoint_path: Path | None = None,
 ) -> dict[str, str]:
+    if freeze_path.resolve() != EVALUATOR_FREEZE.resolve():
+        raise ValueError("scientific evaluation requires the canonical DR04 freeze manifest")
     freeze = _read_json(freeze_path)
     if freeze.get("status") != "FROZEN":
         raise ValueError("DR04 evaluator freeze is not marked FROZEN")
-    checkpoint = (
-        ROOT / EVALUATOR_CHECKPOINT_RELATIVE
-        if checkpoint_path is None
-        else checkpoint_path
-    )
+    if freeze.get("selected_checkpoint") != EVALUATOR_CHECKPOINT_RELATIVE:
+        raise ValueError("canonical DR04 freeze manifest selects an unexpected checkpoint")
+    checkpoint = ROOT / EVALUATOR_CHECKPOINT_RELATIVE
+    if checkpoint_path is not None and checkpoint_path.resolve() != checkpoint.resolve():
+        raise ValueError("scientific evaluation requires the canonical frozen checkpoint")
     if not checkpoint.is_file():
         raise FileNotFoundError(
             "frozen DR04 evaluator checkpoint is unavailable: "
             f"{checkpoint}; measured evaluation is disabled"
         )
     actual = sha256_file(checkpoint)
-    expected_hash = (
-        EVALUATOR_CHECKPOINT_SHA256
-        if freeze_path.resolve() == EVALUATOR_FREEZE.resolve()
-        else str(freeze["best_checkpoint_sha256"])
-    )
-    if actual != expected_hash:
+    if actual != EVALUATOR_CHECKPOINT_SHA256:
         raise ValueError(
             "frozen DR04 evaluator checkpoint hash mismatch: "
-            f"expected {expected_hash}, got {actual}"
+            f"expected {EVALUATOR_CHECKPOINT_SHA256}, got {actual}"
         )
     return {
         "architecture": ARCHITECTURE_ID,
@@ -671,16 +668,31 @@ def load_frozen_evaluator(
     if freeze_path.resolve() != EVALUATOR_FREEZE.resolve():
         raise ValueError("scientific evaluation requires the canonical DR04 freeze manifest")
     _validate_hash(EVALUATOR_FREEZE, EVALUATOR_FREEZE_SHA256)
+    freeze = _read_json(EVALUATOR_FREEZE)
+    if freeze.get("parameter_count") != 293064:
+        raise ValueError("canonical DR04 freeze manifest parameter count is not 293064")
+    if freeze.get("selected_epoch") != 41:
+        raise ValueError("canonical DR04 freeze manifest selected epoch is not 41")
     path = ROOT / EVALUATOR_CHECKPOINT_RELATIVE if checkpoint_path is None else checkpoint_path
     identity = evaluator_identity(EVALUATOR_FREEZE, path)
     if not path.is_file():
         raise FileNotFoundError(f"frozen evaluator checkpoint is unavailable: {path}")
     if sha256_file(path) != EVALUATOR_CHECKPOINT_SHA256:
         raise ValueError("frozen evaluator checkpoint hash mismatch")
-    payload = torch.load(path, map_location=device, weights_only=True)
+    # This legacy frozen V1 checkpoint contains NumPy objects unsupported by
+    # weights_only=True; historical V1 loaded this trusted, hash-verified
+    # artifact with weights_only=False.
+    payload = torch.load(path, map_location="cpu", weights_only=False)
     if not isinstance(payload, dict) or "model_state_dict" not in payload:
         raise ValueError("frozen evaluator checkpoint has an unexpected schema")
+    if payload.get("best_epoch") != freeze["selected_epoch"]:
+        raise ValueError("frozen evaluator checkpoint best epoch disagrees with freeze manifest")
+    if "completed_epoch" in payload and payload["completed_epoch"] != freeze["selected_epoch"]:
+        raise ValueError("frozen evaluator checkpoint completed epoch disagrees with freeze manifest")
     evaluator = AttributeEvaluator().to(device)
+    parameter_count = sum(parameter.numel() for parameter in evaluator.parameters())
+    if parameter_count != freeze["parameter_count"]:
+        raise ValueError("instantiated evaluator parameter count disagrees with freeze manifest")
     evaluator.load_state_dict(payload["model_state_dict"])
     evaluator.eval()
     return evaluator, identity

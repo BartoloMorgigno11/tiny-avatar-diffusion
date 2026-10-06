@@ -40,6 +40,7 @@ from tiny_avatar_diffusion.ca16_evaluation import (
     load_checkpoint_selection_manifest,
     load_ema_checkpoint,
     load_evaluator_sample,
+    load_frozen_evaluator,
     load_robust_conditioning_manifest,
     rank_candidates,
     select_final_candidate,
@@ -633,6 +634,143 @@ def test_evaluator_sample_uses_frozen_preprocessing(tmp_path: Path) -> None:
     assert str(sample.dtype) == "torch.float32"
     assert float(sample[0, 0, 0]) == pytest.approx(1.0)
     assert float(sample[1, 0, 0]) == pytest.approx(-1.0)
+
+
+def test_frozen_evaluator_loads_exact_legacy_artifact() -> None:
+    evaluator, identity = load_frozen_evaluator(device="cpu")
+    assert type(evaluator).__name__ == "AttributeEvaluator"
+    assert not evaluator.training
+    assert sum(parameter.numel() for parameter in evaluator.parameters()) == 293064
+    assert identity["checkpoint"] == EVALUATOR_CHECKPOINT_RELATIVE
+    assert identity["checkpoint_sha256"] == EVALUATOR_CHECKPOINT_SHA256
+    assert identity["attribute_order"] == json.dumps(CANONICAL_ATTRIBUTE_ORDER)
+
+
+def test_frozen_evaluator_rejects_hash_mismatch_before_torch_load(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    load_calls = 0
+
+    def fake_hash(path: Path) -> str:
+        if path.resolve() == EVALUATOR_FREEZE.resolve():
+            return EVALUATOR_FREEZE_SHA256
+        return "wrong-checkpoint-hash"
+
+    def forbidden_load(*args: object, **kwargs: object) -> None:
+        nonlocal load_calls
+        load_calls += 1
+        raise AssertionError("torch.load must not run before checkpoint hash validation")
+
+    monkeypatch.setattr(evaluation_module, "sha256_file", fake_hash)
+    monkeypatch.setattr(torch, "load", forbidden_load)
+    with pytest.raises(ValueError, match="hash mismatch"):
+        load_frozen_evaluator(device="cpu")
+    assert load_calls == 0
+
+
+def test_frozen_evaluator_rejects_custom_manifest_before_torch_load(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    custom_manifest = tmp_path / "custom-freeze.json"
+    custom_manifest.write_text(EVALUATOR_FREEZE.read_text(encoding="utf-8"), encoding="utf-8")
+    load_calls = 0
+
+    def forbidden_load(*args: object, **kwargs: object) -> None:
+        nonlocal load_calls
+        load_calls += 1
+        raise AssertionError("torch.load must not run for a custom freeze manifest")
+
+    monkeypatch.setattr(torch, "load", forbidden_load)
+    with pytest.raises(ValueError, match="canonical DR04 freeze manifest"):
+        load_frozen_evaluator(freeze_path=custom_manifest)
+    assert load_calls == 0
+
+
+def test_frozen_evaluator_rejects_noncanonical_checkpoint_path_before_torch_load(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    load_calls = 0
+
+    def forbidden_load(*args: object, **kwargs: object) -> None:
+        nonlocal load_calls
+        load_calls += 1
+        raise AssertionError("torch.load must not run for a noncanonical checkpoint")
+
+    monkeypatch.setattr(torch, "load", forbidden_load)
+    with pytest.raises(ValueError, match="canonical frozen checkpoint"):
+        load_frozen_evaluator(checkpoint_path=tmp_path / "custom.pt")
+    assert load_calls == 0
+
+
+def test_frozen_evaluator_missing_checkpoint_fails_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(evaluation_module, "ROOT", tmp_path)
+    with pytest.raises(FileNotFoundError, match="checkpoint is unavailable"):
+        load_frozen_evaluator(device="cpu")
+
+
+def test_frozen_evaluator_rejects_wrong_manifest_parameter_count(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_read_json = evaluation_module._read_json
+
+    def altered_manifest(path: Path) -> dict[str, object]:
+        manifest = original_read_json(path)
+        if path.resolve() == EVALUATOR_FREEZE.resolve():
+            manifest["parameter_count"] = 1
+        return manifest
+
+    monkeypatch.setattr(evaluation_module, "_read_json", altered_manifest)
+    with pytest.raises(ValueError, match="parameter count"):
+        load_frozen_evaluator(device="cpu")
+
+
+def test_frozen_evaluator_rejects_wrong_instantiated_parameter_count(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class WrongParameterCountEvaluator(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.parameter = torch.nn.Parameter(torch.zeros(1))
+
+    monkeypatch.setattr(
+        evaluation_module, "AttributeEvaluator", WrongParameterCountEvaluator
+    )
+    with pytest.raises(ValueError, match="parameter count"):
+        load_frozen_evaluator(device="cpu")
+
+
+def test_frozen_evaluator_rejects_wrong_manifest_selected_epoch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_read_json = evaluation_module._read_json
+
+    def altered_manifest(path: Path) -> dict[str, object]:
+        manifest = original_read_json(path)
+        if path.resolve() == EVALUATOR_FREEZE.resolve():
+            manifest["selected_epoch"] = 40
+        return manifest
+
+    monkeypatch.setattr(evaluation_module, "_read_json", altered_manifest)
+    with pytest.raises(ValueError, match="selected epoch"):
+        load_frozen_evaluator(device="cpu")
+
+
+def test_frozen_evaluator_rejects_wrong_checkpoint_best_epoch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkpoint_path = evaluation_module.ROOT / EVALUATOR_CHECKPOINT_RELATIVE
+    original_load = torch.load
+    payload = original_load(checkpoint_path, map_location="cpu", weights_only=False)
+    payload["best_epoch"] = 40
+
+    def altered_load(*args: object, **kwargs: object) -> object:
+        return payload
+
+    monkeypatch.setattr(torch, "load", altered_load)
+    with pytest.raises(ValueError, match="best epoch"):
+        load_frozen_evaluator(device="cpu")
 
 
 def test_kid_protocol_and_rng_restoration(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
