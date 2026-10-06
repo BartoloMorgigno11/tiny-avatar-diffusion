@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import argparse
-import copy
-import csv
 import errno
 import hashlib
 import json
 import os
 import random
+import subprocess
 import time
 import uuid
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 import torch
 
@@ -33,18 +33,18 @@ from tiny_avatar_diffusion.conditional_lr_pilot import (
     evaluate_fixed_validation,
     load_text_image_split,
 )
-from tiny_avatar_diffusion.debug_tiny_overfit import preload_images
 from tiny_avatar_diffusion.conditional_sampling import conditional_sample
 from tiny_avatar_diffusion.conditional_training import conditional_diffusion_loss
+from tiny_avatar_diffusion.debug_tiny_overfit import preload_images
 from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule
 from tiny_avatar_diffusion.text_conditioning import TextConditioningEncoder
 from tiny_avatar_diffusion.unet import ConditionalTinyUNet
-
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_ROOT = ROOT / "reports" / "dr03_main_training"
 TRAIN_MANIFEST = ROOT / "data" / "processed" / "dr01_v1" / "text" / "10k" / "train.jsonl"
 CHECKPOINT_SCHEMA = "dr03_conditional_main_training_v1"
+CA16_CHECKPOINT_SCHEMA = "ca16_ablation_main_training_v1"
 VALIDATION_INTERVAL = 1_000
 MILESTONES = (5_000, 10_000, 15_000, 20_000)
 ATOMIC_REPLACE_ATTEMPTS = 6
@@ -143,10 +143,14 @@ class TrainingProgress:
     permutation: torch.Tensor | None = None
     train_losses: list[float] | None = None
     skipped_step_count: int = 0
+    attempted_batch_count: int = 0
+    skipped_attempt_positions: list[int] | None = None
 
     def __post_init__(self) -> None:
         if self.train_losses is None:
             self.train_losses = []
+        if self.skipped_attempt_positions is None:
+            self.skipped_attempt_positions = []
 
 
 def _is_transient_windows_replace_error(error: OSError) -> bool:
@@ -212,14 +216,32 @@ def build_checkpoint(
     denoiser: torch.nn.Module, ema: ConditionalEMA, optimizer: torch.optim.Optimizer,
     scaler: torch.amp.GradScaler, sampler_generator: torch.Generator,
     corruption_generator: torch.Generator, validation_history: list[dict[str, Any]],
+    experiment_spec: Any | None = None,
+    execution_git_sha: str | None = None,
+    execution_branch: str | None = None,
 ) -> dict[str, Any]:
     """Return every state required to continue exactly from an optimizer update."""
-    return {
-        "schema": CHECKPOINT_SCHEMA, "run_id": config.run_id, "config": asdict(config),
+    if experiment_spec is not None:
+        experiment_spec.validate_config(config)
+        experiment_spec.verify_manifests()
+        schema = CA16_CHECKPOINT_SCHEMA
+        if execution_git_sha is None:
+            execution_git_sha, execution_branch = _git_provenance()
+        experiment_identity = experiment_spec.provenance(
+            execution_git_sha=execution_git_sha,
+            branch=execution_branch,
+        )
+    else:
+        schema = CHECKPOINT_SCHEMA
+        experiment_identity = None
+    checkpoint = {
+        "schema": schema, "run_id": config.run_id, "config": asdict(config),
         "progress": {"step": progress.step, "images_seen": progress.images_seen,
                      "batch_offset": progress.batch_offset, "permutation": progress.permutation,
                      "train_losses": progress.train_losses,
                      "skipped_step_count": progress.skipped_step_count,
+                     "attempted_batch_count": progress.attempted_batch_count,
+                     "skipped_attempt_positions": progress.skipped_attempt_positions,
                      "sampler_generator_state": sampler_generator.get_state(),
                      "corruption_generator_state": corruption_generator.get_state()},
         "text_encoder_state_dict": text_encoder.state_dict(),
@@ -229,17 +251,33 @@ def build_checkpoint(
         "provenance": {"train_manifest": str(TRAIN_MANIFEST), "id_val_manifest": str(ID_VAL_MANIFEST),
                        "comp_val_manifest": str(COMP_VAL_MANIFEST), "validation_weight_set": "raw"},
     }
+    if experiment_identity is not None:
+        checkpoint["experiment"] = experiment_identity
+    return checkpoint
 
 
 def load_checkpoint(
     path: Path, *, config: MainTrainingConfig, text_encoder: torch.nn.Module, denoiser: torch.nn.Module,
     ema: ConditionalEMA, optimizer: torch.optim.Optimizer, scaler: torch.amp.GradScaler,
     sampler_generator: torch.Generator, corruption_generator: torch.Generator,
-    map_location: torch.device,
+    map_location: torch.device, experiment_spec: Any | None = None,
 ) -> tuple[TrainingProgress, list[dict[str, Any]]]:
     checkpoint = torch.load(path, map_location=map_location, weights_only=False)
-    if checkpoint.get("schema") != CHECKPOINT_SCHEMA or checkpoint.get("run_id") != config.run_id:
+    expected_schema = CA16_CHECKPOINT_SCHEMA if experiment_spec is not None else CHECKPOINT_SCHEMA
+    if checkpoint.get("schema") != expected_schema or checkpoint.get("run_id") != config.run_id:
         raise ValueError("checkpoint is not compatible with this DR03 main run ID")
+    if experiment_spec is not None:
+        experiment_spec.validate_config(config)
+        experiment_spec.verify_manifests()
+        identity = checkpoint.get("experiment")
+        expected = experiment_spec.provenance(
+            execution_git_sha=identity.get("git_commit", "") if isinstance(identity, dict) else "",
+            branch=identity.get("branch") if isinstance(identity, dict) else None,
+        )
+        if not isinstance(identity, dict) or identity != expected:
+            raise ValueError("checkpoint CA16 experiment identity does not match requested run")
+    elif checkpoint.get("schema") == CA16_CHECKPOINT_SCHEMA:
+        raise ValueError("CA16 checkpoint requires an explicit experiment spec")
     if checkpoint.get("config") != asdict(config):
         raise ValueError("checkpoint frozen configuration does not match requested run")
     required = {"progress", "ema_state_dict", "optimizer_state_dict", "grad_scaler_state_dict", "rng_state"}
@@ -259,13 +297,135 @@ def load_checkpoint(
     permutation = stored["permutation"]
     if permutation is not None:
         permutation = permutation.cpu()
-    return TrainingProgress(stored["step"], stored["images_seen"], stored["batch_offset"], permutation, stored["train_losses"], stored.get("skipped_step_count", 0)), checkpoint.get("validation_history", [])
+    skipped_step_count = stored.get("skipped_step_count", 0)
+    # Oldest checkpoints cannot recover attempts without skip history; step is
+    # only a safe compatibility fallback, not reconstructed historical truth.
+    attempted_batch_count = stored.get("attempted_batch_count", stored["step"] + skipped_step_count)
+    skipped_attempt_positions = stored.get("skipped_attempt_positions", [])
+    return TrainingProgress(
+        stored["step"],
+        stored["images_seen"],
+        stored["batch_offset"],
+        permutation,
+        stored["train_losses"],
+        skipped_step_count,
+        attempted_batch_count,
+        skipped_attempt_positions,
+    ), checkpoint.get("validation_history", [])
 
 
-def _new_models(device: torch.device, seed: int) -> tuple[TextConditioningEncoder, ConditionalTinyUNet]:
+def _git_provenance() -> tuple[str, str | None]:
+    sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=False
+    ).stdout.strip()
+    branch = subprocess.run(
+        ["git", "branch", "--show-current"], cwd=ROOT, capture_output=True, text=True, check=False
+    ).stdout.strip() or None
+    if not sha:
+        raise RuntimeError("unable to resolve execution Git SHA")
+    return sha, branch
+
+
+def _reset_runtime_rng(seed: int) -> None:
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def _new_models(
+    device: torch.device, seed: int, *, use_decoder16_cross_attention: bool = False,
+) -> tuple[TextConditioningEncoder, ConditionalTinyUNet]:
     torch.manual_seed(seed)
     if device.type == "cuda": torch.cuda.manual_seed_all(seed)
-    return TextConditioningEncoder().to(device), ConditionalTinyUNet(dropout=0.0).to(device)
+    models = (
+        TextConditioningEncoder().to(device),
+        ConditionalTinyUNet(
+            dropout=0.0,
+            use_decoder16_cross_attention=use_decoder16_cross_attention,
+        ).to(device),
+    )
+    return models
+
+
+def _new_models_for_spec(
+    device: torch.device, spec: Any
+) -> tuple[TextConditioningEncoder, ConditionalTinyUNet]:
+    config = spec.main_training_config()
+    random.seed(config.seed)
+    models = _new_models(
+        device,
+        config.seed,
+        use_decoder16_cross_attention=spec.use_decoder16_cross_attention,
+    )
+    _reset_runtime_rng(config.seed)
+    return models
+
+
+def audit_paired_initialization(seed: int, *, device: torch.device | None = None) -> dict[str, Any]:
+    """Audit paired CA16 construction and initial runtime streams without training."""
+    from tiny_avatar_diffusion.ca16_experiment import ArchitectureArm, CA16RunSpec
+
+    caller_python = random.getstate()
+    caller_cpu = torch.get_rng_state().clone()
+    caller_cuda = (
+        [state.clone() for state in torch.cuda.get_rng_state_all()]
+        if torch.cuda.is_available()
+        else None
+    )
+    try:
+        target = torch.device("cpu") if device is None else device
+        control_spec = CA16RunSpec(ArchitectureArm.CA8, seed)
+        treatment_spec = CA16RunSpec(ArchitectureArm.CA8_CA16, seed)
+        control_text, control_denoiser = _new_models_for_spec(target, control_spec)
+        control_python = random.getstate()
+        control_cpu = torch.get_rng_state()
+        control_cuda = torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+        control_sampler = torch.Generator().manual_seed(seed)
+        control_corruption = torch.Generator(device=target).manual_seed(seed)
+        treatment_text, treatment_denoiser = _new_models_for_spec(target, treatment_spec)
+        treatment_python = random.getstate()
+        treatment_cpu = torch.get_rng_state()
+        treatment_cuda = torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+        treatment_sampler = torch.Generator().manual_seed(seed)
+        treatment_corruption = torch.Generator(device=target).manual_seed(seed)
+        shared_equal = all(
+            torch.equal(control_text.state_dict()[name], treatment_text.state_dict()[name])
+            for name in control_text.state_dict()
+        ) and all(
+            torch.equal(control_denoiser.state_dict()[name], treatment_denoiser.state_dict()[name])
+            for name in control_denoiser.state_dict()
+        )
+        control_keys = set(control_denoiser.state_dict())
+        treatment_keys = set(treatment_denoiser.state_dict())
+        treatment_only = treatment_keys - control_keys
+        expected_only = {
+            f"decoder16_image_text_cross_attention.{name}"
+            for name in treatment_denoiser.decoder16_image_text_cross_attention.state_dict()
+        }
+        protocol_equal = control_spec.frozen_protocol == treatment_spec.frozen_protocol
+        manifests_equal = control_spec.manifests == treatment_spec.manifests
+        return {
+            "shared_parameters_equal": shared_equal,
+            "control_has_no_ca16_namespace": not any(
+                key.startswith("decoder16_image_text_cross_attention.") for key in control_keys
+            ),
+            "treatment_only_namespace_exact": treatment_only == expected_only,
+            "python_rng_equal": control_python == treatment_python,
+            "torch_cpu_rng_equal": torch.equal(control_cpu, treatment_cpu),
+            "torch_cuda_rng_equal": control_cuda == treatment_cuda,
+            "sampler_generator_equal": torch.equal(control_sampler.get_state(), treatment_sampler.get_state()),
+            "corruption_generator_equal": torch.equal(
+                control_corruption.get_state(), treatment_corruption.get_state()
+            ),
+            "frozen_protocol_equal": protocol_equal,
+            "manifest_references_equal": manifests_equal,
+        }
+    finally:
+        random.setstate(caller_python)
+        torch.set_rng_state(caller_cpu)
+        if caller_cuda is not None:
+            torch.cuda.set_rng_state_all(caller_cuda)
 
 
 def _real_subset(path: Path, split: str, count: int) -> TextImageSplit:
@@ -283,12 +443,14 @@ def _append_metric(path: Path, row: dict[str, Any]) -> None:
 def finalize_amp_attempt(*, scaler: Any, optimizer: torch.optim.Optimizer, gradients_finite: bool, progress: TrainingProgress, ema: ConditionalEMA, text_encoder: torch.nn.Module, denoiser: torch.nn.Module, ema_decay: float) -> bool:
     """Finalize one already-unscaled AMP attempt; returns whether it was skipped."""
     before = float(scaler.get_scale())
+    progress.attempted_batch_count += 1
     scaler.step(optimizer); scaler.update()
     skipped = float(scaler.get_scale()) < before
     if not gradients_finite and not skipped:
         raise FloatingPointError("non-finite gradients were not skipped by GradScaler")
     if skipped:
         progress.skipped_step_count += 1
+        progress.skipped_attempt_positions.append(progress.attempted_batch_count)
         return True
     ema.update(text_encoder, denoiser, decay=ema_decay)
     progress.step += 1
@@ -353,9 +515,12 @@ def run_main_training(
     *, config: MainTrainingConfig, output_root: Path = DEFAULT_OUTPUT_ROOT, device_index: int = 0,
     max_steps: int | None = None, resume_from: Path | None = None,
     train: TextImageSplit | None = None, id_validation: FixedValidationSplit | None = None,
-    comp_validation: FixedValidationSplit | None = None,
+    comp_validation: FixedValidationSplit | None = None, experiment_spec: Any | None = None,
 ) -> dict[str, Any]:
     """Run up to ``max_steps`` successful updates; callers must explicitly request the full budget."""
+    if experiment_spec is not None:
+        experiment_spec.validate_config(config)
+        experiment_spec.verify_manifests()
     if not torch.cuda.is_available(): raise RuntimeError("DR03 main training requires CUDA native AMP")
     if max_steps is None: max_steps = config.budget_steps
     if not 0 < max_steps <= config.budget_steps: raise ValueError("max_steps must be in 1..20000")
@@ -363,7 +528,14 @@ def run_main_training(
     if train is None: train = load_text_image_split(TRAIN_MANIFEST, "TRAIN")
     if id_validation is None: id_validation = build_fixed_validation_split(load_text_image_split(ID_VAL_MANIFEST, "ID_VAL"), seed=config.seed + 1)
     if comp_validation is None: comp_validation = build_fixed_validation_split(load_text_image_split(COMP_VAL_MANIFEST, "COMP_VAL"), seed=config.seed + 2)
-    text_encoder, denoiser = _new_models(device, config.seed)
+    if experiment_spec is None:
+        text_encoder, denoiser = _new_models(
+            device, config.seed, use_decoder16_cross_attention=False
+        )
+        execution_git_sha = execution_branch = None
+    else:
+        text_encoder, denoiser = _new_models_for_spec(device, experiment_spec)
+        execution_git_sha, execution_branch = _git_provenance()
     schedule = LinearDDPMSchedule().to(device)
     optimizer = torch.optim.AdamW([*text_encoder.parameters(), *denoiser.parameters()], lr=config.learning_rate, weight_decay=config.weight_decay)
     scaler = torch.amp.GradScaler("cuda")
@@ -374,7 +546,19 @@ def run_main_training(
     latest = run_dir / "latest.pt"
     metrics_path = run_dir / "metrics.jsonl"
     if resume_from is not None:
-        progress, validation_history = load_checkpoint(resume_from, config=config, text_encoder=text_encoder, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler_generator, corruption_generator=corruption_generator, map_location=device)
+        progress, validation_history = load_checkpoint(
+            resume_from,
+            config=config,
+            text_encoder=text_encoder,
+            denoiser=denoiser,
+            ema=ema,
+            optimizer=optimizer,
+            scaler=scaler,
+            sampler_generator=sampler_generator,
+            corruption_generator=corruption_generator,
+            map_location=device,
+            experiment_spec=experiment_spec,
+        )
     else:
         if latest.exists(): raise FileExistsError("run directory already has a latest checkpoint; pass resume_from")
         progress, validation_history = TrainingProgress(), []
@@ -405,13 +589,13 @@ def run_main_training(
             for name, split in (("ID_VAL", id_validation), ("COMP_VAL", comp_validation)):
                 validation_history.append({"step": progress.step, "split": name, "epsilon_mse": evaluate_fixed_validation(text_encoder, denoiser, schedule, split, device=device)})
             _append_metric(metrics_path, {"kind": "validation", "step": progress.step, "id_val_epsilon_mse": validation_history[-2]["epsilon_mse"], "comp_val_epsilon_mse": validation_history[-1]["epsilon_mse"], "weight_set": "RAW"})
-            atomic_save_checkpoint(latest, build_checkpoint(config=config, progress=progress, text_encoder=text_encoder, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler_generator, corruption_generator=corruption_generator, validation_history=validation_history))
+            atomic_save_checkpoint(latest, build_checkpoint(config=config, progress=progress, text_encoder=text_encoder, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler_generator, corruption_generator=corruption_generator, validation_history=validation_history, experiment_spec=experiment_spec, execution_git_sha=execution_git_sha, execution_branch=execution_branch))
             if progress.step in config.milestones:
                 milestone_path = run_dir / f"milestone_{progress.step:05d}.pt"
-                atomic_save_checkpoint(milestone_path, build_checkpoint(config=config, progress=progress, text_encoder=text_encoder, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler_generator, corruption_generator=corruption_generator, validation_history=validation_history))
+                atomic_save_checkpoint(milestone_path, build_checkpoint(config=config, progress=progress, text_encoder=text_encoder, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler_generator, corruption_generator=corruption_generator, validation_history=validation_history, experiment_spec=experiment_spec, execution_git_sha=execution_git_sha, execution_branch=execution_branch))
                 preview_path = generate_ema_milestone_preview(run_dir=run_dir, step=progress.step, run_id=config.run_id, text_encoder=text_encoder, denoiser=denoiser, ema=ema, schedule=schedule)
                 _append_metric(metrics_path, {"kind": "milestone", "step": progress.step, "checkpoint_path": str(milestone_path), "ema_preview_path": str(preview_path)})
-    checkpoint = build_checkpoint(config=config, progress=progress, text_encoder=text_encoder, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler_generator, corruption_generator=corruption_generator, validation_history=validation_history)
+    checkpoint = build_checkpoint(config=config, progress=progress, text_encoder=text_encoder, denoiser=denoiser, ema=ema, optimizer=optimizer, scaler=scaler, sampler_generator=sampler_generator, corruption_generator=corruption_generator, validation_history=validation_history, experiment_spec=experiment_spec, execution_git_sha=execution_git_sha, execution_branch=execution_branch)
     atomic_save_checkpoint(latest, checkpoint)
     summary = {"run_id": config.run_id, "step": progress.step, "images_seen": progress.images_seen, "elapsed_seconds": time.perf_counter() - started, "validation_history": validation_history, "latest_checkpoint": str(latest)}
     run_dir.mkdir(parents=True, exist_ok=True)

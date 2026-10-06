@@ -128,6 +128,15 @@ class CA16RunSpec:
         """Derive the existing frozen V1 training configuration for this run."""
         return MainTrainingConfig(run_id=self.run_id, seed=self.training_seed)
 
+    def validate_config(self, config: MainTrainingConfig) -> None:
+        """Reject a training configuration that does not identify this run."""
+        if config != self.main_training_config():
+            raise ValueError("training config does not match the requested CA16 run spec")
+
+    def verify_manifests(self) -> None:
+        """Verify the configured frozen R2 artifacts before a run starts."""
+        verify_frozen_manifests()
+
     def provenance(
         self,
         *,
