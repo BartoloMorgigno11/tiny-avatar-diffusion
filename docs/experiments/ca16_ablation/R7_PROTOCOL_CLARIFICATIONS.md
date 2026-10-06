@@ -40,6 +40,34 @@ as already frozen in R2 and the protocol.
 The R2 manifest is not modified to serialize the new ID seeds. This addendum
 is the frozen source for the ID seed rule.
 
+## Matched ablation versus historical V1
+
+The procedural rules frozen in this addendum apply identically to both arms of
+the matched CA16 ablation:
+
+- retrained CA8 control;
+- retrained CA8+CA16 treatment.
+
+In particular, the ID checkpoint-selection seed rule, COMP MacroPSR
+definition, checkpoint-selection hierarchy, evaluator, prompts, and
+generation-plan semantics must be applied symmetrically to both arms.
+
+The primary causal comparison is therefore:
+
+**retrained CA8 control versus retrained CA8+CA16 treatment**
+
+under the same frozen ablation protocol.
+
+These rules do not retroactively redefine the historical V1
+checkpoint-selection procedure. The frozen historical V1 checkpoint may later
+be evaluated under compatible new evaluation panels as a contextual historical
+benchmark, but it is not a training/selection-matched causal control for the
+CA16 ablation. Any historical-V1 comparison must therefore be reported
+separately from the primary matched ablation comparison.
+
+This clarification was frozen before observing any CA16 ablation training
+result.
+
 ## Clarification B: COMP MacroPSR
 
 For each compositional family `f` in `CV1`, `CV2`, `CV3`, and `CV4`, compute:
