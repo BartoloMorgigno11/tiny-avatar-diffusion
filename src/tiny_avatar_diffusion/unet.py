@@ -227,11 +227,21 @@ class TinyUNet(nn.Module):
 
 
 class ConditionalTinyUNet(TinyUNet):
-    """DR03 V1 conditional denoiser with bottleneck image-to-text attention."""
+    """Conditional denoiser with required CA8 and optional decoder16 CA16."""
 
-    def __init__(self, *, dropout: float = 0.0) -> None:
+    def __init__(
+        self,
+        *,
+        dropout: float = 0.0,
+        use_decoder16_cross_attention: bool = False,
+    ) -> None:
+        if not isinstance(use_decoder16_cross_attention, bool):
+            raise TypeError("use_decoder16_cross_attention must be a bool")
         super().__init__(dropout=dropout)
         self.image_text_cross_attention = ImageTextCrossAttention()
+        self.use_decoder16_cross_attention = use_decoder16_cross_attention
+        if use_decoder16_cross_attention:
+            self.decoder16_image_text_cross_attention = ImageTextCrossAttention()
 
     def forward(
         self,
@@ -281,6 +291,8 @@ class ConditionalTinyUNet(TinyUNet):
 
         h = torch.cat((h, s16), dim=1)
         h = self.decoder16_block1(h, time_emb)
+        if self.use_decoder16_cross_attention:
+            h = self.decoder16_image_text_cross_attention(h, context, context_mask)
         h = self.decoder16_block2(h, time_emb)
         h = self.upsample16(h)
 
