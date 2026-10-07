@@ -10,6 +10,7 @@ from tiny_avatar_diffusion.conditional_main_training import (
     CHECKPOINT_SCHEMA,
     ConditionalEMA,
     TrainingProgress,
+    _nested_exact,
     _new_models,
     _new_models_for_spec,
     audit_paired_initialization,
@@ -327,3 +328,12 @@ def test_pairing_audit_preserves_caller_rng_state(monkeypatch) -> None:
         audit_paired_initialization(2026)
     assert random.getstate() == python_state
     assert torch.equal(torch.get_rng_state(), cpu_state)
+
+
+def test_nested_exact_compares_tensor_sequences_without_structural_tensor_equality() -> None:
+    left = [torch.tensor([1, 2]), torch.tensor([3, 4])]
+    equal = [tensor.clone() for tensor in left]
+    unequal = [left[0].clone(), torch.tensor([3, 5])]
+
+    assert _nested_exact(left, equal)
+    assert not _nested_exact(left, unequal)

@@ -413,7 +413,7 @@ def audit_paired_initialization(seed: int, *, device: torch.device | None = None
             "treatment_only_namespace_exact": treatment_only == expected_only,
             "python_rng_equal": control_python == treatment_python,
             "torch_cpu_rng_equal": torch.equal(control_cpu, treatment_cpu),
-            "torch_cuda_rng_equal": control_cuda == treatment_cuda,
+            "torch_cuda_rng_equal": _nested_exact(control_cuda, treatment_cuda),
             "sampler_generator_equal": torch.equal(control_sampler.get_state(), treatment_sampler.get_state()),
             "corruption_generator_equal": torch.equal(
                 control_corruption.get_state(), treatment_corruption.get_state()
