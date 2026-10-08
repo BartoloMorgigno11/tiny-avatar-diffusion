@@ -73,6 +73,16 @@ ALLOWED_ROLES = ("ID_VAL", "COMP_VAL")
 EXPECTED_COUNTS = {"ID_VAL": 256, "COMP_VAL": 237}
 TOTAL_SAMPLES = 493
 LOCK_NAME = ".r11.lock"
+TOKEN_SOURCE_PATHS = {
+    role: ROOT
+    / "data"
+    / "processed"
+    / "dr01_v1"
+    / "text"
+    / "10k"
+    / f"{role.lower()}.jsonl"
+    for role in ALLOWED_ROLES
+}
 
 
 class OutputState(str, Enum):
@@ -311,6 +321,59 @@ def canonical_records() -> tuple[dict[str, Any], ...]:
     if len({row["stable_record_key"] for row in records}) != TOTAL_SAMPLES:
         raise ValueError("selection panel has duplicate canonical records")
     return records
+
+
+def _index_tokenized_source_records(
+    records_by_role: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> dict[str, dict[str, Any]]:
+    indexed: dict[str, dict[str, Any]] = {}
+    for role in ALLOWED_ROLES:
+        for record in records_by_role.get(role, ()):
+            if record.get("split_role") != role:
+                raise ValueError(
+                    "token-source record split differs from its authorized source"
+                )
+            key = "|".join(
+                str(record.get(field))
+                for field in ("dataset_variant", "split_role", "image_id")
+            )
+            if key in indexed:
+                raise ValueError("duplicate token-source stable_record_key")
+            indexed[key] = dict(record)
+    return indexed
+
+
+def load_tokenized_source_index() -> dict[str, dict[str, Any]]:
+    expected_hashes = load_checkpoint_selection_manifest()["source_artifact_sha256"]
+    for role, path in TOKEN_SOURCE_PATHS.items():
+        if not path.is_file() or sha256_file(path) != expected_hashes.get(role):
+            raise ValueError(f"frozen token-source hash mismatch: {role}")
+    return _index_tokenized_source_records(
+        {role: read_jsonl(path) for role, path in TOKEN_SOURCE_PATHS.items()}
+    )
+
+
+def hydrate_selection_record(
+    record: Mapping[str, Any], source_by_key: Mapping[str, Mapping[str, Any]]
+) -> dict[str, Any]:
+    role = record.get("split_role")
+    if role not in ALLOWED_ROLES:
+        raise ValueError("selection record has a forbidden split role")
+    key = str(record.get("stable_record_key"))
+    source = source_by_key.get(key)
+    if source is None:
+        raise ValueError("selection record has no matching token-source record")
+    for field in ("dataset_variant", "split_role", "image_id", "caption"):
+        if source.get(field) != record.get(field):
+            raise ValueError(f"token-source {field} differs from selection record")
+    for field in ("token_ids", "attention_mask"):
+        if field not in source:
+            raise ValueError(f"token-source record lacks {field}")
+    return {
+        **dict(record),
+        "token_ids": source["token_ids"],
+        "attention_mask": source["attention_mask"],
+    }
 
 
 def runtime_environment() -> dict[str, Any]:
@@ -1800,6 +1863,8 @@ def execute_r11(
                 )
                 return marker
 
+            token_source_index = load_tokenized_source_index()
+
             def predict(path: Path) -> Mapping[str, int]:
                 return predict_artifact_attributes(
                     evaluator, [str(path)], device=target_device
@@ -1841,11 +1906,12 @@ def execute_r11(
                         text_encoder: Any = text_encoder,
                         denoiser: Any = denoiser,
                     ) -> torch.Tensor:
+                        hydrated = hydrate_selection_record(record, token_source_index)
                         return sample_ema_record(
                             schedule,
                             text_encoder,
                             denoiser,
-                            record,
+                            hydrated,
                             device=target_device,
                         )
 

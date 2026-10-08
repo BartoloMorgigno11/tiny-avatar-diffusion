@@ -7,7 +7,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import torch
 
+import tiny_avatar_diffusion.ca16_evaluation as evaluation_module
 import tiny_avatar_diffusion.ca16_r11_orchestration as r11
 from tiny_avatar_diffusion.ca16_evaluation import (
     EVALUATOR_CHECKPOINT_SHA256,
@@ -119,6 +121,124 @@ def test_canonical_panel_contract_and_forbidden_roles() -> None:
             checkpoint_sha256=CHECKPOINT_SHA,
             canonical_record=bad,
             sample_index=0,
+        )
+
+
+@pytest.mark.parametrize("role", ["ID_VAL", "COMP_VAL"])
+def test_real_selection_record_joins_authoritative_tokens(role: str) -> None:
+    manifest = load_checkpoint_selection_manifest()
+    record = (
+        manifest["id_entries"][0] if role == "ID_VAL" else manifest["comp_entries"][0]
+    )
+    source_index = r11.load_tokenized_source_index()
+    source = source_index[record["stable_record_key"]]
+
+    hydrated = r11.hydrate_selection_record(record, source_index)
+
+    assert hydrated["stable_record_key"] == record["stable_record_key"]
+    assert hydrated["generation_seed"] == record["generation_seed"]
+    assert hydrated["caption"] == record["caption"]
+    assert hydrated["token_ids"] == source["token_ids"]
+    assert hydrated["attention_mask"] == source["attention_mask"]
+
+
+def test_token_join_missing_and_duplicate_source_fail_closed() -> None:
+    record = load_checkpoint_selection_manifest()["id_entries"][0]
+    source = r11.load_tokenized_source_index()[record["stable_record_key"]]
+    with pytest.raises(ValueError, match="no matching"):
+        r11.hydrate_selection_record(record, {})
+    with pytest.raises(ValueError, match="duplicate"):
+        r11._index_tokenized_source_records(
+            {"ID_VAL": [source, deepcopy(source)], "COMP_VAL": []}
+        )
+
+
+def test_token_source_hash_mismatch_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(r11, "sha256_file", lambda _path: "wrong")
+    with pytest.raises(ValueError, match="hash mismatch"):
+        r11.load_tokenized_source_index()
+
+
+@pytest.mark.parametrize("field", ["caption", "image_id", "split_role"])
+def test_token_join_identity_mismatch_fails_closed(field: str) -> None:
+    record = load_checkpoint_selection_manifest()["id_entries"][0]
+    source_index = r11.load_tokenized_source_index()
+    key = record["stable_record_key"]
+    source_index[key] = {**source_index[key], field: "mismatch"}
+    with pytest.raises(ValueError, match=field):
+        r11.hydrate_selection_record(record, source_index)
+
+
+@pytest.mark.parametrize("field", ["token_ids", "attention_mask"])
+def test_token_join_missing_conditioning_field_fails_closed(field: str) -> None:
+    record = load_checkpoint_selection_manifest()["comp_entries"][0]
+    source_index = r11.load_tokenized_source_index()
+    key = record["stable_record_key"]
+    source_index[key].pop(field)
+    with pytest.raises(ValueError, match=field):
+        r11.hydrate_selection_record(record, source_index)
+
+
+def test_sample_ema_record_preserves_joined_tokens_and_canonical_public_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    record = load_checkpoint_selection_manifest()["id_entries"][0]
+    hydrated = r11.hydrate_selection_record(record, r11.load_tokenized_source_index())
+    supplied = {
+        **hydrated,
+        "caption": "caller override",
+        "image_id": "caller-override",
+        "generation_seed": 9999,
+    }
+    captured: dict[str, object] = {}
+
+    def fake_sample(
+        schedule: object,
+        text_encoder: object,
+        denoiser: object,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        **kwargs: object,
+    ) -> torch.Tensor:
+        captured["input_ids"] = input_ids.tolist()
+        captured["attention_mask"] = attention_mask.tolist()
+        captured["seed"] = kwargs["generator"].initial_seed()
+        return torch.zeros((1, 3, 32, 32))
+
+    monkeypatch.setattr(evaluation_module, "conditional_sample", fake_sample)
+    result = r11.sample_ema_record(
+        object(), object(), object(), supplied, device=torch.device("cpu")
+    )
+
+    assert captured["input_ids"] == [hydrated["token_ids"]]
+    assert captured["attention_mask"] == [hydrated["attention_mask"]]
+    assert captured["seed"] == record["generation_seed"]
+    assert result.shape == (3, 32, 32)
+
+
+@pytest.mark.parametrize(
+    ("token_ids", "attention_mask"),
+    [
+        (None, [1]),
+        ([], []),
+        ([1, -1], [1, 1]),
+        ([1, 2], [1]),
+        ([1, 2], [1, 2]),
+    ],
+)
+def test_sample_ema_record_rejects_invalid_conditioning_schema(
+    token_ids: object, attention_mask: object
+) -> None:
+    record = {
+        **load_checkpoint_selection_manifest()["id_entries"][0],
+        "token_ids": token_ids,
+        "attention_mask": attention_mask,
+    }
+    with pytest.raises(ValueError, match="invalid"):
+        r11.sample_ema_record(
+            object(), object(), object(), record, device=torch.device("cpu")
         )
 
 

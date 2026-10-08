@@ -799,9 +799,23 @@ def sample_ema_record(
 ) -> torch.Tensor:
     """Generate one deterministic sample using an explicit per-record generator."""
     canonical = _canonical_selection_record(record)
+    token_ids = record.get("token_ids")
+    attention_mask = record.get("attention_mask")
+    if (
+        not isinstance(token_ids, list)
+        or not token_ids
+        or any(type(value) is not int or value < 0 for value in token_ids)
+    ):
+        raise ValueError("hydrated record has invalid token_ids")
+    if (
+        not isinstance(attention_mask, list)
+        or len(attention_mask) != len(token_ids)
+        or any(type(value) is not int or value not in (0, 1) for value in attention_mask)
+    ):
+        raise ValueError("hydrated record has invalid attention_mask")
     generator = torch.Generator(device=device).manual_seed(int(canonical["generation_seed"]))
-    input_ids = torch.tensor([canonical["token_ids"]], device=device)
-    mask = torch.tensor([canonical["attention_mask"]], device=device)
+    input_ids = torch.tensor([token_ids], device=device)
+    mask = torch.tensor([attention_mask], device=device)
     return conditional_sample(schedule, text_encoder, denoiser, input_ids, mask, generator=generator, clip_denoised=True)[0]
 
 
