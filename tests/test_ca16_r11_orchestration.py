@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import os
 import subprocess
 from copy import deepcopy
 from pathlib import Path
@@ -813,6 +814,36 @@ def test_atomic_json_interruption_leaves_no_valid_final(tmp_path: Path) -> None:
 
     with pytest.raises(OSError, match="interrupted"):
         r11.atomic_json(target, {"complete": True}, replace=fail)
+    assert not target.exists() and not list(tmp_path.glob("*.tmp"))
+
+
+def test_atomic_jsonl_retries_transient_windows_access_denied(tmp_path: Path) -> None:
+    target = tmp_path / "rows.jsonl"
+    calls = 0
+
+    def transient(source: Path, destination: Path) -> None:
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            error = PermissionError("access denied")
+            error.winerror = 5
+            raise error
+        os.replace(source, destination)
+
+    r11.atomic_jsonl(target, [{"value": 1}], replace=transient)
+    assert calls == 3 and r11.read_jsonl(target) == [{"value": 1}]
+
+
+def test_atomic_jsonl_reraises_persistent_windows_access_denied(tmp_path: Path) -> None:
+    target = tmp_path / "rows.jsonl"
+
+    def permanent(_source: Path, _destination: Path) -> None:
+        error = PermissionError("access denied")
+        error.winerror = 5
+        raise error
+
+    with pytest.raises(PermissionError, match="access denied"):
+        r11.atomic_jsonl(target, [{"value": 1}], replace=permanent)
     assert not target.exists() and not list(tmp_path.glob("*.tmp"))
 
 

@@ -15,6 +15,7 @@ import os
 import platform
 import socket
 import subprocess
+import time
 import traceback
 import uuid
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -154,7 +155,12 @@ def atomic_json(
         temporary.unlink(missing_ok=True)
 
 
-def atomic_jsonl(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+def atomic_jsonl(
+    path: Path,
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    replace: Callable[[Path, Path], None] = os.replace,
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = _operational_temp(path)
     try:
@@ -165,7 +171,14 @@ def atomic_jsonl(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
                 )
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
+        for attempt, delay in enumerate((0.05, 0.15, 0.45), start=1):
+            try:
+                replace(temporary, path)
+                break
+            except PermissionError as error:
+                if getattr(error, "winerror", None) != 5 or attempt == 3:
+                    raise
+                time.sleep(delay)
     finally:
         temporary.unlink(missing_ok=True)
 
