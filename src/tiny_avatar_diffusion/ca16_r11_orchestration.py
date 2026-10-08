@@ -56,6 +56,7 @@ from tiny_avatar_diffusion.ca16_evaluation import (
     predict_artifact_attributes,
     rank_candidates,
     sample_ema_record,
+    sample_ema_records_batch,
     sha256_file,
     stable_sample_identity,
 )
@@ -64,6 +65,7 @@ from tiny_avatar_diffusion.conditional_main_training import CA16_CHECKPOINT_SCHE
 from tiny_avatar_diffusion.diffusion import LinearDDPMSchedule
 
 PROTOCOL_ID = "ca16_r11_checkpoint_selection_v1"
+BATCHED_PROTOCOL_ID = "ca16_r11_checkpoint_selection_batched_v1"
 OUTPUT_SCHEMA = "tiny_avatar_diffusion.ca16_r11_output_v1"
 TRAINING_GIT_SHA = "48583669097560ed308ab8d2d5e7104173cc99b4"
 INVENTORY_PATH = ROOT / "data/processed/ca16_eval_v1/r11_checkpoint_inventory.json"
@@ -393,13 +395,28 @@ def build_run_manifest(
     inventory_sha256: str,
     environment: Mapping[str, Any],
     timestamp: str | None = None,
+    protocol_id: str = PROTOCOL_ID,
+    sampling_batch_size: int = 1,
 ) -> dict[str, Any]:
     if environment.get("clean_fid") != CLEAN_FID_VERSION:
         raise RuntimeError(f"clean-fid must equal {CLEAN_FID_VERSION}")
+    if protocol_id not in (PROTOCOL_ID, BATCHED_PROTOCOL_ID):
+        raise ValueError("unknown R11 execution protocol")
+    if sampling_batch_size < 1:
+        raise ValueError("sampling batch size must be positive")
+    if protocol_id == PROTOCOL_ID and sampling_batch_size != 1:
+        raise ValueError("legacy R11 protocol requires sampling batch size one")
+    if protocol_id == BATCHED_PROTOCOL_ID and sampling_batch_size == 1:
+        raise ValueError("batched R11 protocol requires sampling batch size above one")
     return {
         "schema": OUTPUT_SCHEMA,
         "experiment_id": "ca16_ablation",
-        "protocol_id": PROTOCOL_ID,
+        "protocol_id": protocol_id,
+        "execution": {
+            "profile": protocol_id,
+            "sampling_batch_size": sampling_batch_size,
+            "rng_policy": "per_record_cuda_generator_legacy_shape_then_concatenate",
+        },
         "evaluation_git_sha": evaluation.head,
         "expected_training_git_sha": TRAINING_GIT_SHA,
         "branch": evaluation.branch,
@@ -1052,14 +1069,22 @@ def _resume_candidate_generation(
     spec: CA16RunSpec,
     milestone: int,
     checkpoint_sha256: str,
-    generate: Callable[[Mapping[str, Any]], Any],
+    generate: Callable[[Mapping[str, Any]], Any] | None,
     canonical: Sequence[Mapping[str, Any]],
     on_progress: Callable[[int], None] | None = None,
     after_boundary: Callable[[str], None] | None = None,
+    generate_batch: Callable[[Sequence[Mapping[str, Any]]], Sequence[Any]]
+    | None = None,
+    sampling_batch_size: int = 1,
 ) -> dict[str, Any]:
+    if sampling_batch_size < 1:
+        raise ValueError("sampling batch size must be positive")
+    if generate is None and generate_batch is None:
+        raise ValueError("candidate generation requires a generator")
     canonical = tuple(canonical)
     paths = candidate_paths(output_root, spec, milestone)
     rows = read_jsonl(paths.sample_manifest)
+    pending: list[tuple[int, Mapping[str, Any], dict[str, Any], Path, Path]] = []
     for index, record in enumerate(canonical):
         expected = expected_sample_record(
             output_root=output_root,
@@ -1123,29 +1148,56 @@ def _resume_candidate_generation(
         transaction_path, temporary_path = _transaction_paths(
             output_root, spec, milestone, index, key
         )
-        digest = _write_pending_png(temporary_path, generate(record))
-        if after_boundary is not None:
-            after_boundary("TEMP_WRITTEN")
-        atomic_json(
-            transaction_path,
-            _expected_transaction(
-                output_root, expected, transaction_path, temporary_path, digest
-            ),
-        )
-        if after_boundary is not None:
-            after_boundary("TRANSACTION_PERSISTED")
-        _recover_sample_transaction(
-            output_root=output_root,
-            expected=expected,
-            transaction_path=transaction_path,
-            temporary_path=temporary_path,
-            sample_manifest=paths.sample_manifest,
-            rows=rows,
-            after_boundary=after_boundary,
-        )
-        generated.append(key)
-        if on_progress is not None:
-            on_progress(len(rows))
+        pending.append((index, record, expected, transaction_path, temporary_path))
+    for start in range(0, len(canonical), sampling_batch_size):
+        group = [
+            item for item in pending if start <= item[0] < start + sampling_batch_size
+        ]
+        if not group:
+            continue
+        original_group = canonical[start : start + sampling_batch_size]
+        if generate_batch is None:
+            assert generate is not None
+            generated_pixels = [generate(record) for _, record, *_ in group]
+        else:
+            generated_pixels = list(generate_batch(original_group))
+        if len(generated_pixels) != (
+            len(group) if generate_batch is None else len(original_group)
+        ):
+            raise ValueError("batch generator returned an unexpected number of samples")
+        for offset, record, expected, transaction_path, temporary_path in group:
+            pixels = (
+                generated_pixels[offset - start]
+                if generate_batch is not None
+                else generated_pixels[
+                    group.index(
+                        (offset, record, expected, transaction_path, temporary_path)
+                    )
+                ]
+            )
+            digest = _write_pending_png(temporary_path, pixels)
+            if after_boundary is not None:
+                after_boundary("TEMP_WRITTEN")
+            atomic_json(
+                transaction_path,
+                _expected_transaction(
+                    output_root, expected, transaction_path, temporary_path, digest
+                ),
+            )
+            if after_boundary is not None:
+                after_boundary("TRANSACTION_PERSISTED")
+            _recover_sample_transaction(
+                output_root=output_root,
+                expected=expected,
+                transaction_path=transaction_path,
+                temporary_path=temporary_path,
+                sample_manifest=paths.sample_manifest,
+                rows=rows,
+                after_boundary=after_boundary,
+            )
+            generated.append(str(record["stable_record_key"]))
+            if on_progress is not None:
+                on_progress(len(rows))
     _validate_candidate_samples(
         output_root, spec, milestone, checkpoint_sha256, canonical
     )
@@ -1168,6 +1220,30 @@ def resume_candidate_generation(
         milestone=milestone,
         checkpoint_sha256=checkpoint_sha256,
         generate=generate,
+        canonical=canonical_records(),
+        on_progress=on_progress,
+    )
+
+
+def resume_candidate_generation_batched(
+    *,
+    output_root: Path,
+    spec: CA16RunSpec,
+    milestone: int,
+    checkpoint_sha256: str,
+    generate_batch: Callable[[Sequence[Mapping[str, Any]]], Sequence[Any]],
+    sampling_batch_size: int,
+    on_progress: Callable[[int], None] | None = None,
+) -> dict[str, Any]:
+    """Resume canonical generation while computing missing records in batches."""
+    return _resume_candidate_generation(
+        output_root=output_root,
+        spec=spec,
+        milestone=milestone,
+        checkpoint_sha256=checkpoint_sha256,
+        generate=None,
+        generate_batch=generate_batch,
+        sampling_batch_size=sampling_batch_size,
         canonical=canonical_records(),
         on_progress=on_progress,
     )
@@ -1583,6 +1659,8 @@ def validate_preflight(
     state: GitState | None = None,
     environment: Mapping[str, Any] | None = None,
     root: Path = ROOT,
+    protocol_id: str = PROTOCOL_ID,
+    sampling_batch_size: int = 1,
 ) -> dict[str, Any]:
     evaluation = state or git_state(root=root)
     verify_evaluation_git(
@@ -1615,6 +1693,8 @@ def validate_preflight(
         inventory_sha256=sha256_file(INVENTORY_PATH),
         environment=env,
         timestamp=timestamp,
+        protocol_id=protocol_id,
+        sampling_batch_size=sampling_batch_size,
     )
     output_state = classify_output_root(output_root, manifest)
     if output_state is OutputState.INVALID_OR_UNPROVEN:
@@ -1816,12 +1896,16 @@ def execute_r11(
     expected_eval_sha: str,
     expected_tag: str | None = None,
     device: torch.device | None = None,
+    protocol_id: str = PROTOCOL_ID,
+    sampling_batch_size: int = 1,
 ) -> dict[str, Any]:
     """Execute R11.  The CLI is the only intended production caller."""
     preflight = validate_preflight(
         output_root=output_root,
         expected_eval_sha=expected_eval_sha,
         expected_tag=expected_tag,
+        protocol_id=protocol_id,
+        sampling_batch_size=sampling_batch_size,
     )
     evaluation = git_state()
     inventory = load_checkpoint_inventory()
@@ -1832,6 +1916,8 @@ def execute_r11(
             evaluation=evaluation,
             inventory_sha256=sha256_file(INVENTORY_PATH),
             environment=environment,
+            protocol_id=protocol_id,
+            sampling_batch_size=sampling_batch_size,
         )
     target_device = device or torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
@@ -1915,6 +2001,26 @@ def execute_r11(
                             device=target_device,
                         )
 
+                    def generate_batch(
+                        records: Sequence[Mapping[str, Any]],
+                        schedule: LinearDDPMSchedule = schedule,
+                        text_encoder: Any = text_encoder,
+                        denoiser: Any = denoiser,
+                    ) -> Sequence[torch.Tensor]:
+                        hydrated = [
+                            hydrate_selection_record(record, token_source_index)
+                            for record in records
+                        ]
+                        return list(
+                            sample_ema_records_batch(
+                                schedule,
+                                text_encoder,
+                                denoiser,
+                                hydrated,
+                                device=target_device,
+                            )
+                        )
+
                     def record_generation_progress(
                         count: int, s: CA16RunSpec = spec, m: int = milestone
                     ) -> None:
@@ -1936,14 +2042,25 @@ def execute_r11(
                                 TOTAL_SAMPLES,
                             )
 
-                    resume_candidate_generation(
-                        output_root=output_root,
-                        spec=spec,
-                        milestone=milestone,
-                        checkpoint_sha256=entry["sha256"],
-                        generate=generate,
-                        on_progress=record_generation_progress,
-                    )
+                    if protocol_id == BATCHED_PROTOCOL_ID:
+                        resume_candidate_generation_batched(
+                            output_root=output_root,
+                            spec=spec,
+                            milestone=milestone,
+                            checkpoint_sha256=entry["sha256"],
+                            generate_batch=generate_batch,
+                            sampling_batch_size=sampling_batch_size,
+                            on_progress=record_generation_progress,
+                        )
+                    else:
+                        resume_candidate_generation(
+                            output_root=output_root,
+                            spec=spec,
+                            milestone=milestone,
+                            checkpoint_sha256=entry["sha256"],
+                            generate=generate,
+                            on_progress=record_generation_progress,
+                        )
                     update_progress(
                         output_root,
                         current_run=spec.run_id,

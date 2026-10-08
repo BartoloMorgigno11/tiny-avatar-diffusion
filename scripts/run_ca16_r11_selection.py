@@ -6,7 +6,11 @@ import argparse
 import json
 from pathlib import Path
 
-from tiny_avatar_diffusion.ca16_r11_orchestration import execute_r11, validate_preflight
+from tiny_avatar_diffusion.ca16_r11_orchestration import (
+    BATCHED_PROTOCOL_ID,
+    execute_r11,
+    validate_preflight,
+)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -14,6 +18,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--expected-eval-sha", required=True)
     parser.add_argument("--expected-eval-tag")
+    parser.add_argument(
+        "--sampling-batch-size",
+        type=int,
+        default=1,
+        help="fixed batch size; values above one select the isolated batched R11 profile",
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument(
         "--preflight",
@@ -29,10 +39,19 @@ def main(argv: list[str] | None = None) -> None:
         parser.error("execution confirmation is invalid in preflight mode")
     if args.execute and not args.confirm_r11_scientific_execution:
         parser.error("--execute requires --confirm-r11-scientific-execution")
+    if args.sampling_batch_size < 1:
+        parser.error("--sampling-batch-size must be positive")
+    protocol_id = (
+        BATCHED_PROTOCOL_ID
+        if args.sampling_batch_size > 1
+        else "ca16_r11_checkpoint_selection_v1"
+    )
     common = {
         "output_root": args.output_dir.resolve(),
         "expected_eval_sha": args.expected_eval_sha,
         "expected_tag": args.expected_eval_tag,
+        "protocol_id": protocol_id,
+        "sampling_batch_size": args.sampling_batch_size,
     }
     result = validate_preflight(**common) if args.preflight else execute_r11(**common)
     print(json.dumps(result, sort_keys=True, indent=2))

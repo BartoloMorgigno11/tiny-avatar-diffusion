@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +37,7 @@ def conditional_sample(
     image_shape: tuple[int, int, int, int] | None = None,
     clip_denoised: bool = True,
     snapshot_timesteps: Iterable[int] | None = None,
+    reverse_noise_provider: Callable[[int, torch.Tensor], torch.Tensor] | None = None,
 ) -> torch.Tensor | ObservedSample:
     """Sample once per prompt using the unchanged DR02 reverse-step mathematics.
 
@@ -63,7 +64,9 @@ def conditional_sample(
         shape = image_shape or (batch_size, 3, 32, 32)
         if shape != (batch_size, 3, 32, 32):
             raise ValueError("image_shape must be [B, 3, 32, 32] matching input_ids")
-        x_t = torch.randn(shape, device=denoiser_device, dtype=torch.float32, generator=generator)
+        x_t = torch.randn(
+            shape, device=denoiser_device, dtype=torch.float32, generator=generator
+        )
     else:
         if x_T.shape != (batch_size, 3, 32, 32):
             raise ValueError("x_T must have shape [B, 3, 32, 32] matching input_ids")
@@ -91,10 +94,27 @@ def conditional_sample(
                 timesteps = torch.full(
                     (batch_size,), timestep, dtype=torch.long, device=denoiser_device
                 )
-                predicted_noise = conditional_unet(x_t, timesteps, context, attention_mask)
-                reverse_noise = torch.randn(
-                    x_t.shape, device=denoiser_device, dtype=x_t.dtype, generator=generator
+                predicted_noise = conditional_unet(
+                    x_t, timesteps, context, attention_mask
                 )
+                reverse_noise = (
+                    reverse_noise_provider(timestep, x_t)
+                    if reverse_noise_provider is not None
+                    else torch.randn(
+                        x_t.shape,
+                        device=denoiser_device,
+                        dtype=x_t.dtype,
+                        generator=generator,
+                    )
+                )
+                if (
+                    reverse_noise.shape != x_t.shape
+                    or reverse_noise.device != denoiser_device
+                    or reverse_noise.dtype != x_t.dtype
+                ):
+                    raise ValueError(
+                        "reverse noise provider must return [B,3,32,32] on the denoiser device"
+                    )
                 step = schedule.p_sample_from_noise(
                     x_t,
                     timesteps,
@@ -130,7 +150,9 @@ def load_conditional_checkpoint(
     map_location: torch.device | str | None = None,
 ) -> dict[str, Any]:
     """Load the existing DR03 LR-pilot final-state format without altering it."""
-    checkpoint = torch.load(checkpoint_path, map_location=map_location, weights_only=True)
+    checkpoint = torch.load(
+        checkpoint_path, map_location=map_location, weights_only=True
+    )
     if not isinstance(checkpoint, dict):
         raise ValueError(  # noqa: TRY004 - preserve the frozen legacy loader contract.
             "Conditional checkpoint must be a dictionary"
@@ -139,5 +161,7 @@ def load_conditional_checkpoint(
         text_encoder.load_state_dict(checkpoint["text_encoder_state_dict"])
         conditional_unet.load_state_dict(checkpoint["conditional_unet_state_dict"])
     except KeyError as error:
-        raise ValueError("Checkpoint does not use the DR03 LR-pilot state format") from error
+        raise ValueError(
+            "Checkpoint does not use the DR03 LR-pilot state format"
+        ) from error
     return checkpoint

@@ -14,8 +14,14 @@ ID_VAL = ROOT / "data" / "processed" / "dr01_v1" / "text" / "10k" / "id_val.json
 COMP_VAL = ROOT / "data" / "processed" / "dr01_v1" / "text" / "10k" / "comp_val.jsonl"
 
 
-def _components() -> tuple[TextConditioningEncoder, ConditionalTinyUNet, LinearDDPMSchedule]:
-    return TextConditioningEncoder(), ConditionalTinyUNet(), LinearDDPMSchedule(num_timesteps=4)
+def _components() -> tuple[
+    TextConditioningEncoder, ConditionalTinyUNet, LinearDDPMSchedule
+]:
+    return (
+        TextConditioningEncoder(),
+        ConditionalTinyUNet(),
+        LinearDDPMSchedule(num_timesteps=4),
+    )
 
 
 def _real_prompt(path: Path) -> tuple[torch.Tensor, torch.Tensor]:
@@ -97,7 +103,9 @@ def test_conditional_sampler_defaults_to_clipping_reconstructed_x0(
     received_flags: list[bool] = []
     original_reverse_step = schedule.p_sample_from_noise
 
-    def tracked_reverse_step(*args: object, **kwargs: object) -> dict[str, torch.Tensor]:
+    def tracked_reverse_step(
+        *args: object, **kwargs: object
+    ) -> dict[str, torch.Tensor]:
         received_flags.append(bool(kwargs["clip_denoised"]))
         return original_reverse_step(*args, **kwargs)  # type: ignore[arg-type]
 
@@ -120,16 +128,30 @@ def test_conditional_sampling_is_deterministic_and_seed_sensitive() -> None:
     x_t = torch.randn(1, 3, 32, 32, generator=torch.Generator().manual_seed(7))
     with torch.no_grad():
         first = conditional_sample(
-            schedule, text_encoder, denoiser, input_ids, mask, x_T=x_t,
-            generator=torch.Generator().manual_seed(8)
+            schedule,
+            text_encoder,
+            denoiser,
+            input_ids,
+            mask,
+            x_T=x_t,
+            generator=torch.Generator().manual_seed(8),
         )
         repeated = conditional_sample(
-            schedule, text_encoder, denoiser, input_ids, mask, x_T=x_t,
-            generator=torch.Generator().manual_seed(8)
+            schedule,
+            text_encoder,
+            denoiser,
+            input_ids,
+            mask,
+            x_T=x_t,
+            generator=torch.Generator().manual_seed(8),
         )
         different_seed = conditional_sample(
-            schedule, text_encoder, denoiser, input_ids, mask,
-            generator=torch.Generator().manual_seed(9)
+            schedule,
+            text_encoder,
+            denoiser,
+            input_ids,
+            mask,
+            generator=torch.Generator().manual_seed(9),
         )
 
     assert torch.equal(first, repeated)
@@ -186,29 +208,48 @@ def test_conditional_sampling_is_sensitive_to_two_real_dr01_captions() -> None:
     comp_ids, comp_mask = _real_prompt(COMP_VAL)
     x_t = torch.randn(1, 3, 32, 32, generator=torch.Generator().manual_seed(10))
     first = conditional_sample(
-        schedule, text_encoder, denoiser, id_ids, id_mask, x_T=x_t,
-        generator=torch.Generator().manual_seed(11)
+        schedule,
+        text_encoder,
+        denoiser,
+        id_ids,
+        id_mask,
+        x_T=x_t,
+        generator=torch.Generator().manual_seed(11),
     )
     second = conditional_sample(
-        schedule, text_encoder, denoiser, comp_ids, comp_mask, x_T=x_t,
-        generator=torch.Generator().manual_seed(11)
+        schedule,
+        text_encoder,
+        denoiser,
+        comp_ids,
+        comp_mask,
+        x_T=x_t,
+        generator=torch.Generator().manual_seed(11),
     )
 
     assert not torch.equal(first, second)
 
 
-def test_text_encoder_runs_once_and_sampling_preserves_modes_gradients_and_parameters() -> None:
+def test_text_encoder_runs_once_and_sampling_preserves_modes_gradients_and_parameters() -> (
+    None
+):
     text_encoder, denoiser, schedule = _components()
     text_encoder.train()
     denoiser.train()
     input_ids, mask = _real_prompt(ID_VAL)
-    parameters_before = [parameter.detach().clone() for parameter in [*text_encoder.parameters(), *denoiser.parameters()]]
+    parameters_before = [
+        parameter.detach().clone()
+        for parameter in [*text_encoder.parameters(), *denoiser.parameters()]
+    ]
     calls: list[int] = []
     handle = text_encoder.register_forward_hook(lambda *_: calls.append(1))
     try:
         sample = conditional_sample(
-            schedule, text_encoder, denoiser, input_ids, mask,
-            generator=torch.Generator().manual_seed(12)
+            schedule,
+            text_encoder,
+            denoiser,
+            input_ids,
+            mask,
+            generator=torch.Generator().manual_seed(12),
         )
     finally:
         handle.remove()
@@ -216,11 +257,51 @@ def test_text_encoder_runs_once_and_sampling_preserves_modes_gradients_and_param
     assert len(calls) == 1
     assert not sample.requires_grad
     assert text_encoder.training and denoiser.training
-    assert all(parameter.grad is None for parameter in [*text_encoder.parameters(), *denoiser.parameters()])
+    assert all(
+        parameter.grad is None
+        for parameter in [*text_encoder.parameters(), *denoiser.parameters()]
+    )
     assert all(
         torch.equal(parameter, before)
-        for parameter, before in zip([*text_encoder.parameters(), *denoiser.parameters()], parameters_before, strict=True)
+        for parameter, before in zip(
+            [*text_encoder.parameters(), *denoiser.parameters()],
+            parameters_before,
+            strict=True,
+        )
     )
+
+
+def test_explicit_batched_noise_preserves_per_record_legacy_streams() -> None:
+    generators = [torch.Generator().manual_seed(seed) for seed in (2026, 2027)]
+    serial_generators = [torch.Generator().manual_seed(seed) for seed in (2026, 2027)]
+
+    def draw_batched() -> torch.Tensor:
+        return torch.cat(
+            [
+                torch.randn((1, 3, 32, 32), generator=generator)
+                for generator in generators
+            ]
+        )
+
+    assert torch.equal(
+        draw_batched(),
+        torch.cat(
+            [
+                torch.randn((1, 3, 32, 32), generator=generator)
+                for generator in serial_generators
+            ]
+        ),
+    )
+    for _ in range(4):
+        assert torch.equal(
+            draw_batched(),
+            torch.cat(
+                [
+                    torch.randn((1, 3, 32, 32), generator=generator)
+                    for generator in serial_generators
+                ]
+            ),
+        )
 
 
 @pytest.mark.parametrize(

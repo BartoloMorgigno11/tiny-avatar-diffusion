@@ -819,6 +819,70 @@ def sample_ema_record(
     return conditional_sample(schedule, text_encoder, denoiser, input_ids, mask, generator=generator, clip_denoised=True)[0]
 
 
+def sample_ema_records_batch(
+    schedule: LinearDDPMSchedule,
+    text_encoder: TextConditioningEncoder,
+    denoiser: ConditionalTinyUNet,
+    records: Sequence[Mapping[str, Any]],
+    *,
+    device: torch.device,
+) -> torch.Tensor:
+    """Sample canonical records in parallel without sharing their RNG streams."""
+    if not records:
+        raise ValueError("batched sampling requires at least one record")
+    canonical = [_canonical_selection_record(record) for record in records]
+    token_rows: list[list[int]] = []
+    mask_rows: list[list[int]] = []
+    for record in records:
+        token_ids = record.get("token_ids")
+        attention_mask = record.get("attention_mask")
+        if (
+            not isinstance(token_ids, list)
+            or not token_ids
+            or any(type(value) is not int or value < 0 for value in token_ids)
+        ):
+            raise ValueError("hydrated record has invalid token_ids")
+        if (
+            not isinstance(attention_mask, list)
+            or len(attention_mask) != len(token_ids)
+            or any(type(value) is not int or value not in (0, 1) for value in attention_mask)
+        ):
+            raise ValueError("hydrated record has invalid attention_mask")
+        token_rows.append(token_ids)
+        mask_rows.append(attention_mask)
+    if len({len(row) for row in token_rows}) != 1:
+        raise ValueError("batched sampling requires equal token sequence lengths")
+    generators = [
+        torch.Generator(device=device).manual_seed(int(record["generation_seed"]))
+        for record in canonical
+    ]
+
+    def draw_noise() -> torch.Tensor:
+        return torch.cat(
+            [
+                torch.randn(
+                    (1, 3, 32, 32),
+                    device=device,
+                    dtype=torch.float32,
+                    generator=generator,
+                )
+                for generator in generators
+            ],
+            dim=0,
+        )
+
+    return conditional_sample(
+        schedule,
+        text_encoder,
+        denoiser,
+        torch.tensor(token_rows, device=device),
+        torch.tensor(mask_rows, device=device),
+        x_T=draw_noise(),
+        reverse_noise_provider=lambda _timestep, _x_t: draw_noise(),
+        clip_denoised=True,
+    )
+
+
 def compute_comp_kid_from_artifacts(
     artifacts: Sequence[SampleArtifact],
     real_directory: Path,

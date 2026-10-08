@@ -242,6 +242,60 @@ def test_sample_ema_record_rejects_invalid_conditioning_schema(
         )
 
 
+@pytest.mark.parametrize("partition", [(2,), (1, 1)])
+def test_batched_sampler_noise_matches_legacy_per_record_streams(
+    monkeypatch: pytest.MonkeyPatch, partition: tuple[int, ...]
+) -> None:
+    canonical = r11.canonical_records()
+    records = [
+        r11.hydrate_selection_record(record, r11.load_tokenized_source_index())
+        for record in (canonical[0], canonical[256])
+    ]
+    observed: list[tuple[torch.Tensor, list[torch.Tensor]]] = []
+
+    def fake_sample(*args: object, **kwargs: object) -> torch.Tensor:
+        initial = kwargs["x_T"]
+        provider = kwargs["reverse_noise_provider"]
+        assert isinstance(initial, torch.Tensor) and callable(provider)
+        noise = [provider(timestep, initial) for timestep in range(1_000)]
+        observed.append((initial, noise))
+        return torch.zeros((initial.shape[0], 3, 32, 32))
+
+    monkeypatch.setattr(evaluation_module, "conditional_sample", fake_sample)
+    start = 0
+    for size in partition:
+        evaluation_module.sample_ema_records_batch(
+            object(),
+            object(),
+            object(),
+            records[start : start + size],
+            device=torch.device("cpu"),
+        )
+        start += size
+    expected_generators = [
+        torch.Generator().manual_seed(record["generation_seed"]) for record in records
+    ]
+    expected = [
+        [torch.randn((1, 3, 32, 32), generator=generator) for _ in range(1_001)]
+        for generator in expected_generators
+    ]
+    reconstructed = [[], []]
+    offset = 0
+    for initial, reverse in observed:
+        for index in range(initial.shape[0]):
+            reconstructed[offset + index].append(initial[index : index + 1])
+            reconstructed[offset + index].extend(
+                noise[index : index + 1] for noise in reverse
+            )
+        offset += initial.shape[0]
+    for actual, expected_stream in zip(reconstructed, expected, strict=True):
+        assert len(actual) == 1_001
+        assert all(
+            torch.equal(value, reference)
+            for value, reference in zip(actual, expected_stream, strict=True)
+        )
+
+
 def test_public_generation_api_has_no_records_override_and_seeds_are_frozen() -> None:
     assert (
         "records" not in inspect.signature(r11.resume_candidate_generation).parameters
@@ -387,6 +441,64 @@ def test_sample_round_trip_partial_resume_and_no_overwrite(
         generate=lambda _record: pytest.fail("valid sample must not be overwritten"),
     )
     assert len(again["reused"]) == 5 and not again["generated"]
+
+
+def test_batched_generation_preserves_order_partial_batch_and_resume(
+    tmp_path: Path, small_contract
+) -> None:
+    batches: list[list[str]] = []
+
+    def generate_batch(records):
+        batches.append([record["stable_record_key"] for record in records])
+        return [pixels(index + 1) for index, _ in enumerate(records)]
+
+    result = r11.resume_candidate_generation_batched(
+        output_root=tmp_path,
+        spec=spec(),
+        milestone=5000,
+        checkpoint_sha256=CHECKPOINT_SHA,
+        generate_batch=generate_batch,
+        sampling_batch_size=2,
+    )
+
+    assert [len(batch) for batch in batches] == [2, 2, 1]
+    assert result["generated"] == [
+        record["stable_record_key"] for record in small_contract
+    ]
+    assert result["completed"] == 5
+    resumed = r11.resume_candidate_generation_batched(
+        output_root=tmp_path,
+        spec=spec(),
+        milestone=5000,
+        checkpoint_sha256=CHECKPOINT_SHA,
+        generate_batch=lambda _records: pytest.fail("validated sample was regenerated"),
+        sampling_batch_size=2,
+    )
+    assert len(resumed["reused"]) == 5
+
+
+def test_batched_resume_retains_original_group_lanes_after_partial_publication(
+    tmp_path: Path, small_contract
+) -> None:
+    populate_candidate(tmp_path, small_contract)
+    manifest = r11.candidate_paths(tmp_path, spec(), 5000).sample_manifest
+    rows = r11.read_jsonl(manifest)
+    for row in rows[3:]:
+        (tmp_path / row["png_relative_path"]).unlink()
+    r11.atomic_jsonl(manifest, rows[:3])
+    observed: list[list[str]] = []
+    r11.resume_candidate_generation_batched(
+        output_root=tmp_path,
+        spec=spec(),
+        milestone=5000,
+        checkpoint_sha256=CHECKPOINT_SHA,
+        generate_batch=lambda records: (
+            observed.append([record["stable_record_key"] for record in records])
+            or [pixels(9) for _ in records]
+        ),
+        sampling_batch_size=8,
+    )
+    assert observed == [[record["stable_record_key"] for record in small_contract]]
 
 
 @pytest.mark.parametrize(
