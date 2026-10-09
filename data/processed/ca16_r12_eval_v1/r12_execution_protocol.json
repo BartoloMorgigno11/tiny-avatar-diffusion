@@ -1,0 +1,59 @@
+{
+  "schema": "tiny_avatar_diffusion.ca16_r12_execution_protocol_v1",
+  "protocol_id": "ca16_r12_selected_checkpoint_evaluation_batched_v1",
+  "status": "FROZEN",
+  "scientific_scope": {
+    "models": "exactly the six winners recorded by completed R11 V2 selection artifacts; no checkpoint reselection",
+    "allowed_roles": ["ID_TEST", "FINAL_OOD"],
+    "forbidden_roles": ["TRAIN", "ID_VAL", "COMP_VAL"],
+    "prior_final_ood_disclosure": "V1 FINAL_OOD evidence informed the CA16 hypothesis; R12 is a post-hoc focused extension final evaluation and must report that provenance."
+  },
+  "dr04_reuse": {
+    "panel_manifest_path": "data/processed/dr04_final_eval_v1/final_prompt_panel_manifest.json",
+    "panel_manifest_sha256": "102c76b5281119df066cc83e59ca7dfd836aa99bb3ab511b0628f3d750224e60",
+    "matched_controls_path": "data/processed/dr04_final_eval_v1/matched_controls_manifest.json",
+    "matched_controls_sha256": "c955c39bb5debd201a72ecd65aa7e2a66de7407f6d38515ba52c13d2d99749c7",
+    "protocol_path": "data/processed/dr04_final_eval_v1/final_evaluation_protocol.json",
+    "protocol_sha256": "a233ffaff4e6d278e7132188071473bbc75e6e7408a501f4b92468c08a71427e",
+    "geometry": {
+      "prompt_count": 252,
+      "id_prompt_count": 152,
+      "final_ood_prompt_count": 100,
+      "seeds": [2026, 2027, 2028, 2029, 2030],
+      "slots_per_model": 1260
+    },
+    "metrics": ["MAA", "MacroPSR", "EAM", "per-attribute Macro-F1", "per-attribute Balanced Accuracy", "per-combination PSR", "confusion matrices", "matched-control diagnostics"]
+  },
+  "sampling": {
+    "weight_variant": "EMA",
+    "precision": "FP32",
+    "sampler": "ancestral DDPM",
+    "timesteps": 1000,
+    "sampling_batch_size": 8,
+    "batch_partitioning": "canonical contiguous plan groups; incomplete resumed groups are regenerated in memory with their original lanes and only missing outputs are published",
+    "final_batch_padding": "the final four canonical records are repeated in canonical order as four non-published padding lanes, so every sampler invocation has exactly eight lanes"
+  },
+  "bindings": {
+    "r11_root": "results/r11_checkpoint_selection_reproducible_tokenfix_batched_v2",
+    "r11_complete_path": "results/r11_checkpoint_selection_reproducible_tokenfix_batched_v2/R11_COMPLETE.json",
+    "r11_complete_sha256": "3fd6c3b3caf8df527c5d93d2320398ce492dea57a0b76243c420ac02ffde0122",
+    "r11_inventory_path": "data/processed/ca16_eval_v1/r11_checkpoint_inventory.json",
+    "r11_inventory_sha256": "cace0eb71751c770c4e4c1318e9683813566fd1a36b7595b4bb8ab84a37e7790",
+    "evaluator_freeze_path": "data/processed/dr04_evaluator_v1/evaluator_checkpoint_freeze.json",
+    "evaluator_freeze_sha256": "85b0cef08bb5a298442d7d863c4f76b114ecf023335d312f319c6feef168f13f",
+    "evaluator_checkpoint_path": "results/runs/dr04_evaluator_main_100k_seed2026_r1/best.pt",
+    "evaluator_checkpoint_sha256": "3f97b8763dc8caa1148ff9434224cac619507f6a377b32bc742cd5fae204c50f",
+    "vocabulary_path": "data/processed/dr01_v1/text/10k/vocab.json",
+    "vocabulary_sha256": "15f2feb538e6e13389bf6ff113c48ed7a9663e0aefd8416dcd4c6fc760d7041a"
+  },
+  "output_root": "results/r12_selected_checkpoint_evaluation_batched_v1",
+  "execution_guards": {
+    "requires_cuda": true,
+    "requires_explicit_confirmation": true,
+    "requires_clean_expected_git_identity": true,
+    "preflight_may_only_hash_or_read_nonsemantic_metadata_of_sealed_inputs": true,
+    "no_kid": true,
+    "no_checkpoint_selection": true,
+    "no_r13_quality_or_diversity": true
+  }
+}
