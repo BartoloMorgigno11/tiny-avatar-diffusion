@@ -1,0 +1,56 @@
+{
+  "schema": "tiny_avatar_diffusion.ca16_r13_quality_protocol_v1",
+  "protocol_id": "ca16_r13_quality_guardrail_batched_v1",
+  "status": "FROZEN",
+  "scientific_scope": {
+    "purpose": "prospective distribution-preserving quality guardrail; not checkpoint selection or conditioning adherence",
+    "allowed_roles": ["ID_VAL", "COMP_VAL"],
+    "forbidden_roles": ["TRAIN", "ID_TEST", "FINAL_OOD"],
+    "checkpoint_policy": "exactly the six completed R11 V2 winners; never reselect"
+  },
+  "quality_manifest": {
+    "path": "data/processed/ca16_eval_v1/quality_guardrail_manifest.json",
+    "sha256": "e34db5251d8949a5fb37a905f6e9e4791602047f3153a9a9908d14d9cd85e84f",
+    "geometry": {"ID_VAL": 466, "COMP_VAL": 338, "GLOBAL": 804},
+    "generation_seed": "2026+canonical_manifest_index",
+    "order": "ascending_split_role_then_stable_record_key"
+  },
+  "token_sources": {
+    "ID_VAL": {"path": "data/processed/dr01_v1/text/10k/id_val.jsonl", "sha256": "34d610b9a9d3b8f20caf3004e93c154aa7646319006a53c2552b7d994850b487"},
+    "COMP_VAL": {"path": "data/processed/dr01_v1/text/10k/comp_val.jsonl", "sha256": "cfb3467420469c3b34c09d0a4b21ec1a336f5446276d8ae2a1fa6c6d9cb1025e"}
+  },
+  "r11_bindings": {
+    "root": "results/r11_checkpoint_selection_reproducible_tokenfix_batched_v2",
+    "complete_path": "results/r11_checkpoint_selection_reproducible_tokenfix_batched_v2/R11_COMPLETE.json",
+    "complete_sha256": "3fd6c3b3caf8df527c5d93d2320398ce492dea57a0b76243c420ac02ffde0122",
+    "inventory_path": "data/processed/ca16_eval_v1/r11_checkpoint_inventory.json",
+    "inventory_sha256": "cace0eb71751c770c4e4c1318e9683813566fd1a36b7595b4bb8ab84a37e7790",
+    "selected_milestone": 20000
+  },
+  "sampling": {
+    "weight_variant": "EMA",
+    "precision": "FP32",
+    "sampler": "ancestral DDPM",
+    "timesteps": 1000,
+    "sampling_batch_size": 8,
+    "batch_partitioning": "canonical contiguous manifest groups; incomplete resumed groups are regenerated in memory with original lanes and only missing outputs are published",
+    "final_batch_padding": "the final four canonical records are repeated in canonical order as four non-published padding lanes"
+  },
+  "quality_metrics": {
+    "primary": ["KID_ID", "KID_COMP", "KID_GLOBAL"],
+    "implementation": {"package": "clean-fid", "version": "0.1.35", "mode": "clean", "feature_extractor": "standard Inception-v3", "feature_batch_size": 8, "num_workers": 0},
+    "kid": {"num_subsets": 100, "subset_seed": 2026, "subset_size": "min(1000, real_count, generated_count)", "sampling": "without_replacement_within_subset"},
+    "fid": {"status": "OPTIONAL_SECONDARY", "rule": "report only when produced by unchanged established Clean-FID implementation; absence must not block KID"},
+    "uncertainty": "no CA16 quality bootstrap or significance procedure is frozen; report KID point estimates and defer cross-seed inference to R15"
+  },
+  "output_root": "results/r13_quality_guardrail_batched_v1",
+  "execution_guards": {
+    "requires_cuda": true,
+    "requires_explicit_confirmation": true,
+    "requires_clean_expected_git_identity": true,
+    "requires_annotated_tag": true,
+    "no_evaluator_inference": true,
+    "no_checkpoint_selection": true,
+    "no_id_test_or_final_ood": true
+  }
+}
