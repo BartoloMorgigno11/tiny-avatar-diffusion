@@ -1,0 +1,37 @@
+{
+  "schema": "tiny_avatar_diffusion.ca16_r13_fid_secondary_protocol_v1",
+  "protocol_id": "ca16_r13_fid_secondary_v1",
+  "status": "FROZEN",
+  "scientific_scope": {
+    "purpose": "post-R13 secondary FID diagnostic over immutable R13 image artifacts",
+    "primary_metric_unchanged": "R13 KID remains the frozen primary quality metric",
+    "interpretation": "FID is descriptive, post-hoc, small-sample, and not statistically conclusive",
+    "forbidden": ["sampling", "diffusion inference", "training", "checkpoint reselection", "R13 artifact modification"]
+  },
+  "source_r13": {
+    "frozen_commit": "fad95da059f88c74d9c2a18ba16cdd4889d24f57",
+    "annotated_tag": "ca16-ablation-r13-quality-b8-v1",
+    "root": "results/r13_quality_guardrail_batched_v1",
+    "r13_protocol_path": "data/processed/ca16_r13_quality_v1/r13_execution_protocol.json",
+    "r13_protocol_sha256": "fe292f1a67b4f755bfae0512601b206f3abd7d4ec4a2cae4bc820098631f240b",
+    "quality_manifest_path": "data/processed/ca16_eval_v1/quality_guardrail_manifest.json",
+    "quality_manifest_sha256": "e34db5251d8949a5fb37a905f6e9e4791602047f3153a9a9908d14d9cd85e84f",
+    "real_reference_manifest_path": "results/r13_quality_guardrail_batched_v1/real_reference_manifest.jsonl",
+    "real_reference_manifest_sha256": "3b7ebe285e8d2f82ec1e03c8d23d8e3f0c4ebdc605335a6ce4d6a8397a0a06b3",
+    "completed_summary_sha256": {
+      "ca16_ablation_ca8_seed2026": "415592c93c4d3e062348ecf59b98431655c2a12d021051cb74ba6134632df4b8",
+      "ca16_ablation_ca8_seed2027": "d1d3a67a413c0bfb8b79622c2f26d0e45ae597c470f3edd7485234c65ee50108",
+      "ca16_ablation_ca8_seed2028": "9b1ebaec67d64a44a840a065e7833575928b734cd759ca0867e23426a924af77",
+      "ca16_ablation_ca8_ca16_seed2026": "132cee2c40d1f3310a7c7a68cddab5c723ed1fe772caaee0081b08f439c0bc63",
+      "ca16_ablation_ca8_ca16_seed2027": "81f9af4be7e29e00c7229d8b21850a7149af3601e1cebd49f6a8b7750f52dbc1",
+      "ca16_ablation_ca8_ca16_seed2028": "293aaac6a4b345ef9368957403f136297984145468dc2b2c767bd390918f4050"
+    }
+  },
+  "fid": {
+    "implementation": {"package": "clean-fid", "version": "0.1.35", "mode": "clean", "feature_extractor": "standard Inception-v3", "feature_batch_size": 8, "num_workers": 0},
+    "metrics": {"FID_ID": 466, "FID_COMP": 338, "FID_GLOBAL": 804},
+    "population_policy": "reuse the existing R13 real and generated metric pools exactly; no rematerialization or image generation"
+  },
+  "output_root": "results/r13_fid_secondary_v1",
+  "execution_guards": {"requires_clean_expected_git_identity": true, "requires_annotated_tag": true, "requires_cuda": true, "requires_explicit_confirmation": true, "output_root_must_be_unused": true}
+}
