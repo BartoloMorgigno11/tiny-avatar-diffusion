@@ -134,6 +134,99 @@ def test_pairs_are_ten_per_prompt_and_two_thousand_total(plan: list[dict]):
     assert all(row["seed_a"] < row["seed_b"] for row in pairs)
 
 
+def test_r14_complete_synthetic_output_contract_and_pair_publication(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, plan: list[dict]
+):
+    _plan, checkpoints = r14.resolve_inputs(r14.load_protocol())
+    checkpoint = checkpoints[0]
+    run_root = tmp_path / checkpoint["run_id"]
+    executor = r14.R14Executor(
+        run_root, plan, {"protocol_sha256": r14.PROTOCOL_SHA256, **checkpoint}
+    )
+    executor.generate(lambda _row: np.zeros((32, 32, 3), dtype=np.uint8))
+    manifest = {
+        row["sample_id"]: row for row in r14._read_jsonl(executor.manifest_path)
+    }
+    pairs = [
+        {**row, "lpips": 0.1, "l1": 0.2}
+        for row in r14.enumerate_r14_pairs(plan, manifest)
+    ]
+    with pytest.raises(KeyError, match="planned_sample_index"):
+        r14.atomic_jsonl(run_root / "legacy_pairs.jsonl", pairs)
+
+    original = r14.atomic_r14_jsonl
+    calls = 0
+
+    def fail_during_prompt_publication(path, rows, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("simulated prompt publication interruption")
+        original(path, rows, **kwargs)
+
+    monkeypatch.setattr(r14, "atomic_r14_jsonl", fail_during_prompt_publication)
+    with pytest.raises(OSError, match="interruption"):
+        r14.publish_r14_diversity_metrics(
+            run_root=run_root,
+            plan=plan,
+            manifest=manifest,
+            measured_pairs=pairs,
+            checkpoint=checkpoint,
+        )
+    assert (run_root / "lpips_pairs.jsonl").is_file()
+    assert not (run_root / "lpips_prompts.jsonl").exists()
+    assert not (run_root / "r14_diversity_summary.json").exists()
+
+    monkeypatch.setattr(r14, "atomic_r14_jsonl", original)
+    summary = r14.publish_r14_diversity_metrics(
+        run_root=run_root,
+        plan=plan,
+        manifest=manifest,
+        measured_pairs=pairs,
+        checkpoint=checkpoint,
+    )
+    repeated = r14.publish_r14_diversity_metrics(
+        run_root=run_root,
+        plan=plan,
+        manifest=manifest,
+        measured_pairs=pairs,
+        checkpoint=checkpoint,
+    )
+    assert summary == repeated
+    assert len(r14._read_jsonl(run_root / "lpips_pairs.jsonl")) == 2000
+    assert len(r14._read_jsonl(run_root / "lpips_prompts.jsonl")) == 200
+    summaries = [{**summary, **candidate} for candidate in checkpoints]
+    assert r14.validate_r14_diversity_summaries(summaries, checkpoints)
+
+
+def test_r14_pair_publication_interruption_before_atomic_write(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, plan: list[dict]
+):
+    artifacts = {
+        row["sample_id"]: {"png_relative_path": f"images/{row['sample_id']}.png"}
+        for row in plan
+    }
+    pairs = [
+        {**row, "lpips": 0.1, "l1": 0.2}
+        for row in r14.enumerate_r14_pairs(plan, artifacts)
+    ]
+    monkeypatch.setattr(
+        r14,
+        "atomic_r14_jsonl",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("interrupted")),
+    )
+    with pytest.raises(OSError, match="interrupted"):
+        r14.publish_r14_diversity_metrics(
+            run_root=tmp_path,
+            plan=plan,
+            manifest=artifacts,
+            measured_pairs=pairs,
+            checkpoint=r14.resolve_inputs(r14.load_protocol())[1][0],
+        )
+    assert not (tmp_path / "lpips_pairs.jsonl").exists()
+    assert not (tmp_path / "r14_diversity_summary.json").exists()
+
+
 def test_prompt_and_equal_family_aggregation(plan: list[dict]):
     artifacts = {
         row["sample_id"]: {"png_relative_path": f"images/{row['sample_id']}.png"}

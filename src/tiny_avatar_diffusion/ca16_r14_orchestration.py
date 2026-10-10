@@ -13,7 +13,9 @@ import importlib.metadata
 import itertools
 import json
 import math
+import os
 import subprocess
+import uuid
 from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
@@ -27,6 +29,7 @@ from tiny_avatar_diffusion.ca16_r12_orchestration import (
     resolve_selected_checkpoints,
 )
 from tiny_avatar_diffusion.ca16_r13_quality import (
+    _replace_with_retry,
     _save_png,
     atomic_json,
     atomic_jsonl,
@@ -44,7 +47,7 @@ PROTOCOL_PATH = (
 )
 PROTOCOL_ID = "ca16_r14_diversity_efficiency_b8_v1"
 # Bound only during the authorized freeze transition.
-PROTOCOL_SHA256 = "586330473ace7a9bfb07878f14145b61816715d332c0234ab920e6ffe988a36e"
+PROTOCOL_SHA256 = "77ee8564d89656c9cbcdb9ea6eddbd58f73a4fc8fcb55d2d13284ff71902783c"
 
 
 def sha256_file(path: Path) -> str:
@@ -386,6 +389,114 @@ def aggregate_r14_pairs(
     return prompt_rows, aggregates
 
 
+def _canonical_pair_key(row: Mapping[str, Any]) -> tuple[str, int, int, str]:
+    return (
+        str(row["prompt_id"]),
+        int(row["seed_a"]),
+        int(row["seed_b"]),
+        str(row["pair_id"]),
+    )
+
+
+def atomic_r14_jsonl(
+    path: Path,
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    key: Callable[[Mapping[str, Any]], Any],
+) -> None:
+    """Atomically publish a complete R14-specific JSONL collection."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
+    try:
+        with temporary.open("w", encoding="utf-8", newline="\n") as stream:
+            for row in sorted(rows, key=key):
+                stream.write(
+                    json.dumps(dict(row), sort_keys=True, separators=(",", ":")) + "\n"
+                )
+            stream.flush()
+            os.fsync(stream.fileno())
+        _replace_with_retry(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def validate_r14_pair_records(
+    plan: Sequence[Mapping[str, Any]],
+    manifest: Mapping[str, Mapping[str, Any]],
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Require the exact canonical pair population and finite measurements."""
+    expected = enumerate_r14_pairs(plan, manifest)
+    by_id = {str(row.get("pair_id")): row for row in rows}
+    if len(rows) != 2000 or len(by_id) != len(rows):
+        raise ValueError("R14 LPIPS pair population is incomplete or duplicated")
+    expected_ids = {str(row["pair_id"]) for row in expected}
+    if set(by_id) != expected_ids:
+        raise ValueError("R14 LPIPS pair identities do not match the canonical plan")
+    canonical: list[dict[str, Any]] = []
+    for item in expected:
+        row = by_id[str(item["pair_id"])]
+        if any(row.get(key) != value for key, value in item.items()):
+            raise ValueError("R14 LPIPS pair identity mismatch")
+        if not math.isfinite(float(row.get("lpips", math.nan))) or not math.isfinite(
+            float(row.get("l1", math.nan))
+        ):
+            raise ValueError("R14 LPIPS pair has a non-finite measurement")
+        canonical.append(dict(row))
+    return canonical
+
+
+def publish_r14_diversity_metrics(
+    *,
+    run_root: Path,
+    plan: Sequence[Mapping[str, Any]],
+    manifest: Mapping[str, Mapping[str, Any]],
+    measured_pairs: Sequence[Mapping[str, Any]],
+    checkpoint: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate and atomically publish one complete R14 diversity run."""
+    pairs = validate_r14_pair_records(plan, manifest, measured_pairs)
+    prompt_rows, aggregates = aggregate_r14_pairs(pairs)
+    if len(prompt_rows) != 200:
+        raise ValueError("R14 LPIPS prompt population is incomplete")
+    pair_path, prompt_path = (
+        run_root / "lpips_pairs.jsonl",
+        run_root / "lpips_prompts.jsonl",
+    )
+    if (
+        pair_path.exists()
+        and validate_r14_pair_records(plan, manifest, _read_jsonl(pair_path)) != pairs
+    ):
+        raise ValueError("R14 existing LPIPS pair publication differs")
+    if prompt_path.exists() and _read_jsonl(prompt_path) != sorted(
+        prompt_rows, key=lambda row: str(row["prompt_id"])
+    ):
+        raise ValueError("R14 existing LPIPS prompt publication differs")
+    if not pair_path.exists():
+        atomic_r14_jsonl(pair_path, pairs, key=_canonical_pair_key)
+    if not prompt_path.exists():
+        atomic_r14_jsonl(
+            prompt_path, prompt_rows, key=lambda row: str(row["prompt_id"])
+        )
+    stored_pairs = validate_r14_pair_records(plan, manifest, _read_jsonl(pair_path))
+    stored_prompts = _read_jsonl(prompt_path)
+    if stored_pairs != pairs or stored_prompts != sorted(
+        prompt_rows, key=lambda row: str(row["prompt_id"])
+    ):
+        raise ValueError("R14 persisted LPIPS output validation failed")
+    summary = {
+        "schema": "tiny_avatar_diffusion.ca16_r14_diversity_v1",
+        "status": "COMPLETE",
+        **checkpoint,
+        "aggregates": aggregates,
+        "pair_count": len(pairs),
+        "lpips_pairs_sha256": sha256_file(pair_path),
+        "lpips_prompts_sha256": sha256_file(prompt_path),
+    }
+    atomic_json(run_root / "r14_diversity_summary.json", summary)
+    return summary
+
+
 def paired_summary(results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     values = {
         (row["architecture_arm"], int(row["training_seed"])): row["aggregates"]
@@ -418,6 +529,35 @@ def paired_summary(results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "mean_paired_differences": means,
         "inference": "descriptive across three training seeds; LPIPS pairs are not independent training replicates",
     }
+
+
+def validate_r14_diversity_summaries(
+    summaries: Sequence[Mapping[str, Any]], checkpoints: Sequence[Mapping[str, Any]]
+) -> dict[str, Any]:
+    """Fail closed before publishing the cross-checkpoint completion marker."""
+    if len(summaries) != 6 or len(checkpoints) != 6:
+        raise ValueError("R14 requires six complete diversity summaries")
+    expected = {
+        (str(row["architecture_arm"]), int(row["training_seed"])): row
+        for row in checkpoints
+    }
+    observed = {
+        (str(row.get("architecture_arm")), int(row.get("training_seed", -1))): row
+        for row in summaries
+    }
+    if set(observed) != set(expected):
+        raise ValueError("R14 diversity summaries do not cover the six checkpoints")
+    for key, checkpoint in expected.items():
+        summary = observed[key]
+        if (
+            summary.get("status") != "COMPLETE"
+            or summary.get("pair_count") != 2000
+            or any(summary.get(field) != value for field, value in checkpoint.items())
+            or not isinstance(summary.get("lpips_pairs_sha256"), str)
+            or not isinstance(summary.get("lpips_prompts_sha256"), str)
+        ):
+            raise ValueError("R14 diversity summary is incomplete or mismatched")
+    return paired_summary(summaries)
 
 
 def efficiency_execution_order(
@@ -907,24 +1047,20 @@ def execute_diversity(
         pairs = measure_pairs(
             enumerate_r14_pairs(plan, manifest), run_root, lpips_alexnet_metric("cuda")
         )
-        prompt_rows, aggregates = aggregate_r14_pairs(pairs)
-        atomic_jsonl(run_root / "lpips_pairs.jsonl", pairs)
-        atomic_jsonl(run_root / "lpips_prompts.jsonl", prompt_rows)
-        summary = {
-            "schema": "tiny_avatar_diffusion.ca16_r14_diversity_v1",
-            "status": "COMPLETE",
-            **checkpoint,
-            "aggregates": aggregates,
-            "pair_count": len(pairs),
-        }
-        atomic_json(run_root / "r14_diversity_summary.json", summary)
+        summary = publish_r14_diversity_metrics(
+            run_root=run_root,
+            plan=plan,
+            manifest=manifest,
+            measured_pairs=pairs,
+            checkpoint=checkpoint,
+        )
         summaries.append(summary)
     result = {
         "schema": "tiny_avatar_diffusion.ca16_r14_complete_v1",
         "status": "COMPLETE",
         "preflight": preflight,
         "runs": summaries,
-        "paired": paired_summary(summaries),
+        "paired": validate_r14_diversity_summaries(summaries, checkpoints),
     }
     atomic_json(output_root / "R14_COMPLETE.json", result)
     return result

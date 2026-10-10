@@ -30,7 +30,7 @@
   "sampling": {"weight_variant": "EMA", "precision": "FP32", "sampler": "ancestral DDPM", "timesteps": 1000, "sampling_batch_size": 8, "batch_partitioning": "canonical contiguous plan groups; incomplete resumed groups are regenerated in memory with original lanes and only missing outputs are published"},
   "lpips": {"package": "lpips", "package_version": "0.1.4", "network": "AlexNet", "version": "0.1", "input_range": "[-1,1]", "rgb_resolution": [32, 32], "pairs_per_prompt": 10, "aggregation": "prompt_mean; COMP family means then equal-family macro", "bootstrap": {"resamples": 10000, "seed": 202605, "unit": "prompt"}},
   "efficiency": {"parameter_counts": {"ca8_total": 4723907, "ca8_ca16_total": 4749059, "delta": 25152}, "conditions": [{"batch_size": 1, "role": "PRIMARY_LATENCY"}, {"batch_size": 8, "role": "SECONDARY_THROUGHPUT"}], "warmups": 3, "measured_iterations": 10, "timing": "cuda_synchronize + perf_counter + cuda_synchronize", "memory": "fresh subprocess per checkpoint and batch size", "order": "balanced deterministic order recorded before execution"},
-  "output_root": "results/r14_diversity_efficiency_b8_v2",
+  "output_root": "results/r14_diversity_efficiency_b8_v3",
   "output_layout": {"diversity": "diversity", "efficiency": "efficiency"},
   "execution_guards": {"requires_cuda": true, "requires_clean_expected_git_identity": true, "requires_annotated_tag": true, "requires_explicit_confirmation": true, "no_evaluator_inference": true, "no_checkpoint_selection": true, "no_id_test_or_final_ood": true}
 }
