@@ -1,0 +1,36 @@
+{
+  "schema": "tiny_avatar_diffusion.ca16_r14_diversity_efficiency_protocol_v1",
+  "protocol_id": "ca16_r14_diversity_efficiency_b8_v1",
+  "status": "FROZEN",
+  "scientific_scope": {
+    "purpose": "prospective descriptive diversity and controlled efficiency evaluation of already R11-selected checkpoints; never checkpoint selection",
+    "allowed_roles": ["ID_VAL", "COMP_VAL"],
+    "forbidden_roles": ["TRAIN", "ID_TEST", "FINAL_OOD"],
+    "limitation": "ID_VAL and COMP_VAL are validation populations; results are not an independent held-out test"
+  },
+  "diversity_manifest": {
+    "path": "data/processed/ca16_eval_v1/robust_conditioning_manifest.json",
+    "sha256": "e3319f65f67c19ae8b458f7450ff8e6b86e5913e0fd542e9c0c3009802451aec",
+    "geometry": {"ID_VAL": 100, "COMP_VAL": 100, "COMP_family": {"CV1": 25, "CV2": 25, "CV3": 25, "CV4": 25}},
+    "generation_seeds": [2026, 2027, 2028, 2029, 2030],
+    "order": "manifest_entry_order_then_generation_seed"
+  },
+  "r11_bindings": {
+    "root": "results/r11_checkpoint_selection_reproducible_tokenfix_batched_v2",
+    "complete_path": "results/r11_checkpoint_selection_reproducible_tokenfix_batched_v2/R11_COMPLETE.json",
+    "complete_sha256": "3fd6c3b3caf8df527c5d93d2320398ce492dea57a0b76243c420ac02ffde0122",
+    "inventory_path": "data/processed/ca16_eval_v1/r11_checkpoint_inventory.json",
+    "inventory_sha256": "cace0eb71751c770c4e4c1318e9683813566fd1a36b7595b4bb8ab84a37e7790",
+    "selected_milestone": 20000
+  },
+  "token_sources": {
+    "ID_VAL": {"path": "data/processed/dr01_v1/text/10k/id_val.jsonl", "sha256": "34d610b9a9d3b8f20caf3004e93c154aa7646319006a53c2552b7d994850b487"},
+    "COMP_VAL": {"path": "data/processed/dr01_v1/text/10k/comp_val.jsonl", "sha256": "cfb3467420469c3b34c09d0a4b21ec1a336f5446276d8ae2a1fa6c6d9cb1025e"}
+  },
+  "sampling": {"weight_variant": "EMA", "precision": "FP32", "sampler": "ancestral DDPM", "timesteps": 1000, "sampling_batch_size": 8, "batch_partitioning": "canonical contiguous plan groups; incomplete resumed groups are regenerated in memory with original lanes and only missing outputs are published"},
+  "lpips": {"package": "lpips", "package_version": "0.1.4", "network": "AlexNet", "version": "0.1", "input_range": "[-1,1]", "rgb_resolution": [32, 32], "pairs_per_prompt": 10, "aggregation": "prompt_mean; COMP family means then equal-family macro", "bootstrap": {"resamples": 10000, "seed": 202605, "unit": "prompt"}},
+  "efficiency": {"parameter_counts": {"ca8_total": 4723907, "ca8_ca16_total": 4749059, "delta": 25152}, "conditions": [{"batch_size": 1, "role": "PRIMARY_LATENCY"}, {"batch_size": 8, "role": "SECONDARY_THROUGHPUT"}], "warmups": 3, "measured_iterations": 10, "timing": "cuda_synchronize + perf_counter + cuda_synchronize", "memory": "fresh subprocess per checkpoint and batch size", "order": "balanced deterministic order recorded before execution"},
+  "output_root": "results/r14_diversity_efficiency_b8_v1",
+  "output_layout": {"diversity": "diversity", "efficiency": "efficiency"},
+  "execution_guards": {"requires_cuda": true, "requires_clean_expected_git_identity": true, "requires_annotated_tag": true, "requires_explicit_confirmation": true, "no_evaluator_inference": true, "no_checkpoint_selection": true, "no_id_test_or_final_ood": true}
+}
