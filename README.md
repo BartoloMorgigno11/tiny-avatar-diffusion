@@ -7,6 +7,13 @@ structured attributes → scratch text encoder → cross-attention
                       → Tiny U-Net DDPM → 32×32 RGB avatar
 ```
 
+## Study status
+
+- **Original V1 baseline:** the released conditional/unconditional system and its frozen DR01–DR05 evidence, described below.
+- **Completed CA16 comparison:** a separate, paired three-seed comparison of bottleneck cross-attention (CA8) with CA8+CA16 on the 10k compositional task. At the selected 20k checkpoints, CA8+CA16 had higher mean R12 ID_TEST MAA (0.7184 vs 0.5854), FINAL_OOD MAA (0.6758 vs 0.5163), and MacroPSR (0.488 vs 0.267). The full scope, provenance, metrics, and limitations are in [the CA16 closure record](docs/experiments/ca16_ablation/FINAL_CLOSURE.md).
+- **Available now:** the V1 package, CLI, inference, comparison, and Streamlit demo. CA16 experiment checkpoints and result roots are local-only evidence, not Git-shipped inference assets.
+- **Not implemented:** H7 continuation to 40k and native 64×64 output support are prospective work, not current capabilities. No final project architecture has been selected.
+
 ## Project at a glance
 
 - Dataset: Google Cartoon Set, with four controlled attributes: `face_shape`, `glasses`, `hair_color`, and `face_color`.
@@ -126,6 +133,7 @@ This reads validated frozen DR04/DR05 evidence. It does not train models, genera
 | [02_model_and_diffusion.ipynb](notebooks/02_model_and_diffusion.ipynb) | Tiny U-Net, scratch text encoder, cross-attention, and DDPM mechanics. |
 | [03_evaluation_and_results.ipynb](notebooks/03_evaluation_and_results.ipynb) | Validated analysis of frozen conditioning, quality, diversity, and engineering evidence. |
 | [04_interactive_generation.ipynb](notebooks/04_interactive_generation.ipynb) | Frozen inference contract and optional live trajectory/paired demonstration. |
+| [05_ca16_ablation_results.ipynb](notebooks/05_ca16_ablation_results.ipynb) | CPU-only examiner summary of the completed CA8 versus CA8+CA16 study; uses verified compact summaries, not local checkpoints or generated images. |
 
 All four passed fresh-kernel default Run All during the Phase-5 notebook release pass. The fourth notebook keeps live generation and paired comparison disabled by default, so no expensive sampling occurs during its default run.
 

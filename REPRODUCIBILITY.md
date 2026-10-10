@@ -12,6 +12,10 @@ Three activities must not be confused:
 
 The final clean-release audit procedure is documented for later execution. This guide does not claim that a clean-clone audit has already passed.
 
+### CA16 closure boundary
+
+The completed CA16 CA8-versus-CA8+CA16 comparison is documented in [the closure record](docs/experiments/ca16_ablation/FINAL_CLOSURE.md). A clean clone can inspect its tracked protocols, source, and documentation, but cannot reproduce R10–R14 results without the local evidence archive: the six R10 checkpoint roots and the R11–R14 result roots are intentionally ignored by Git. They require the original CUDA-capable environment and the manually acquired datasets/evaluator asset; they are not restored by `pip install`.
+
 ## 2. Repository and software requirements
 
 - Python: `>=3.11`
@@ -253,6 +257,12 @@ Read-only verification:
 tiny-avatar results
 python -c "from tiny_avatar_diffusion.frozen_results import load_frozen_results; load_frozen_results(); print('frozen evidence: OK')"
 ```
+
+### CA16 historical evidence and verification
+
+The CA16 execution entry points are present, but are historical campaign workflows rather than clean-clone commands: `scripts/run_ca16_r11_selection.py`, `scripts/run_ca16_r12_evaluation.py`, `scripts/run_ca16_r13_quality.py`, `scripts/run_ca16_r13_fid_secondary.py`, `scripts/run_ca16_r14_diversity.py`, and `scripts/run_ca16_r14_efficiency.py`. They need the local R10 checkpoints, local R11–R14 roots, and CUDA; do not run them merely to inspect the study. Their authoritative local evidence locations and the SHA256 identity/manifests are listed in the [CA16 closure record](docs/experiments/ca16_ablation/FINAL_CLOSURE.md#evidence-and-reproduction).
+
+For a clean clone, the supported read-only checks are the commands in the preceding section, source/protocol inspection, and SHA256 checks of the tracked V1 artifacts. Full CA16 recomputation additionally needs both Cartoon Set archives; the 100k archive and the external Inception asset used by the FID campaign are not Git-shipped. The 10k archive is also an externally supplied raw asset, even when present in a local working directory.
 
 ## 13. Inference with released V1
 
