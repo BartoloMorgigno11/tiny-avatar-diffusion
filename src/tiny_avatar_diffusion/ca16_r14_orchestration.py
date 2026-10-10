@@ -36,6 +36,7 @@ from tiny_avatar_diffusion.dr05_diversity import (
     measure_pairs,
 )
 from tiny_avatar_diffusion.dr05_final_executor import pixel_sha256
+from tiny_avatar_diffusion.tokenizer import WhitespaceTokenizer
 
 ROOT = Path(__file__).resolve().parents[2]
 PROTOCOL_PATH = (
@@ -43,7 +44,7 @@ PROTOCOL_PATH = (
 )
 PROTOCOL_ID = "ca16_r14_diversity_efficiency_b8_v1"
 # Bound only during the authorized freeze transition.
-PROTOCOL_SHA256 = "6c075702c53d2290d384c2c51a8647fc1be191b43010f3783665b076bb4ad4a6"
+PROTOCOL_SHA256 = "586330473ace7a9bfb07878f14145b61816715d332c0234ab920e6ffe988a36e"
 
 
 def sha256_file(path: Path) -> str:
@@ -188,6 +189,60 @@ def validate_execution_plan(plan: Sequence[Mapping[str, Any]]) -> None:
         raise ValueError("R14 panel geometry is invalid")
 
 
+def adapt_plan_for_r12_generator(
+    plan: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Project frozen R14 rows onto the legacy R12 generator boundary.
+
+    R14's public plan deliberately names its canonical conditioning fields
+    ``caption`` and ``generation_seed``.  The reused R12 sampler predates that
+    plan and consumes the equivalent ``prompt`` and ``seed`` names instead.
+    Keep this translation local: it neither changes the R14 plan nor its
+    persisted scientific identity.
+    """
+    adapted: list[dict[str, Any]] = []
+    for row in plan:
+        caption, generation_seed, sample_id = (
+            row.get("caption"),
+            row.get("generation_seed"),
+            row.get("sample_id"),
+        )
+        if (
+            not isinstance(caption, str)
+            or not caption
+            or not isinstance(generation_seed, int)
+            or not isinstance(sample_id, str)
+            or not sample_id
+        ):
+            raise ValueError("R14 row cannot satisfy the R12 generator schema")
+        adapted.append({**row, "prompt": caption, "seed": generation_seed})
+    if len({row["sample_id"] for row in adapted}) != len(adapted):
+        raise ValueError("R14 generator adapter received duplicate sample IDs")
+    return adapted
+
+
+def validate_generator_adapter(
+    plan: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """CPU-only conditioning-contract check for the reused R12 sampler."""
+    adapted = adapt_plan_for_r12_generator(plan)
+    vocab = _read_json(ROOT / "data/processed/dr01_v1/text/10k/vocab.json")
+    token_to_id = vocab.get("token_to_id")
+    if not isinstance(token_to_id, dict):
+        raise TypeError("R14 vocabulary lacks token_to_id")
+    tokenizer = WhitespaceTokenizer(token_to_id)
+    for original, projected in zip(plan, adapted, strict=True):
+        encoded = tokenizer.encode(projected["prompt"])
+        if (
+            projected["prompt"] != original.get("caption")
+            or projected["seed"] != original.get("generation_seed")
+            or encoded.token_ids != original.get("token_ids")
+            or encoded.attention_mask != original.get("attention_mask")
+        ):
+            raise ValueError("R14 generator adapter conditioning mismatch")
+    return adapted
+
+
 def resolve_inputs(
     protocol: Mapping[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], tuple[dict[str, Any], ...]]:
@@ -231,6 +286,7 @@ def validate_preflight(
     if output_root.exists() and not allow_existing:
         raise FileExistsError("R14 output root must be unused")
     plan, checkpoints = resolve_inputs(protocol)
+    validate_generator_adapter(plan)
     resumed_conditions = 0
     if output_root.exists() and allow_existing:
         order = efficiency_execution_order(checkpoints)
@@ -828,15 +884,23 @@ def execute_diversity(
         expected_tag=expected_tag,
     )
     plan, checkpoints = resolve_inputs(protocol)
+    generator_plan = validate_generator_adapter(plan)
     output_root.mkdir(parents=True, exist_ok=False)
     summaries = []
     for checkpoint in checkpoints:
         run_root = output_root / checkpoint["run_id"]
-        generator, _counts = _load_generator(checkpoint, plan, torch.device("cuda"))
+        generator, _counts = _load_generator(
+            checkpoint, generator_plan, torch.device("cuda")
+        )
         executor = R14Executor(
             run_root, plan, {"protocol_sha256": PROTOCOL_SHA256, **checkpoint}
         )
-        executor.generate(generator)
+        projected = {str(row["sample_id"]): row for row in generator_plan}
+        executor.generate(
+            lambda row, generator=generator, projected=projected: generator(
+                projected[str(row["sample_id"])]
+            )
+        )
         manifest = {
             str(row["sample_id"]): row for row in _read_jsonl(executor.manifest_path)
         }

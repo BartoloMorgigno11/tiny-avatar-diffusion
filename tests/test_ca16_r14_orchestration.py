@@ -6,8 +6,11 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+import torch
 
+from tiny_avatar_diffusion import ca16_r12_orchestration as r12
 from tiny_avatar_diffusion import ca16_r14_orchestration as r14
+from tiny_avatar_diffusion.tokenizer import WhitespaceTokenizer
 
 
 @pytest.fixture(scope="module")
@@ -47,6 +50,77 @@ def test_plan_has_exact_population_seed_and_batch_geometry(plan: list[dict]):
         "CV3",
         "CV4",
     }
+
+
+def test_r14_adapter_reproduces_the_legacy_generator_contract(plan: list[dict]):
+    executor = r14.R14Executor(Path("unused"), plan, {"protocol_sha256": "frozen"})
+    plan_sha = executor._plan_sha()
+    projected = r14.validate_generator_adapter(plan)
+    assert len(projected) == len(plan)
+    assert all("prompt" not in row and "seed" not in row for row in plan)
+    assert all(
+        row["prompt"] == original["caption"]
+        and row["seed"] == original["generation_seed"]
+        and row["sample_id"] == original["sample_id"]
+        for original, row in zip(plan, projected, strict=True)
+    )
+    _plan, checkpoints = r14.resolve_inputs(r14.load_protocol())
+    assert len(checkpoints) == 6
+    assert all(len(r14.adapt_plan_for_r12_generator(plan)) == 1000 for _ in checkpoints)
+    assert executor._plan_sha() == plan_sha
+
+
+def test_legacy_raw_r14_rows_reproduce_missing_prompt_before_adapter(
+    plan: list[dict],
+):
+    generator = r12.BatchedPlanGenerator(
+        plan=plan[:8],
+        text_encoder=object(),
+        denoiser=object(),
+        tokenizer=SimpleNamespace(encode=lambda _prompt: None),
+        device=torch.device("cpu"),
+    )
+    with pytest.raises(KeyError, match="prompt"):
+        generator._generate_group(0)
+
+
+def test_adapted_first_group_tokenizes_and_samples_without_ddpm(
+    monkeypatch: pytest.MonkeyPatch, plan: list[dict]
+):
+    projected = r14.validate_generator_adapter(plan)[:8]
+    vocab = r14._read_json(r14.ROOT / "data/processed/dr01_v1/text/10k/vocab.json")
+    tokenizer = WhitespaceTokenizer(vocab["token_to_id"])
+    captured: dict[str, torch.Tensor] = {}
+
+    def fake_sample(_schedule, _encoder, _denoiser, ids, masks, **_kwargs):
+        captured["ids"], captured["masks"] = ids.cpu(), masks.cpu()
+        return torch.zeros((8, 3, 32, 32), dtype=torch.float32)
+
+    monkeypatch.setattr(r12, "conditional_sample", fake_sample)
+    generator = r12.BatchedPlanGenerator(
+        plan=projected,
+        text_encoder=object(),
+        denoiser=object(),
+        tokenizer=tokenizer,
+        device=torch.device("cpu"),
+    )
+    generator._generate_group(0)
+    assert set(generator.cache) == {row["sample_id"] for row in projected}
+    assert captured["ids"].tolist() == [row["token_ids"] for row in projected]
+    assert captured["masks"].tolist() == [row["attention_mask"] for row in projected]
+
+
+def test_generator_adapter_rejects_missing_or_incompatible_prompt_fields(
+    plan: list[dict],
+):
+    missing_caption = [dict(plan[0])]
+    missing_caption[0].pop("caption")
+    with pytest.raises(ValueError, match="generator schema"):
+        r14.adapt_plan_for_r12_generator(missing_caption)
+    incompatible_tokens = [dict(plan[0])]
+    incompatible_tokens[0]["token_ids"] = [0] * 7
+    with pytest.raises(ValueError, match="conditioning mismatch"):
+        r14.validate_generator_adapter(incompatible_tokens)
 
 
 def test_pairs_are_ten_per_prompt_and_two_thousand_total(plan: list[dict]):
