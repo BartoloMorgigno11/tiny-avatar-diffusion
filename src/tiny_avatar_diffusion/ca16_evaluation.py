@@ -41,13 +41,31 @@ from tiny_avatar_diffusion.semantic_mapping import (
 from tiny_avatar_diffusion.text_conditioning import TextConditioningEncoder
 from tiny_avatar_diffusion.unet import ConditionalTinyUNet
 
-SELECTION_MANIFEST = ROOT / "data" / "processed" / "ca16_eval_v1" / "checkpoint_selection_manifest.json"
-ROBUST_MANIFEST = ROOT / "data" / "processed" / "ca16_eval_v1" / "robust_conditioning_manifest.json"
-QUALITY_MANIFEST = ROOT / "data" / "processed" / "ca16_eval_v1" / "quality_guardrail_manifest.json"
-EVALUATOR_FREEZE = ROOT / "data" / "processed" / "dr04_evaluator_v1" / "evaluator_checkpoint_freeze.json"
-SELECTION_MANIFEST_SHA256 = "192191235af7992b8c332019b7e948414ba0b87c5f8df8d70f044b74e85e3d40"
-ROBUST_MANIFEST_SHA256 = "e3319f65f67c19ae8b458f7450ff8e6b86e5913e0fd542e9c0c3009802451aec"
-QUALITY_MANIFEST_SHA256 = "e34db5251d8949a5fb37a905f6e9e4791602047f3153a9a9908d14d9cd85e84f"
+SELECTION_MANIFEST = (
+    ROOT / "data" / "processed" / "ca16_eval_v1" / "checkpoint_selection_manifest.json"
+)
+ROBUST_MANIFEST = (
+    ROOT / "data" / "processed" / "ca16_eval_v1" / "robust_conditioning_manifest.json"
+)
+QUALITY_MANIFEST = (
+    ROOT / "data" / "processed" / "ca16_eval_v1" / "quality_guardrail_manifest.json"
+)
+EVALUATOR_FREEZE = (
+    ROOT
+    / "data"
+    / "processed"
+    / "dr04_evaluator_v1"
+    / "evaluator_checkpoint_freeze.json"
+)
+SELECTION_MANIFEST_SHA256 = (
+    "192191235af7992b8c332019b7e948414ba0b87c5f8df8d70f044b74e85e3d40"
+)
+ROBUST_MANIFEST_SHA256 = (
+    "e3319f65f67c19ae8b458f7450ff8e6b86e5913e0fd542e9c0c3009802451aec"
+)
+QUALITY_MANIFEST_SHA256 = (
+    "e34db5251d8949a5fb37a905f6e9e4791602047f3153a9a9908d14d9cd85e84f"
+)
 CANDIDATE_MILESTONES = (5_000, 10_000, 15_000, 20_000)
 ALLOWED_ROLES = frozenset(("ID_VAL", "COMP_VAL"))
 DENIED_ROLES = frozenset(("TRAIN", "ID_TEST", "FINAL_OOD"))
@@ -55,9 +73,15 @@ ATTRIBUTES = ("face_shape", "glasses", "hair_color", "face_color")
 FAMILIES = ("CV1", "CV2", "CV3", "CV4")
 EXPECTED_SELECTION_FAMILY_COUNTS = {"CV1": 40, "CV2": 114, "CV3": 27, "CV4": 56}
 AMBIGUOUS_COMP_IMAGE_ID = "cs10387983567686797037"
-EVALUATOR_FREEZE_SHA256 = "85b0cef08bb5a298442d7d863c4f76b114ecf023335d312f319c6feef168f13f"
-EVALUATOR_CHECKPOINT_RELATIVE = "results/runs/dr04_evaluator_main_100k_seed2026_r1/best.pt"
-EVALUATOR_CHECKPOINT_SHA256 = "3f97b8763dc8caa1148ff9434224cac619507f6a377b32bc742cd5fae204c50f"
+EVALUATOR_FREEZE_SHA256 = (
+    "85b0cef08bb5a298442d7d863c4f76b114ecf023335d312f319c6feef168f13f"
+)
+EVALUATOR_CHECKPOINT_RELATIVE = (
+    "results/runs/dr04_evaluator_main_100k_seed2026_r1/best.pt"
+)
+EVALUATOR_CHECKPOINT_SHA256 = (
+    "3f97b8763dc8caa1148ff9434224cac619507f6a377b32bc742cd5fae204c50f"
+)
 FROZEN_GENERATION = {
     "timesteps": 1_000,
     "pixel_space_ddpm": True,
@@ -87,7 +111,9 @@ def _canonical_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, default=lambda item: asdict(item))
 
 
-def _validate_records(records: Iterable[Mapping[str, Any]], *, source: str) -> tuple[dict[str, Any], ...]:
+def _validate_records(
+    records: Iterable[Mapping[str, Any]], *, source: str
+) -> tuple[dict[str, Any], ...]:
     materialized = tuple(dict(record) for record in records)
     for record in materialized:
         role = record.get("split_role")
@@ -107,37 +133,56 @@ def _record_seed(record: Mapping[str, Any], *, index: int, role: str) -> int:
     if not isinstance(seed, int):
         raise TypeError("COMP selection record lacks its frozen generation_seed")
     if seed != 2026 + index:
-        raise ValueError("COMP selection seed is not the frozen canonical 2026+i mapping")
+        raise ValueError(
+            "COMP selection seed is not the frozen canonical 2026+i mapping"
+        )
     return seed
 
 
 def _validate_hash(path: Path, expected: str) -> None:
     actual = sha256_file(path)
     if actual != expected:
-        raise ValueError(f"frozen manifest hash mismatch: expected {expected}, got {actual}")
+        raise ValueError(
+            f"frozen manifest hash mismatch: expected {expected}, got {actual}"
+        )
 
 
-def load_checkpoint_selection_manifest(path: Path = SELECTION_MANIFEST) -> dict[str, Any]:
+def load_checkpoint_selection_manifest(
+    path: Path = SELECTION_MANIFEST,
+) -> dict[str, Any]:
     """Load and validate the immutable checkpoint-selection panel."""
     if path.resolve() != SELECTION_MANIFEST.resolve():
-        raise ValueError("checkpoint selection requires the frozen R2 selection manifest")
+        raise ValueError(
+            "checkpoint selection requires the frozen R2 selection manifest"
+        )
     _validate_hash(path, SELECTION_MANIFEST_SHA256)
     manifest = _read_json(path)
-    if manifest.get("schema") != "tiny_avatar_diffusion.ca16_checkpoint_selection_manifest":
+    if (
+        manifest.get("schema")
+        != "tiny_avatar_diffusion.ca16_checkpoint_selection_manifest"
+    ):
         raise ValueError("unexpected checkpoint-selection manifest schema")
     ids = _validate_records(manifest.get("id_entries", ()), source="ID selection")
     comps = _validate_records(manifest.get("comp_entries", ()), source="COMP selection")
     if len(ids) != 256 or len(comps) != 237:
-        raise ValueError("checkpoint-selection panel must contain 256 ID and 237 COMP records")
-    ids = [{**record, "generation_seed": _record_seed(record, index=i, role="ID_VAL")}
-           for i, record in enumerate(ids)]
-    comps = [{**record, "generation_seed": _record_seed(record, index=i, role="COMP_VAL")}
-             for i, record in enumerate(comps)]
+        raise ValueError(
+            "checkpoint-selection panel must contain 256 ID and 237 COMP records"
+        )
+    ids = [
+        {**record, "generation_seed": _record_seed(record, index=i, role="ID_VAL")}
+        for i, record in enumerate(ids)
+    ]
+    comps = [
+        {**record, "generation_seed": _record_seed(record, index=i, role="COMP_VAL")}
+        for i, record in enumerate(comps)
+    ]
     family_counts: dict[str, int] = {family: 0 for family in FAMILIES}
     for record in comps:
         families = record.get("comp_families", ())
         if len(families) != 1 or families[0] not in FAMILIES:
-            raise ValueError("each COMP selection record must have exactly one known family")
+            raise ValueError(
+                "each COMP selection record must have exactly one known family"
+            )
         family_counts[families[0]] += 1
     if family_counts != EXPECTED_SELECTION_FAMILY_COUNTS:
         raise ValueError(f"unexpected COMP selection family counts: {family_counts}")
@@ -158,17 +203,30 @@ def load_robust_conditioning_manifest(path: Path = ROBUST_MANIFEST) -> dict[str,
         raise ValueError("robust evaluation requires the frozen R2 robust manifest")
     _validate_hash(path, ROBUST_MANIFEST_SHA256)
     manifest = _read_json(path)
-    if manifest.get("schema") != "tiny_avatar_diffusion.ca16_robust_conditioning_manifest":
+    if (
+        manifest.get("schema")
+        != "tiny_avatar_diffusion.ca16_robust_conditioning_manifest"
+    ):
         raise ValueError("unexpected robust-conditioning manifest schema")
-    entries = _validate_records(manifest.get("entries", ()), source="robust conditioning")
+    entries = _validate_records(
+        manifest.get("entries", ()), source="robust conditioning"
+    )
     if len(entries) != 200:
         raise ValueError("robust-conditioning panel must contain 200 prompts")
     if sum(record.get("panel") == "robust_id" for record in entries) != 100:
         raise ValueError("robust ID panel must contain 100 prompts")
     comp = [record for record in entries if record.get("panel") == "robust_comp"]
-    if len(comp) != 100 or any(len(record.get("generation_seeds", ())) != 5 for record in entries):
+    if len(comp) != 100 or any(
+        len(record.get("generation_seeds", ())) != 5 for record in entries
+    ):
         raise ValueError("robust panel must contain five seeds per prompt")
-    if {seed for record in entries for seed in record["generation_seeds"]} != {2026, 2027, 2028, 2029, 2030}:
+    if {seed for record in entries for seed in record["generation_seeds"]} != {
+        2026,
+        2027,
+        2028,
+        2029,
+        2030,
+    }:
         raise ValueError("robust panel uses unexpected generation seeds")
     counts = {
         family: sum(record.get("comp_family") == family for record in comp)
@@ -181,7 +239,9 @@ def load_robust_conditioning_manifest(path: Path = ROBUST_MANIFEST) -> dict[str,
 
 def _reject_non_selection_manifest(path: Path) -> None:
     if path.resolve() in {ROBUST_MANIFEST.resolve(), QUALITY_MANIFEST.resolve()}:
-        raise ValueError("robust and quality manifests cannot be checkpoint-selection inputs")
+        raise ValueError(
+            "robust and quality manifests cannot be checkpoint-selection inputs"
+        )
 
 
 def build_robust_conditioning_plan() -> dict[str, Any]:
@@ -236,9 +296,17 @@ class SampleIdentity:
 
     def as_key(self) -> str:
         return "|".join(
-            (self.experiment_id, self.run_id, self.architecture_arm, str(self.training_seed),
-             str(self.milestone_step), self.split_role, self.record_id,
-             str(self.generation_seed), self.weight_set)
+            (
+                self.experiment_id,
+                self.run_id,
+                self.architecture_arm,
+                str(self.training_seed),
+                str(self.milestone_step),
+                self.split_role,
+                self.record_id,
+                str(self.generation_seed),
+                self.weight_set,
+            )
         )
 
 
@@ -296,17 +364,25 @@ def validate_selection_artifacts(
     spec: CA16RunSpec,
     milestone_step: int,
 ) -> tuple[SampleArtifact, ...]:
-    id_artifacts = [artifact for artifact in artifacts if artifact.identity.split_role == "ID_VAL"]
-    comp_artifacts = [artifact for artifact in artifacts if artifact.identity.split_role == "COMP_VAL"]
+    id_artifacts = [
+        artifact for artifact in artifacts if artifact.identity.split_role == "ID_VAL"
+    ]
+    comp_artifacts = [
+        artifact for artifact in artifacts if artifact.identity.split_role == "COMP_VAL"
+    ]
     if len(id_artifacts) + len(comp_artifacts) != len(artifacts):
         raise ValueError("selection artifacts contain a forbidden split role")
     return (
         *validate_sample_artifacts(id_artifacts, spec, milestone_step, role="ID_VAL"),
-        *validate_sample_artifacts(comp_artifacts, spec, milestone_step, role="COMP_VAL"),
+        *validate_sample_artifacts(
+            comp_artifacts, spec, milestone_step, role="COMP_VAL"
+        ),
     )
 
 
-def load_evaluator_sample(path: Path, *, device: torch.device | str = "cpu") -> torch.Tensor:
+def load_evaluator_sample(
+    path: Path, *, device: torch.device | str = "cpu"
+) -> torch.Tensor:
     """Read one generated image using the frozen V1 evaluator preprocessing."""
     with Image.open(path) as image:
         return preprocess(image).to(device)
@@ -355,10 +431,16 @@ class SelectionResult:
     measured: bool = True
 
     def as_dict(self) -> dict[str, Any]:
-        return json.loads(json.dumps({
-            "schema": "tiny_avatar_diffusion.ca16_selection_result_v1",
-            **self.__dict__,
-        }, sort_keys=True, default=list))
+        return json.loads(
+            json.dumps(
+                {
+                    "schema": "tiny_avatar_diffusion.ca16_selection_result_v1",
+                    **self.__dict__,
+                },
+                sort_keys=True,
+                default=list,
+            )
+        )
 
 
 def validate_candidate_milestones(candidates: Iterable[SelectionCandidate]) -> None:
@@ -366,11 +448,15 @@ def validate_candidate_milestones(candidates: Iterable[SelectionCandidate]) -> N
     steps = [candidate.milestone_step for candidate in candidates]
     if len(steps) != len(set(steps)):
         raise ValueError("candidate milestones contain duplicates")
-    if set(steps) != set(CANDIDATE_MILESTONES) or len(steps) != len(CANDIDATE_MILESTONES):
+    if set(steps) != set(CANDIDATE_MILESTONES) or len(steps) != len(
+        CANDIDATE_MILESTONES
+    ):
         raise ValueError(f"candidate set must contain exactly {CANDIDATE_MILESTONES}")
 
 
-def _candidate_key(candidate: SelectionCandidate) -> tuple[float, float, float, float, int]:
+def _candidate_key(
+    candidate: SelectionCandidate,
+) -> tuple[float, float, float, float, int]:
     """Return descending adherence/KID and ascending milestone ranking values."""
     kid = float("inf") if candidate.comp_kid is None else candidate.comp_kid
     return (
@@ -382,7 +468,11 @@ def _candidate_key(candidate: SelectionCandidate) -> tuple[float, float, float, 
     )
 
 
-def rank_candidates(candidates: Sequence[SelectionCandidate], *, kid: Callable[[SelectionCandidate], float] | None = None) -> list[SelectionCandidate]:
+def rank_candidates(
+    candidates: Sequence[SelectionCandidate],
+    *,
+    kid: Callable[[SelectionCandidate], float] | None = None,
+) -> list[SelectionCandidate]:
     """Rank candidates by the frozen adherence-first hierarchy."""
     validate_candidate_milestones(candidates)
     groups: dict[tuple[float, float, float], list[SelectionCandidate]] = {}
@@ -409,7 +499,9 @@ def rank_candidates(candidates: Sequence[SelectionCandidate], *, kid: Callable[[
             if kid is None:
                 raise ValueError("KID is required to resolve a conditioning tie")
             group = [
-                candidate if candidate.comp_kid is not None else SelectionCandidate(
+                candidate
+                if candidate.comp_kid is not None
+                else SelectionCandidate(
                     **{**candidate.__dict__, "comp_kid": kid(candidate)}
                 )
                 for candidate in group
@@ -431,7 +523,9 @@ def select_final_candidate(
     return rank_candidates(candidates, kid=kid)[0]
 
 
-def attribute_metrics(records: Sequence[Mapping[str, Any]], predictions: Sequence[Mapping[str, int]]) -> dict[str, Any]:
+def attribute_metrics(
+    records: Sequence[Mapping[str, Any]], predictions: Sequence[Mapping[str, int]]
+) -> dict[str, Any]:
     """Compute frozen MAA, PSR, and per-attribute/class accuracy summaries."""
     if len(records) != len(predictions):
         raise ValueError("records and predictions must have equal length")
@@ -440,21 +534,41 @@ def attribute_metrics(records: Sequence[Mapping[str, Any]], predictions: Sequenc
     per_attribute: dict[str, float] = {}
     confusion: dict[str, dict[str, int]] = {}
     for attribute in ATTRIBUTES:
-        pairs = [(int(record["ground_truth_attributes"][attribute]), int(prediction[attribute])) for record, prediction in zip(records, predictions)]
-        per_attribute[attribute] = sum(actual == predicted for actual, predicted in pairs) / len(pairs)
+        pairs = [
+            (
+                int(record["ground_truth_attributes"][attribute]),
+                int(prediction[attribute]),
+            )
+            for record, prediction in zip(records, predictions)
+        ]
+        per_attribute[attribute] = sum(
+            actual == predicted for actual, predicted in pairs
+        ) / len(pairs)
         classes: dict[str, int] = {}
         for actual, predicted in pairs:
             key = f"{actual}->{predicted}"
             classes[key] = classes.get(key, 0) + 1
         confusion[attribute] = classes
     psr = sum(
-        all(int(record["ground_truth_attributes"][attribute]) == int(prediction[attribute]) for attribute in ATTRIBUTES)
+        all(
+            int(record["ground_truth_attributes"][attribute])
+            == int(prediction[attribute])
+            for attribute in ATTRIBUTES
+        )
         for record, prediction in zip(records, predictions)
     ) / len(records)
-    return {"maa": sum(per_attribute.values()) / len(ATTRIBUTES), "psr": psr, "per_attribute_accuracy": per_attribute, "confusion": confusion, "sample_count": len(records)}
+    return {
+        "maa": sum(per_attribute.values()) / len(ATTRIBUTES),
+        "psr": psr,
+        "per_attribute_accuracy": per_attribute,
+        "confusion": confusion,
+        "sample_count": len(records),
+    }
 
 
-def family_macro_metrics(records: Sequence[Mapping[str, Any]], predictions: Sequence[Mapping[str, int]]) -> dict[str, Any]:
+def family_macro_metrics(
+    records: Sequence[Mapping[str, Any]], predictions: Sequence[Mapping[str, int]]
+) -> dict[str, Any]:
     if len(records) != len(predictions):
         raise ValueError("records and predictions must have equal length")
     groups: dict[str, tuple[list[Mapping[str, Any]], list[Mapping[str, int]]]] = {}
@@ -463,7 +577,9 @@ def family_macro_metrics(records: Sequence[Mapping[str, Any]], predictions: Sequ
         if not families and record.get("comp_family"):
             families = (record["comp_family"],)
         if len(families) != 1:
-            raise ValueError("family-macro metrics require one unambiguous family per record")
+            raise ValueError(
+                "family-macro metrics require one unambiguous family per record"
+            )
         family = families[0]
         if family not in FAMILIES:
             raise ValueError(f"unknown COMP family: {family}")
@@ -481,7 +597,9 @@ def family_macro_metrics(records: Sequence[Mapping[str, Any]], predictions: Sequ
     }
 
 
-def stable_sample_identity(spec: CA16RunSpec, milestone_step: int, record: Mapping[str, Any]) -> SampleIdentity:
+def stable_sample_identity(
+    spec: CA16RunSpec, milestone_step: int, record: Mapping[str, Any]
+) -> SampleIdentity:
     if milestone_step not in CANDIDATE_MILESTONES:
         raise ValueError("sample identity requires a frozen candidate milestone")
     canonical = _canonical_selection_record(record)
@@ -499,13 +617,21 @@ def stable_sample_identity(spec: CA16RunSpec, milestone_step: int, record: Mappi
     )
 
 
-def load_ema_checkpoint(path: Path, spec: CA16RunSpec, milestone_step: int, *, device: torch.device | str = "cpu") -> tuple[TextConditioningEncoder, ConditionalTinyUNet, dict[str, Any]]:
+def load_ema_checkpoint(
+    path: Path,
+    spec: CA16RunSpec,
+    milestone_step: int,
+    *,
+    device: torch.device | str = "cpu",
+) -> tuple[TextConditioningEncoder, ConditionalTinyUNet, dict[str, Any]]:
     """Load only the EMA model states after validating CA16 identity."""
     if milestone_step not in CANDIDATE_MILESTONES:
         raise ValueError("checkpoint is not a frozen candidate milestone")
     checkpoint = torch.load(path, map_location=device, weights_only=False)
     if checkpoint.get("schema") != CA16_CHECKPOINT_SCHEMA:
-        raise ValueError("scientific CA16 evaluation requires the CA16 checkpoint schema")
+        raise ValueError(
+            "scientific CA16 evaluation requires the CA16 checkpoint schema"
+        )
     if checkpoint.get("progress", {}).get("step") != milestone_step:
         raise ValueError("checkpoint milestone does not match requested step")
     identity = checkpoint.get("experiment")
@@ -516,23 +642,34 @@ def load_ema_checkpoint(path: Path, spec: CA16RunSpec, milestone_step: int, *, d
         branch=identity.get("branch"),
     )
     required_identity = (
-        "experiment_id", "run_id", "architecture_arm",
-        "use_decoder16_cross_attention", "training_seed",
-        "frozen_training", "text_encoder", "manifests",
+        "experiment_id",
+        "run_id",
+        "architecture_arm",
+        "use_decoder16_cross_attention",
+        "training_seed",
+        "frozen_training",
+        "text_encoder",
+        "manifests",
     )
     if any(identity.get(key) != expected.get(key) for key in required_identity):
         raise ValueError("checkpoint CA16 identity does not match requested run spec")
     if checkpoint.get("config") != asdict(spec.main_training_config()):
-        raise ValueError("checkpoint frozen MainTrainingConfig does not match requested run")
+        raise ValueError(
+            "checkpoint frozen MainTrainingConfig does not match requested run"
+        )
     if identity.get("frozen_training") != dict(spec.frozen_protocol):
-        raise ValueError("checkpoint frozen protocol metadata does not match requested run")
+        raise ValueError(
+            "checkpoint frozen protocol metadata does not match requested run"
+        )
     if identity.get("git_commit") == "":
         raise ValueError("checkpoint CA16 identity lacks execution Git SHA")
     ema = checkpoint.get("ema_state_dict")
     if not isinstance(ema, dict) or set(ema) != {"text_encoder", "conditional_unet"}:
         raise ValueError("checkpoint lacks complete EMA state")
     text_encoder = TextConditioningEncoder().to(device)
-    denoiser = ConditionalTinyUNet(use_decoder16_cross_attention=spec.use_decoder16_cross_attention, dropout=0.0).to(device)
+    denoiser = ConditionalTinyUNet(
+        use_decoder16_cross_attention=spec.use_decoder16_cross_attention, dropout=0.0
+    ).to(device)
     text_encoder.load_state_dict(ema["text_encoder"])
     denoiser.load_state_dict(ema["conditional_unet"])
     text_encoder.eval()
@@ -545,15 +682,24 @@ def evaluator_identity(
     checkpoint_path: Path | None = None,
 ) -> dict[str, str]:
     if freeze_path.resolve() != EVALUATOR_FREEZE.resolve():
-        raise ValueError("scientific evaluation requires the canonical DR04 freeze manifest")
+        raise ValueError(
+            "scientific evaluation requires the canonical DR04 freeze manifest"
+        )
     freeze = _read_json(freeze_path)
     if freeze.get("status") != "FROZEN":
         raise ValueError("DR04 evaluator freeze is not marked FROZEN")
     if freeze.get("selected_checkpoint") != EVALUATOR_CHECKPOINT_RELATIVE:
-        raise ValueError("canonical DR04 freeze manifest selects an unexpected checkpoint")
+        raise ValueError(
+            "canonical DR04 freeze manifest selects an unexpected checkpoint"
+        )
     checkpoint = ROOT / EVALUATOR_CHECKPOINT_RELATIVE
-    if checkpoint_path is not None and checkpoint_path.resolve() != checkpoint.resolve():
-        raise ValueError("scientific evaluation requires the canonical frozen checkpoint")
+    if (
+        checkpoint_path is not None
+        and checkpoint_path.resolve() != checkpoint.resolve()
+    ):
+        raise ValueError(
+            "scientific evaluation requires the canonical frozen checkpoint"
+        )
     if not checkpoint.is_file():
         raise FileNotFoundError(
             "frozen DR04 evaluator checkpoint is unavailable: "
@@ -581,27 +727,40 @@ def evaluator_identity(
 
 def _validate_measured_evaluator_identity(evaluator: Mapping[str, str]) -> None:
     required = {
-        "architecture", "preprocessing", "checkpoint", "checkpoint_sha256",
-        "freeze_manifest_path", "freeze_manifest_sha256", "attribute_order",
-        "class_counts", "semantic_mapping",
+        "architecture",
+        "preprocessing",
+        "checkpoint",
+        "checkpoint_sha256",
+        "freeze_manifest_path",
+        "freeze_manifest_sha256",
+        "attribute_order",
+        "class_counts",
+        "semantic_mapping",
     }
     if set(evaluator) != required:
         raise ValueError("measured result evaluator identity is incomplete")
     if Path(evaluator["freeze_manifest_path"]).resolve() != EVALUATOR_FREEZE.resolve():
-        raise ValueError("measured result evaluator must use the canonical freeze manifest")
+        raise ValueError(
+            "measured result evaluator must use the canonical freeze manifest"
+        )
     if evaluator["freeze_manifest_sha256"] != EVALUATOR_FREEZE_SHA256:
         raise ValueError("measured result evaluator freeze hash is not canonical")
     if evaluator["checkpoint"] != EVALUATOR_CHECKPOINT_RELATIVE:
         raise ValueError("measured result evaluator checkpoint path is not canonical")
     if evaluator["checkpoint_sha256"] != EVALUATOR_CHECKPOINT_SHA256:
         raise ValueError("measured result evaluator checkpoint hash is not canonical")
-    if evaluator["architecture"] != ARCHITECTURE_ID or evaluator["preprocessing"] != PREPROCESSING_ID:
+    if (
+        evaluator["architecture"] != ARCHITECTURE_ID
+        or evaluator["preprocessing"] != PREPROCESSING_ID
+    ):
         raise ValueError("measured result evaluator architecture is not canonical")
     if json.loads(evaluator["attribute_order"]) != list(CANONICAL_ATTRIBUTE_ORDER):
         raise ValueError("measured result evaluator attribute order is not canonical")
     if json.loads(evaluator["class_counts"]) != CLASS_COUNTS:
         raise ValueError("measured result evaluator class mapping is not canonical")
-    if json.loads(evaluator["semantic_mapping"]) != json.loads(_canonical_json(SEMANTIC_MAPPING)):
+    if json.loads(evaluator["semantic_mapping"]) != json.loads(
+        _canonical_json(SEMANTIC_MAPPING)
+    ):
         raise ValueError("measured result evaluator semantic mapping is not canonical")
 
 
@@ -635,7 +794,11 @@ def _validate_ranking_metadata(
     candidate: SelectionCandidate,
 ) -> None:
     expected_order = [
-        "comp_family_macro_maa", "comp_macro_psr", "id_maa", "comp_kid", "milestone_step"
+        "comp_family_macro_maa",
+        "comp_macro_psr",
+        "id_maa",
+        "comp_kid",
+        "milestone_step",
     ]
     if ranking.get("criteria_order") != expected_order:
         raise ValueError("ranking criteria order is not frozen")
@@ -643,7 +806,9 @@ def _validate_ranking_metadata(
     if not isinstance(rows, Sequence) or len(rows) != len(CANDIDATE_MILESTONES):
         raise ValueError("ranking must contain all four candidate milestones")
     milestones = [row.get("milestone_step") for row in rows if isinstance(row, Mapping)]
-    if len(milestones) != len(set(milestones)) or set(milestones) != set(CANDIDATE_MILESTONES):
+    if len(milestones) != len(set(milestones)) or set(milestones) != set(
+        CANDIDATE_MILESTONES
+    ):
         raise ValueError("ranking candidate milestones are incomplete or duplicated")
     if ranking.get("selected_milestone") != candidate.milestone_step:
         raise ValueError("ranking selected milestone disagrees with result")
@@ -652,7 +817,9 @@ def _validate_ranking_metadata(
             raise ValueError("ranking contains an unsupported criterion")
         if row.get("kid_status") not in {"NOT_REQUIRED", "COMPUTED"}:
             raise ValueError("ranking KID status is invalid")
-        if row["kid_status"] == "COMPUTED" and not isinstance(row.get("comp_kid"), (int, float)):
+        if row["kid_status"] == "COMPUTED" and not isinstance(
+            row.get("comp_kid"), (int, float)
+        ):
             raise ValueError("ranking computed KID value is missing")
         if row["kid_status"] == "NOT_REQUIRED" and row.get("comp_kid") is not None:
             raise ValueError("ranking NOT_REQUIRED KID has a value")
@@ -663,18 +830,49 @@ def load_frozen_evaluator(
     device: torch.device | str = "cpu",
     freeze_path: Path = EVALUATOR_FREEZE,
     checkpoint_path: Path | None = None,
+    asset_root: Path | None = None,
 ) -> tuple[AttributeEvaluator, dict[str, str]]:
     """Load the frozen real-only evaluator, failing closed if unavailable."""
-    if freeze_path.resolve() != EVALUATOR_FREEZE.resolve():
-        raise ValueError("scientific evaluation requires the canonical DR04 freeze manifest")
-    _validate_hash(EVALUATOR_FREEZE, EVALUATOR_FREEZE_SHA256)
-    freeze = _read_json(EVALUATOR_FREEZE)
+    if asset_root is None and freeze_path.resolve() != EVALUATOR_FREEZE.resolve():
+        raise ValueError(
+            "scientific evaluation requires the canonical DR04 freeze manifest"
+        )
+    if asset_root is not None:
+        asset_root = asset_root.resolve()
+        expected_freeze = (
+            asset_root
+            / "data/processed/dr04_evaluator_v1/evaluator_checkpoint_freeze.json"
+        ).resolve()
+        expected_checkpoint = (asset_root / EVALUATOR_CHECKPOINT_RELATIVE).resolve()
+        if freeze_path.resolve() != expected_freeze or (
+            checkpoint_path is not None
+            and checkpoint_path.resolve() != expected_checkpoint
+        ):
+            raise ValueError("external evaluator paths must be canonical CA16 assets")
+    else:
+        expected_freeze = EVALUATOR_FREEZE
+        expected_checkpoint = ROOT / EVALUATOR_CHECKPOINT_RELATIVE
+    _validate_hash(expected_freeze, EVALUATOR_FREEZE_SHA256)
+    freeze = _read_json(expected_freeze)
     if freeze.get("parameter_count") != 293064:
         raise ValueError("canonical DR04 freeze manifest parameter count is not 293064")
     if freeze.get("selected_epoch") != 41:
         raise ValueError("canonical DR04 freeze manifest selected epoch is not 41")
-    path = ROOT / EVALUATOR_CHECKPOINT_RELATIVE if checkpoint_path is None else checkpoint_path
-    identity = evaluator_identity(EVALUATOR_FREEZE, path)
+    path = expected_checkpoint if checkpoint_path is None else checkpoint_path
+    if not path.is_file() or sha256_file(path) != EVALUATOR_CHECKPOINT_SHA256:
+        raise ValueError("frozen evaluator checkpoint hash mismatch")
+    identity = {
+        "architecture": ARCHITECTURE_ID,
+        "preprocessing": PREPROCESSING_ID,
+        "run_id": str(freeze["run_id"]),
+        "checkpoint": EVALUATOR_CHECKPOINT_RELATIVE,
+        "checkpoint_sha256": EVALUATOR_CHECKPOINT_SHA256,
+        "freeze_manifest_path": str(expected_freeze),
+        "freeze_manifest_sha256": EVALUATOR_FREEZE_SHA256,
+        "attribute_order": json.dumps(CANONICAL_ATTRIBUTE_ORDER),
+        "class_counts": json.dumps(CLASS_COUNTS, sort_keys=True),
+        "semantic_mapping": _canonical_json(SEMANTIC_MAPPING),
+    }
     if not path.is_file():
         raise FileNotFoundError(f"frozen evaluator checkpoint is unavailable: {path}")
     if sha256_file(path) != EVALUATOR_CHECKPOINT_SHA256:
@@ -686,27 +884,40 @@ def load_frozen_evaluator(
     if not isinstance(payload, dict) or "model_state_dict" not in payload:
         raise ValueError("frozen evaluator checkpoint has an unexpected schema")
     if payload.get("best_epoch") != freeze["selected_epoch"]:
-        raise ValueError("frozen evaluator checkpoint best epoch disagrees with freeze manifest")
-    if "completed_epoch" in payload and payload["completed_epoch"] != freeze["selected_epoch"]:
-        raise ValueError("frozen evaluator checkpoint completed epoch disagrees with freeze manifest")
+        raise ValueError(
+            "frozen evaluator checkpoint best epoch disagrees with freeze manifest"
+        )
+    if (
+        "completed_epoch" in payload
+        and payload["completed_epoch"] != freeze["selected_epoch"]
+    ):
+        raise ValueError(
+            "frozen evaluator checkpoint completed epoch disagrees with freeze manifest"
+        )
     evaluator = AttributeEvaluator().to(device)
     parameter_count = sum(parameter.numel() for parameter in evaluator.parameters())
     if parameter_count != freeze["parameter_count"]:
-        raise ValueError("instantiated evaluator parameter count disagrees with freeze manifest")
+        raise ValueError(
+            "instantiated evaluator parameter count disagrees with freeze manifest"
+        )
     evaluator.load_state_dict(payload["model_state_dict"])
     evaluator.eval()
     return evaluator, identity
 
 
-def predict_attributes(evaluator: AttributeEvaluator, samples: torch.Tensor) -> list[dict[str, int]]:
+def predict_attributes(
+    evaluator: AttributeEvaluator, samples: torch.Tensor
+) -> list[dict[str, int]]:
     """Run frozen evaluator inference only; never trains or generates."""
     if samples.ndim != 4 or samples.shape[1:] != (3, 32, 32):
         raise ValueError("samples must have shape [B, 3, 32, 32]")
     with torch.inference_mode():
         logits = evaluator(samples)
     return [
-        {attribute: int(logits[attribute][index].argmax().item())
-         for attribute in CANONICAL_ATTRIBUTE_ORDER}
+        {
+            attribute: int(logits[attribute][index].argmax().item())
+            for attribute in CANONICAL_ATTRIBUTE_ORDER
+        }
         for index in range(samples.shape[0])
     ]
 
@@ -734,7 +945,9 @@ def evaluate_generated_samples(
     milestone_step: int,
 ) -> tuple[dict[str, Any], tuple[SampleArtifact, ...]]:
     if len(records) != len(identities) or len(records) != len(artifact_paths):
-        raise ValueError("records, identities, and artifact_paths must have equal length")
+        raise ValueError(
+            "records, identities, and artifact_paths must have equal length"
+        )
     if len(samples) != len(records):
         raise ValueError("records and samples must have equal length")
     predictions = predict_attributes(evaluator, samples)
@@ -746,12 +959,14 @@ def evaluate_generated_samples(
             ground_truth=dict(record["ground_truth_attributes"]),
             predictions=prediction,
             correctness={
-                attribute: int(record["ground_truth_attributes"][attribute]) == prediction[attribute]
+                attribute: int(record["ground_truth_attributes"][attribute])
+                == prediction[attribute]
                 for attribute in ATTRIBUTES
             },
         )
-        for record, identity, artifact_path, prediction
-        in zip(records, identities, artifact_paths, predictions)
+        for record, identity, artifact_path, prediction in zip(
+            records, identities, artifact_paths, predictions
+        )
     )
     validate_sample_artifacts(
         artifacts,
@@ -762,11 +977,20 @@ def evaluate_generated_samples(
     return metrics, artifacts
 
 
-def build_generation_plan(manifest: Mapping[str, Any], spec: CA16RunSpec, milestone_step: int) -> dict[str, Any]:
-    if manifest.get("schema") != "tiny_avatar_diffusion.ca16_checkpoint_selection_manifest":
-        raise ValueError("generation plans for checkpoint selection require the selection manifest")
+def build_generation_plan(
+    manifest: Mapping[str, Any], spec: CA16RunSpec, milestone_step: int
+) -> dict[str, Any]:
+    if (
+        manifest.get("schema")
+        != "tiny_avatar_diffusion.ca16_checkpoint_selection_manifest"
+    ):
+        raise ValueError(
+            "generation plans for checkpoint selection require the selection manifest"
+        )
     _reject_non_selection_manifest(Path(str(manifest.get("_path", SELECTION_MANIFEST))))
-    records = list(manifest.get("id_entries", ())) + list(manifest.get("comp_entries", ()))
+    records = list(manifest.get("id_entries", ())) + list(
+        manifest.get("comp_entries", ())
+    )
     return {
         "kind": "dry_run_generation_plan",
         "measured": False,
@@ -774,7 +998,10 @@ def build_generation_plan(manifest: Mapping[str, Any], spec: CA16RunSpec, milest
         "milestone_step": milestone_step,
         "weight_set": "EMA",
         "generation": dict(FROZEN_GENERATION),
-        "records": [stable_sample_identity(spec, milestone_step, record).as_key() for record in records],
+        "records": [
+            stable_sample_identity(spec, milestone_step, record).as_key()
+            for record in records
+        ],
     }
 
 
@@ -796,9 +1023,18 @@ def sample_ema_record(
     record: Mapping[str, Any],
     *,
     device: torch.device,
+    canonical_record: Mapping[str, Any] | None = None,
 ) -> torch.Tensor:
     """Generate one deterministic sample using an explicit per-record generator."""
-    canonical = _canonical_selection_record(record)
+    canonical = (
+        dict(canonical_record)
+        if canonical_record is not None
+        else _canonical_selection_record(record)
+    )
+    if canonical.get("stable_record_key") != record.get(
+        "stable_record_key"
+    ) or canonical.get("split_role") != record.get("split_role"):
+        raise ValueError("explicit canonical record does not bind the sampled prompt")
     token_ids = record.get("token_ids")
     attention_mask = record.get("attention_mask")
     if (
@@ -810,13 +1046,25 @@ def sample_ema_record(
     if (
         not isinstance(attention_mask, list)
         or len(attention_mask) != len(token_ids)
-        or any(type(value) is not int or value not in (0, 1) for value in attention_mask)
+        or any(
+            type(value) is not int or value not in (0, 1) for value in attention_mask
+        )
     ):
         raise ValueError("hydrated record has invalid attention_mask")
-    generator = torch.Generator(device=device).manual_seed(int(canonical["generation_seed"]))
+    generator = torch.Generator(device=device).manual_seed(
+        int(canonical["generation_seed"])
+    )
     input_ids = torch.tensor([token_ids], device=device)
     mask = torch.tensor([attention_mask], device=device)
-    return conditional_sample(schedule, text_encoder, denoiser, input_ids, mask, generator=generator, clip_denoised=True)[0]
+    return conditional_sample(
+        schedule,
+        text_encoder,
+        denoiser,
+        input_ids,
+        mask,
+        generator=generator,
+        clip_denoised=True,
+    )[0]
 
 
 def sample_ema_records_batch(
@@ -845,7 +1093,10 @@ def sample_ema_records_batch(
         if (
             not isinstance(attention_mask, list)
             or len(attention_mask) != len(token_ids)
-            or any(type(value) is not int or value not in (0, 1) for value in attention_mask)
+            or any(
+                type(value) is not int or value not in (0, 1)
+                for value in attention_mask
+            )
         ):
             raise ValueError("hydrated record has invalid attention_mask")
         token_rows.append(token_ids)
@@ -901,7 +1152,11 @@ def compute_comp_kid_from_artifacts(
         raise ValueError("KID requires the candidate run spec and milestone")
     comp_artifacts = list(
         validate_sample_artifacts(
-            [artifact for artifact in artifacts if artifact.identity.split_role == "COMP_VAL"],
+            [
+                artifact
+                for artifact in artifacts
+                if artifact.identity.split_role == "COMP_VAL"
+            ],
             spec,
             milestone_step,
             role="COMP_VAL",
@@ -912,14 +1167,30 @@ def compute_comp_kid_from_artifacts(
     if not comp_artifacts:
         raise ValueError("KID tie-break requires at least one generated sample")
     identities = {artifact.identity for artifact in comp_artifacts}
-    if len({(identity.run_id, identity.architecture_arm, identity.training_seed, identity.milestone_step)
-            for identity in identities}) != 1:
+    if (
+        len(
+            {
+                (
+                    identity.run_id,
+                    identity.architecture_arm,
+                    identity.training_seed,
+                    identity.milestone_step,
+                )
+                for identity in identities
+            }
+        )
+        != 1
+    ):
         raise ValueError("KID tie-break artifacts must belong to one candidate")
     if len({identity.record_id for identity in identities}) != len(identities):
         raise ValueError("KID tie-break artifacts contain duplicate sample identities")
-    generated_paths = {Path(artifact.artifact_path).resolve() for artifact in comp_artifacts}
+    generated_paths = {
+        Path(artifact.artifact_path).resolve() for artifact in comp_artifacts
+    }
     if any(not path.is_file() for path in generated_paths):
-        raise FileNotFoundError("KID input contains a missing generated sample artifact")
+        raise FileNotFoundError(
+            "KID input contains a missing generated sample artifact"
+        )
     generated_directories = {path.parent for path in generated_paths}
     if len(generated_directories) != 1:
         raise ValueError("KID artifacts must be stored in one canonical directory")
@@ -951,12 +1222,22 @@ def compute_comp_kid_from_artifacts(
         mode="clean", device=device, use_dataparallel=False
     )
     real_features = fid.get_folder_features(
-        str(real_directory), model=model, num_workers=0, batch_size=batch_size,
-        device=device, mode="clean", verbose=False,
+        str(real_directory),
+        model=model,
+        num_workers=0,
+        batch_size=batch_size,
+        device=device,
+        mode="clean",
+        verbose=False,
     )
     generated_features = fid.get_folder_features(
-        str(generated_directory), model=model, num_workers=0, batch_size=batch_size,
-        device=device, mode="clean", verbose=False,
+        str(generated_directory),
+        model=model,
+        num_workers=0,
+        batch_size=batch_size,
+        device=device,
+        mode="clean",
+        verbose=False,
     )
     caller_state = np.random.get_state()
     try:
@@ -1006,10 +1287,18 @@ def build_measured_selection_result(
         execution_git_sha=str(identity["git_commit"]),
         branch=str(identity["branch"]),
     )
-    if any(identity.get(key) != expected_identity.get(key) for key in (
-        "experiment_id", "run_id", "architecture_arm",
-        "use_decoder16_cross_attention", "training_seed", "frozen_training", "manifests",
-    )):
+    if any(
+        identity.get(key) != expected_identity.get(key)
+        for key in (
+            "experiment_id",
+            "run_id",
+            "architecture_arm",
+            "use_decoder16_cross_attention",
+            "training_seed",
+            "frozen_training",
+            "manifests",
+        )
+    ):
         raise ValueError("measured result checkpoint identity does not match run spec")
     checkpoint_path = checkpoint.get("path", checkpoint.get("checkpoint_path"))
     checkpoint_sha256 = checkpoint.get("sha256", checkpoint.get("checkpoint_sha256"))
@@ -1017,16 +1306,25 @@ def build_measured_selection_result(
         raise TypeError("measured result checkpoint path/hash are required")
     checkpoint_file = Path(checkpoint_path)
     if not checkpoint_file.is_file():
-        raise FileNotFoundError(f"measured result checkpoint is missing: {checkpoint_file}")
+        raise FileNotFoundError(
+            f"measured result checkpoint is missing: {checkpoint_file}"
+        )
     if sha256_file(checkpoint_file) != checkpoint_sha256:
         raise ValueError("measured result checkpoint hash does not match file")
     if (
         candidate.checkpoint_path is not None
         and Path(candidate.checkpoint_path).resolve() != checkpoint_file.resolve()
     ):
-        raise ValueError("candidate checkpoint path disagrees with checkpoint provenance")
-    if candidate.checkpoint_sha256 is not None and candidate.checkpoint_sha256 != checkpoint_sha256:
-        raise ValueError("candidate checkpoint hash disagrees with checkpoint provenance")
+        raise ValueError(
+            "candidate checkpoint path disagrees with checkpoint provenance"
+        )
+    if (
+        candidate.checkpoint_sha256 is not None
+        and candidate.checkpoint_sha256 != checkpoint_sha256
+    ):
+        raise ValueError(
+            "candidate checkpoint hash disagrees with checkpoint provenance"
+        )
     if checkpoint.get("progress", {}).get("step") != candidate.milestone_step:
         raise ValueError("measured result checkpoint milestone is inconsistent")
     if checkpoint.get("ema_state_dict") is None:
@@ -1034,16 +1332,27 @@ def build_measured_selection_result(
     _validate_measured_evaluator_identity(evaluator)
     if not artifacts:
         raise ValueError("measured result requires per-record sample artifacts")
-    validated_artifacts = validate_selection_artifacts(artifacts, spec, candidate.milestone_step)
+    validated_artifacts = validate_selection_artifacts(
+        artifacts, spec, candidate.milestone_step
+    )
     if sum(item.identity.split_role == "ID_VAL" for item in validated_artifacts) != 256:
         raise ValueError("measured result requires 256 ID references")
-    if sum(item.identity.split_role == "COMP_VAL" for item in validated_artifacts) != 237:
+    if (
+        sum(item.identity.split_role == "COMP_VAL" for item in validated_artifacts)
+        != 237
+    ):
         raise ValueError("measured result requires 237 COMP references")
     _validate_conditioning_metrics(conditioning)
     if (
-        set(FROZEN_GENERATION) != {
-            "timesteps", "pixel_space_ddpm", "clip_denoised",
-            "cfg", "conditioning_dropout", "sampler", "weight_set",
+        set(FROZEN_GENERATION)
+        != {
+            "timesteps",
+            "pixel_space_ddpm",
+            "clip_denoised",
+            "cfg",
+            "conditioning_dropout",
+            "sampler",
+            "weight_set",
         }
         or FROZEN_GENERATION["sampler"] != "pixel_ddpm_ancestral"
         or FROZEN_GENERATION["weight_set"] != "EMA"
@@ -1063,7 +1372,10 @@ def build_measured_selection_result(
         )
         for row in ranking["candidates"]
     ]
-    if select_final_candidate(ranking_candidates).milestone_step != candidate.milestone_step:
+    if (
+        select_final_candidate(ranking_candidates).milestone_step
+        != candidate.milestone_step
+    ):
         raise ValueError("ranking criteria do not select the reported milestone")
     if kid is None:
         kid = {"status": "NOT_REQUIRED", "value": None}

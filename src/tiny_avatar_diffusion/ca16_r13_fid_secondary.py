@@ -382,6 +382,62 @@ def compute_fid_metrics(
     return results
 
 
+def compute_fid_from_verified_pools(
+    real_pools: Mapping[str, Path],
+    generated_pools: Mapping[str, Path],
+    *,
+    device: torch.device,
+) -> dict[str, Any]:
+    """Frozen FID backend for one already-verified ID/COMP/GLOBAL pool set."""
+    from cleanfid import fid
+
+    counts = {"ID": 466, "COMP": 338, "GLOBAL": 804}
+    if set(real_pools) != set(counts) or set(generated_pools) != set(counts):
+        raise ValueError("FID pools require exactly ID/COMP/GLOBAL")
+    for role, count in counts.items():
+        real, generated = real_pools[role], generated_pools[role]
+        if (
+            not real.is_dir()
+            or not generated.is_dir()
+            or len(list(real.glob("*.png"))) != count
+            or len(list(generated.glob("*.png"))) != count
+        ):
+            raise ValueError("FID verified pool count mismatch")
+    model = fid.build_feature_extractor(
+        mode="clean", device=device, use_dataparallel=False
+    )
+    result: dict[str, Any] = {}
+    for role, count in counts.items():
+        real_features = fid.get_folder_features(
+            str(real_pools[role]),
+            model=model,
+            num_workers=0,
+            batch_size=8,
+            device=device,
+            mode="clean",
+            verbose=False,
+        )
+        generated_features = fid.get_folder_features(
+            str(generated_pools[role]),
+            model=model,
+            num_workers=0,
+            batch_size=8,
+            device=device,
+            mode="clean",
+            verbose=False,
+        )
+        result[f"FID_{role}"] = {
+            "status": "COMPUTED",
+            "value": _fid_from_features(real_features, generated_features),
+            "real_count": count,
+            "generated_count": count,
+            "clean_fid_version": CLEAN_FID_VERSION,
+            "mode": "clean",
+            "feature_extractor": "standard Inception-v3",
+        }
+    return result
+
+
 def summarize_fid_results(results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     """Summarize paired FID descriptively; lower values are better."""
     values = {
