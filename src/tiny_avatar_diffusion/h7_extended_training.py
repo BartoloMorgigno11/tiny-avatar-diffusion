@@ -335,6 +335,7 @@ def _restore_source(
     text.load_state_dict(checkpoint["text_encoder_state_dict"])
     denoiser.load_state_dict(checkpoint["conditional_unet_state_dict"])
     ema.load_state_dict(checkpoint["ema_state_dict"])
+    _align_restored_ema(ema, text, denoiser, device)
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     scaler.load_state_dict(checkpoint["grad_scaler_state_dict"])
     stored = checkpoint["progress"]
@@ -352,6 +353,23 @@ def _restore_source(
         stored["skipped_attempt_positions"],
     )
     return text, denoiser, optimizer, scaler, ema, sampler, corruption, progress
+
+
+def _align_restored_ema(
+    ema: ConditionalEMA,
+    text: torch.nn.Module,
+    denoiser: torch.nn.Module,
+    device: torch.device,
+) -> None:
+    """Move only restored EMA shadows to their live-model device once."""
+    for name, model in (("text_encoder", text), ("denoiser", denoiser)):
+        shadows = getattr(ema, name)
+        expected = model.state_dict()
+        if not isinstance(shadows, dict) or set(shadows) != set(expected):
+            raise ValueError("restored EMA state is incomplete or incompatible")
+        if not all(isinstance(value, torch.Tensor) for value in shadows.values()):
+            raise TypeError("restored EMA state contains a non-tensor value")
+        setattr(ema, name, {key: value.to(device) for key, value in shadows.items()})
 
 
 def _h7_checkpoint(

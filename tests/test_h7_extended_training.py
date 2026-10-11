@@ -7,11 +7,13 @@ from types import SimpleNamespace
 
 import pytest
 import torch
+from torch import nn
 
 import tiny_avatar_diffusion
 import tiny_avatar_diffusion.h7_extended_training as h7
 from tiny_avatar_diffusion import conditional_lr_pilot
 from tiny_avatar_diffusion.ca16_experiment import ArchitectureArm, CA16RunSpec
+from tiny_avatar_diffusion.conditional_main_training import ConditionalEMA
 from tiny_avatar_diffusion.debug_tiny_overfit import preload_images
 from tiny_avatar_diffusion.h7_extended_training import (
     TARGET_STEP,
@@ -143,3 +145,37 @@ def test_h7_runner_binds_training_images_to_the_explicit_ca16_root(
     monkeypatch.setattr(h7.torch.cuda, "is_available", lambda: True)
     with pytest.raises(LoaderCalled):
         h7.run(H7ContinuationSpec(2026), assets=CA16AssetSource(ca16), execute=True)
+
+
+def test_restored_ema_is_aligned_once_without_reinitializing_values() -> None:
+    text, denoiser = nn.Linear(2, 2), nn.BatchNorm1d(2)
+    ema = ConditionalEMA(text, denoiser)
+    ema.text_encoder = {
+        key: value.detach().clone().to(torch.float64)
+        for key, value in ema.text_encoder.items()
+    }
+    ema.denoiser = {
+        key: value.detach().clone().to(torch.float64)
+        for key, value in ema.denoiser.items()
+    }
+    before = ema.state_dict()
+    rng_before = torch.get_rng_state().clone()
+    h7._align_restored_ema(ema, text, denoiser, torch.device("cpu"))
+    after = ema.state_dict()
+    assert set(after) == {"text_encoder", "conditional_unet"}
+    for shadows, model in ((ema.text_encoder, text), (ema.denoiser, denoiser)):
+        assert set(shadows) == set(model.state_dict())
+        assert all(value.device.type == "cpu" for value in shadows.values())
+    for component in after:
+        for key in after[component]:
+            assert after[component][key].dtype == before[component][key].dtype
+            assert torch.equal(after[component][key], before[component][key])
+    assert torch.equal(torch.get_rng_state(), rng_before)
+
+
+def test_restored_ema_fails_closed_when_a_component_is_incomplete() -> None:
+    text, denoiser = nn.Linear(2, 2), nn.BatchNorm1d(2)
+    ema = ConditionalEMA(text, denoiser)
+    ema.text_encoder.pop(next(iter(ema.text_encoder)))
+    with pytest.raises(ValueError, match="EMA state is incomplete"):
+        h7._align_restored_ema(ema, text, denoiser, torch.device("cpu"))
