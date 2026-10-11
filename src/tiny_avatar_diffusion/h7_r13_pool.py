@@ -27,6 +27,93 @@ from tiny_avatar_diffusion.h7_r11_evaluation import (
 PROTOCOL_RELATIVE = "data/processed/ca16_r13_quality_v1/r13_execution_protocol.json"
 PROTOCOL_SHA256 = "fe292f1a67b4f755bfae0512601b206f3abd7d4ec4a2cae4bc820098631f240b"
 OUTPUT_ROOT = ROOT / "results" / "h7_ca16_40k_v1"
+BATCH_SIZE = 8
+
+
+def pool_root(seed: int) -> Path:
+    """Isolated R13 B8 namespace; never resumes the preserved B1 evidence."""
+    return OUTPUT_ROOT / f"r13_shared_pool_b8_seed{seed}"
+
+
+def batch_lanes(
+    plan: Sequence[Mapping[str, Any]], start: int
+) -> tuple[Sequence[Mapping[str, Any]], Sequence[Mapping[str, Any]]]:
+    """Return CA16's real and eight sampling lanes for one canonical group."""
+    real = plan[start : start + BATCH_SIZE]
+    lanes = real if len(real) == BATCH_SIZE else real + real
+    if len(lanes) != BATCH_SIZE or len(real) not in {4, 8}:
+        raise ValueError("R13 requires full B8 groups and a repeated four-lane tail")
+    return real, lanes
+
+
+class _BatchedGenerator:
+    """CA16 R13 B8 lanes, including the frozen repeated four-lane tail."""
+
+    def __init__(
+        self, plan: Sequence[Mapping[str, Any]], text: Any, denoiser: Any
+    ) -> None:
+        self.plan, self.text, self.denoiser = tuple(plan), text, denoiser
+        self.schedule = LinearDDPMSchedule(1000).to("cuda")
+        self.cache: dict[str, np.ndarray] = {}
+        self.indices = {
+            str(row["sample_id"]): index for index, row in enumerate(plan)
+        }
+
+    def _generate_group(self, start: int) -> None:
+        real, lanes = batch_lanes(self.plan, start)
+        ids = [row["token_ids"] for row in lanes]
+        masks = [row["attention_mask"] for row in lanes]
+        if len({len(row) for row in ids}) != 1 or any(
+            len(a) != len(b) for a, b in zip(ids, masks, strict=True)
+        ):
+            raise ValueError("R13 token rows are not B8-compatible")
+        generators = [
+            torch.Generator(device="cuda").manual_seed(int(row["generation_seed"]))
+            for row in lanes
+        ]
+
+        def noise() -> torch.Tensor:
+            return torch.cat(
+                [
+                    torch.randn(
+                        (1, 3, 32, 32),
+                        device="cuda",
+                        dtype=torch.float32,
+                        generator=generator,
+                    )
+                    for generator in generators
+                ],
+                dim=0,
+            )
+
+        with torch.no_grad():
+            samples = conditional_sample(
+                self.schedule,
+                self.text,
+                self.denoiser,
+                torch.tensor(ids, device="cuda"),
+                torch.tensor(masks, device="cuda"),
+                x_T=noise(),
+                reverse_noise_provider=lambda _t, _x: noise(),
+                clip_denoised=True,
+            )
+        for row, sample in zip(real, samples[: len(real)], strict=True):
+            self.cache[str(row["sample_id"])] = (
+                ((sample.detach().cpu().clamp(-1, 1) + 1) * 127.5)
+                .round()
+                .to(torch.uint8)
+                .permute(1, 2, 0)
+                .numpy()
+            )
+
+    def __call__(self, row: Mapping[str, Any]) -> np.ndarray:
+        key = str(row["sample_id"])
+        if key not in self.cache:
+            index = self.indices.get(key)
+            if index is None or self.plan[index] != row:
+                raise ValueError("R13 row is outside the canonical plan")
+            self._generate_group(index - index % BATCH_SIZE)
+        return self.cache.pop(key)
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -153,7 +240,7 @@ def execute_pool(
 ) -> dict[str, Any]:
     terminal = verify_terminal_checkpoint(terminal_checkpoint, seed)
     plan, identity = prepare_plan(ca16_assets_root)
-    root = OUTPUT_ROOT / f"r13_shared_pool_seed{seed}"
+    root = pool_root(seed)
     complete = root / "R13_POOL_COMPLETE.json"
     if complete.exists():
         summary = _json(complete)
@@ -197,22 +284,7 @@ def execute_pool(
         text, denoiser, _ = load_h7_terminal_ema(
             terminal_checkpoint, seed, device="cuda"
         )
-        schedule = LinearDDPMSchedule(1000).to("cuda")
-
-        def generator(item: Mapping[str, Any]) -> np.ndarray:
-            ids = torch.tensor([item["token_ids"]], device="cuda")
-            mask = torch.tensor([item["attention_mask"]], device="cuda")
-            g = torch.Generator(device="cuda").manual_seed(item["generation_seed"])
-            x = conditional_sample(
-                schedule, text, denoiser, ids, mask, generator=g, clip_denoised=True
-            )[0]
-            return (
-                ((x.detach().cpu().clamp(-1, 1) + 1) * 127.5)
-                .round()
-                .to(torch.uint8)
-                .permute(1, 2, 0)
-                .numpy()
-            )
+        generator = _BatchedGenerator(plan, text, denoiser)
 
     for item in plan:
         if item["sample_id"] in known:

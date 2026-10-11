@@ -17,7 +17,12 @@ from tiny_avatar_diffusion.h7_r11_evaluation import (
     verify_ca16_assets,
     verify_terminal_checkpoint,
 )
-from tiny_avatar_diffusion.h7_r13_pool import OUTPUT_ROOT, prepare_plan, validate_pool
+from tiny_avatar_diffusion.h7_r13_pool import (
+    OUTPUT_ROOT,
+    pool_root,
+    prepare_plan,
+    validate_pool,
+)
 
 R13_ROOT = "results/r13_quality_guardrail_batched_v1"
 
@@ -54,7 +59,7 @@ def preflight(
     verify_ca16_assets(ca16_assets_root)
     terminal = verify_terminal_checkpoint(terminal_checkpoint, seed)
     plan, identity = prepare_plan(ca16_assets_root)
-    pool = OUTPUT_ROOT / f"r13_shared_pool_seed{seed}"
+    pool = pool_root(seed)
     marker = _json(pool / "R13_POOL_COMPLETE.json")
     if marker.get("status") != "COMPLETE":
         raise ValueError("H7 shared R13 pool is not complete")
