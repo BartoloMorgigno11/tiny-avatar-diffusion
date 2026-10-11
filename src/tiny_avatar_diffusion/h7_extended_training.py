@@ -472,6 +472,7 @@ def run(
     train = load_text_image_split(
         assets.root / "data" / "processed" / "dr01_v1" / "text" / "10k" / "train.jsonl",
         "TRAIN",
+        image_root=assets.root,
     )
     schedule = LinearDDPMSchedule().to(device)
     started = time.perf_counter()

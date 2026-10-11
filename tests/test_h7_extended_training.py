@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import json
 from dataclasses import asdict
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+import torch
 
 import tiny_avatar_diffusion
 import tiny_avatar_diffusion.h7_extended_training as h7
+from tiny_avatar_diffusion import conditional_lr_pilot
 from tiny_avatar_diffusion.ca16_experiment import ArchitectureArm, CA16RunSpec
+from tiny_avatar_diffusion.debug_tiny_overfit import preload_images
 from tiny_avatar_diffusion.h7_extended_training import (
     TARGET_STEP,
     CA16AssetSource,
@@ -80,3 +85,61 @@ def test_missing_assets_and_import_identity_fail_closed(tmp_path: Path) -> None:
         Path(tiny_avatar_diffusion.__file__).resolve().parents[1]
         == Path(h7.__file__).resolve().parents[1]
     )
+
+
+def test_text_image_loader_accepts_an_explicit_external_image_root(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    records = [{"token_ids": [1] * 7, "attention_mask": [1] * 7}]
+    observed: list[Path] = []
+    monkeypatch.setattr(conditional_lr_pilot, "_load_text_records", lambda *_: records)
+    monkeypatch.setattr(
+        conditional_lr_pilot,
+        "preload_images",
+        lambda rows, *, root: observed.append(root) or torch.zeros((1, 3, 32, 32)),
+    )
+    split = conditional_lr_pilot.load_text_image_split(
+        tmp_path / "train.jsonl", "TRAIN", image_root=tmp_path
+    )
+    assert split.images.shape == (1, 3, 32, 32)
+    assert observed == [tmp_path]
+
+
+def test_external_ca16_archive_is_used_when_h7_archive_is_absent() -> None:
+    ca16 = Path(r"C:\Users\Bartolo\Desktop\PROGETTI\DL_Project_CA16")
+    manifest = ca16 / "data" / "processed" / "dr01_v1" / "text" / "10k" / "train.jsonl"
+    record = json.loads(manifest.read_text(encoding="utf-8").splitlines()[0])
+    relative_archive = Path(record["source_image_path"].split("::", 1)[0])
+    assert not (Path(h7.ROOT) / relative_archive).is_file()
+    with pytest.raises(FileNotFoundError):
+        preload_images([record], root=Path(h7.ROOT))
+    image = preload_images([record], root=ca16)
+    assert image.shape == (1, 3, 32, 32)
+
+
+def test_h7_runner_binds_training_images_to_the_explicit_ca16_root(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ca16 = Path(r"C:\Users\Bartolo\Desktop\PROGETTI\DL_Project_CA16")
+
+    class LoaderCalled(Exception):
+        pass
+
+    def loader(path: Path, split: str, *, image_root: Path) -> None:
+        assert (
+            path
+            == ca16 / "data" / "processed" / "dr01_v1" / "text" / "10k" / "train.jsonl"
+        )
+        assert split == "TRAIN"
+        assert image_root == ca16
+        raise LoaderCalled
+
+    monkeypatch.setattr(h7, "preflight", lambda *_: {})
+    monkeypatch.setattr(h7, "verify_source_checkpoint", lambda *_: {})
+    monkeypatch.setattr(
+        h7, "_restore_source", lambda *_: (None,) * 7 + (SimpleNamespace(step=20_000),)
+    )
+    monkeypatch.setattr(h7, "load_text_image_split", loader)
+    monkeypatch.setattr(h7.torch.cuda, "is_available", lambda: True)
+    with pytest.raises(LoaderCalled):
+        h7.run(H7ContinuationSpec(2026), assets=CA16AssetSource(ca16), execute=True)

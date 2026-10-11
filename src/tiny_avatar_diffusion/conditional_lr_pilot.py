@@ -100,10 +100,12 @@ def _load_text_records(path: Path, expected_split: str) -> list[dict[str, Any]]:
     return records
 
 
-def load_text_image_split(path: Path, expected_split: str) -> TextImageSplit:
+def load_text_image_split(
+    path: Path, expected_split: str, *, image_root: Path = ROOT
+) -> TextImageSplit:
     """Load one existing DR01 text split and reuse the frozen image preprocessing."""
     records = _load_text_records(path, expected_split)
-    images = preload_images(records)
+    images = preload_images(records, root=image_root)
     input_ids = torch.tensor([record["token_ids"] for record in records], dtype=torch.long)
     attention_mask = torch.tensor(
         [record["attention_mask"] for record in records], dtype=torch.long
