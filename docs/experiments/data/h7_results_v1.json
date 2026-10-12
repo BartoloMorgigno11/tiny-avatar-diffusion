@@ -1,0 +1,212 @@
+{
+  "limitations": {
+    "historical_20k_family_maa": "unavailable",
+    "historical_20k_id_psr": "unavailable"
+  },
+  "protocols": {
+    "r11_commit": "c2eb836b2bf53bcc830e52719a996c69f9eb678c",
+    "r11_tag": "h7-terminal-protocol-v3",
+    "r13_commit": "39e69336ca3997971cd35fcc86ff4a3c792e1d59",
+    "r13_tag": "h7-r13-batched-v1"
+  },
+  "rows": [
+    {
+      "diagnostics_40k": {
+        "family_maa": {
+          "CV1": 0.96875,
+          "CV2": 0.9780701754385965,
+          "CV3": 0.9351851851851851,
+          "CV4": 0.9866071428571428
+        },
+        "historical_20k_family_maa": null,
+        "historical_20k_id_psr": null,
+        "id_psr": 0.8671875
+      },
+      "marker_hashes": {
+        "fid": "7d56ef4bff625575f9a9301e12e97c8d3662631a7e0c9a4c62b5ee8d5eb3a223",
+        "kid": "a1fe64171cc03498ccc668c1152311a95d414fd3f6a0c2046cb39d200a54b603",
+        "r11": "54d144a9cee28d84462ac7fd07f1ac20bf86c361f9751ae87dae3e4ad48c30b9"
+      },
+      "metrics_20k": {
+        "comp_maa": 0.670254194514063,
+        "comp_psr": 0.1788551239209134,
+        "fid_comp": 65.53281215070345,
+        "fid_global": 43.823908473789004,
+        "fid_id": 52.670854734489865,
+        "id_maa": 0.73828125,
+        "kid_comp": 0.01924298331141472,
+        "kid_global": 0.015471149235963821,
+        "kid_id": 0.013704375363886356
+      },
+      "metrics_40k": {
+        "comp_maa": 0.9671531258702311,
+        "comp_psr": 0.8686125034809244,
+        "fid_comp": 43.691514248203475,
+        "fid_global": 25.57197915338122,
+        "fid_id": 36.44976927533776,
+        "id_maa": 0.962890625,
+        "kid_comp": 0.001953283790498972,
+        "kid_global": 0.0021128032822161913,
+        "kid_id": 0.0024990334641188383
+      },
+      "pool": {
+        "identity": {
+          "plan_sha256": "69cd79673dadf8e8beeb17bfa041571acb8b28c2a0bdfa6fc18fb191eef82beb",
+          "protocol_sha256": "fe292f1a67b4f755bfae0512601b206f3abd7d4ec4a2cae4bc820098631f240b"
+        },
+        "image_count": 804,
+        "schema": "tiny_avatar_diffusion.h7_r13_shared_pool_v1",
+        "status": "COMPLETE",
+        "terminal": {
+          "path": "C:\\Users\\Bartolo\\Desktop\\PROGETTI\\DL_Project_H7\\results\\h7_ca16_40k_v1\\h7_ca16_40k_v1_seed2026\\terminal_40000.pt",
+          "seed": 2026,
+          "sha256": "80eedea866a8f73b728b0d8bdc184910c814e93857d051f0cbb5a680ac6f10dd",
+          "source_checkpoint_sha256": "ad3093446be3958d322d7af9d1109636e50e0fa7decc766177f015d04b51848d",
+          "step": 40000
+        }
+      },
+      "seed": 2026,
+      "terminal": {
+        "path": "C:\\Users\\Bartolo\\Desktop\\PROGETTI\\DL_Project_H7\\results\\h7_ca16_40k_v1\\h7_ca16_40k_v1_seed2026\\terminal_40000.pt",
+        "seed": 2026,
+        "sha256": "80eedea866a8f73b728b0d8bdc184910c814e93857d051f0cbb5a680ac6f10dd",
+        "source_checkpoint_sha256": "ad3093446be3958d322d7af9d1109636e50e0fa7decc766177f015d04b51848d",
+        "step": 40000
+      }
+    },
+    {
+      "diagnostics_40k": {
+        "family_maa": {
+          "CV1": 0.96875,
+          "CV2": 0.9846491228070176,
+          "CV3": 0.962962962962963,
+          "CV4": 0.9776785714285714
+        },
+        "historical_20k_family_maa": null,
+        "historical_20k_id_psr": null,
+        "id_psr": 0.8984375
+      },
+      "marker_hashes": {
+        "fid": "b42185e9babfa164139964b47ab4a5f987b6ddae6d711bbde37ff936899d135a",
+        "kid": "ea2f938c95c1077193be70c58fd4661ffa4114a1f002fef7d78da0574f972e9e",
+        "r11": "718268321d0edcf2fdd1c02cb3383b0426cda1153627b1576b146dc7596001c4"
+      },
+      "metrics_20k": {
+        "comp_maa": 0.7919420948203844,
+        "comp_psr": 0.3742289752158173,
+        "fid_comp": 60.53897943865482,
+        "fid_global": 43.19470178339466,
+        "fid_id": 54.42027160020089,
+        "id_maa": 0.7978515625,
+        "kid_comp": 0.0187826044857502,
+        "kid_global": 0.020109260454773903,
+        "kid_id": 0.02188725955784321
+      },
+      "metrics_40k": {
+        "comp_maa": 0.973510164299638,
+        "comp_psr": 0.900290657198552,
+        "fid_comp": 43.765800380130344,
+        "fid_global": 26.34284122573723,
+        "fid_id": 37.79178699244659,
+        "id_maa": 0.97265625,
+        "kid_comp": 0.0022266851738095284,
+        "kid_global": 0.0027467096224427223,
+        "kid_id": 0.0034943700302392244
+      },
+      "pool": {
+        "identity": {
+          "plan_sha256": "69cd79673dadf8e8beeb17bfa041571acb8b28c2a0bdfa6fc18fb191eef82beb",
+          "protocol_sha256": "fe292f1a67b4f755bfae0512601b206f3abd7d4ec4a2cae4bc820098631f240b"
+        },
+        "image_count": 804,
+        "schema": "tiny_avatar_diffusion.h7_r13_shared_pool_v1",
+        "status": "COMPLETE",
+        "terminal": {
+          "path": "C:\\Users\\Bartolo\\Desktop\\PROGETTI\\DL_Project_H7\\results\\h7_ca16_40k_v1\\h7_ca16_40k_v1_seed2027\\terminal_40000.pt",
+          "seed": 2027,
+          "sha256": "f1e67734f38426d4bc7f4af793046ea461cedc553e0e2f805d5a0d04e5278288",
+          "source_checkpoint_sha256": "6749055ce11c48eaec4605ed68d77f637ee9cb0a323ca79c7273cf2715ff64d7",
+          "step": 40000
+        }
+      },
+      "seed": 2027,
+      "terminal": {
+        "path": "C:\\Users\\Bartolo\\Desktop\\PROGETTI\\DL_Project_H7\\results\\h7_ca16_40k_v1\\h7_ca16_40k_v1_seed2027\\terminal_40000.pt",
+        "seed": 2027,
+        "sha256": "f1e67734f38426d4bc7f4af793046ea461cedc553e0e2f805d5a0d04e5278288",
+        "source_checkpoint_sha256": "6749055ce11c48eaec4605ed68d77f637ee9cb0a323ca79c7273cf2715ff64d7",
+        "step": 40000
+      }
+    },
+    {
+      "diagnostics_40k": {
+        "family_maa": {
+          "CV1": 0.94375,
+          "CV2": 0.9824561403508771,
+          "CV3": 0.9444444444444444,
+          "CV4": 0.9732142857142857
+        },
+        "historical_20k_family_maa": null,
+        "historical_20k_id_psr": null,
+        "id_psr": 0.91015625
+      },
+      "marker_hashes": {
+        "fid": "9d66e4de91cdd165c1bc6d10440ab6a0a7b5ea2226aed6b78a748504cde5484b",
+        "kid": "1323bbeb07c351e2a95873938410b1a1ba900ef5805751c95a1fa47b17f6293f",
+        "r11": "d8addd38fad985b664659978414c8cd2cfcfe48e322e6886b9b40b2cfc1fc0f2"
+      },
+      "metrics_20k": {
+        "comp_maa": 0.7501475041771094,
+        "comp_psr": 0.24383180172653857,
+        "fid_comp": 56.81689992964053,
+        "fid_global": 39.204862710050975,
+        "fid_id": 49.75528003555431,
+        "id_maa": 0.7998046875,
+        "kid_comp": 0.015314411371946335,
+        "kid_global": 0.015247487463057041,
+        "kid_id": 0.015791138634085655
+      },
+      "metrics_40k": {
+        "comp_maa": 0.9609662176274019,
+        "comp_psr": 0.8438648705096073,
+        "fid_comp": 45.37712027574287,
+        "fid_global": 26.865732271652178,
+        "fid_id": 37.54052749966465,
+        "id_maa": 0.9775390625,
+        "kid_comp": 0.0033598444424569607,
+        "kid_global": 0.003317038994282484,
+        "kid_id": 0.0036515367683023214
+      },
+      "pool": {
+        "identity": {
+          "plan_sha256": "69cd79673dadf8e8beeb17bfa041571acb8b28c2a0bdfa6fc18fb191eef82beb",
+          "protocol_sha256": "fe292f1a67b4f755bfae0512601b206f3abd7d4ec4a2cae4bc820098631f240b"
+        },
+        "image_count": 804,
+        "schema": "tiny_avatar_diffusion.h7_r13_shared_pool_v1",
+        "status": "COMPLETE",
+        "terminal": {
+          "path": "C:\\Users\\Bartolo\\Desktop\\PROGETTI\\DL_Project_H7\\results\\h7_ca16_40k_v1\\h7_ca16_40k_v1_seed2028\\terminal_40000.pt",
+          "seed": 2028,
+          "sha256": "050adbdaa3d9542a94913cc547d2baaefd23c28c2469742ef11263c2231ca73e",
+          "source_checkpoint_sha256": "904c45d6f601e73b12bb99031806845cc4411ba89a5f20c6b962a362e691b094",
+          "step": 40000
+        }
+      },
+      "seed": 2028,
+      "terminal": {
+        "path": "C:\\Users\\Bartolo\\Desktop\\PROGETTI\\DL_Project_H7\\results\\h7_ca16_40k_v1\\h7_ca16_40k_v1_seed2028\\terminal_40000.pt",
+        "seed": 2028,
+        "sha256": "050adbdaa3d9542a94913cc547d2baaefd23c28c2469742ef11263c2231ca73e",
+        "source_checkpoint_sha256": "904c45d6f601e73b12bb99031806845cc4411ba89a5f20c6b962a362e691b094",
+        "step": 40000
+      }
+    }
+  ],
+  "schema": "h7_results_snapshot_v1",
+  "software": {
+    "clean_fid": "0.1.35",
+    "inception_sha256": "f58cb9b6ec323ed63459aa4fb441fe750cfe39fafad6da5cb504a16f19e958f4",
+    "matplotlib": "3.11.2"
+  }
+}
