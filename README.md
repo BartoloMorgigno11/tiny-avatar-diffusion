@@ -12,7 +12,7 @@ structured attributes → scratch text encoder → cross-attention
 - **Original V1 baseline:** the released conditional/unconditional system and its frozen DR01–DR05 evidence, described below.
 - **Completed CA16 comparison:** a separate, paired three-seed comparison of bottleneck cross-attention (CA8) with CA8+CA16 on the 10k compositional task. At the selected 20k checkpoints, CA8+CA16 had higher mean R12 ID_TEST MAA (0.7184 vs 0.5854), FINAL_OOD MAA (0.6758 vs 0.5163), and MacroPSR (0.488 vs 0.267). The full scope, provenance, metrics, and limitations are in [the CA16 closure record](docs/experiments/ca16_ablation/FINAL_CLOSURE.md).
 - **Available now:** the V1 package, CLI, inference, comparison, and Streamlit demo. CA16 experiment checkpoints and result roots are local-only evidence, not Git-shipped inference assets.
-- **Not implemented:** H7 continuation to 40k and native 64×64 output support are prospective work, not current capabilities. No final project architecture has been selected.
+- **Completed H7 continuation:** CA8+CA16 was continued from 20k to 40k successful updates for seeds 2026, 2027, and 2028. Frozen R11 semantic evaluation and R13 batch-8 KID/FID evaluation are complete. A portable CPU-only report with five figure pairs is available in [the H7 experiment report](docs/experiments/h7_extended_training.md). Native 64×64 output remains out of scope; H7 does not select a final project architecture.
 
 ## Project at a glance
 

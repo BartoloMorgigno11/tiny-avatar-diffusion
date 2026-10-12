@@ -16,6 +16,24 @@ The final clean-release audit procedure is documented for later execution. This 
 
 The completed CA16 CA8-versus-CA8+CA16 comparison is documented in [the closure record](docs/experiments/ca16_ablation/FINAL_CLOSURE.md). A clean clone can inspect its tracked protocols, source, and documentation, but cannot reproduce R10–R14 results without the local evidence archive: the six R10 checkpoint roots and the R11–R14 result roots are intentionally ignored by Git. They require the original CUDA-capable environment and the manually acquired datasets/evaluator asset; they are not restored by `pip install`.
 
+### H7 continuation and reporting boundary
+
+The completed H7 CA8+CA16 continuation extends the three selected CA16 20k checkpoints to 40k successful updates for seeds 2026, 2027, and 2028. Its frozen R11 semantic results and corrected R13 batch-8 KID/FID results are summarized in [the H7 experiment report](docs/experiments/h7_extended_training.md); CA16 examiner-facing context remains in [the CA16 closure record](docs/experiments/ca16_ablation/FINAL_CLOSURE.md).
+
+**CPU-only snapshot reproduction** needs Python with Matplotlib, but no PyTorch, dataset, checkpoint, CA16 root, or H7 result root:
+
+```powershell
+python scripts/generate_h7_report.py --snapshot docs/experiments/data/h7_results_v1.json --figures outputs/h7_report_figures
+```
+
+This renders figures from the tracked lightweight snapshot; it does not reproduce training or scientific evaluation. To read-only verify that snapshot against frozen external artifacts, supply explicit roots:
+
+```powershell
+python scripts/generate_h7_report.py --snapshot docs/experiments/data/h7_results_v1.json --figures outputs/h7_report_figures --verify --ca16-root <CA16-root> --h7-root <H7-root>
+```
+
+Strict verification fails on an identity or metric mismatch and never substitutes the snapshot. Full H7 training, sampling, R11, R13, KID, and FID reproduction requires the external historical CA16/H7 checkpoints, result roots, Cartoon Set assets, evaluator/metric assets, and CUDA where the corresponding frozen workflow requires it; those assets are intentionally not Git-shipped.
+
 ## 2. Repository and software requirements
 
 - Python: `>=3.11`
