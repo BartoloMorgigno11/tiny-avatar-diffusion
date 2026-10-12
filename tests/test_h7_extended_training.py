@@ -69,7 +69,7 @@ def test_h7_output_is_isolated(tmp_path: Path) -> None:
 
 def test_wrong_source_root_and_output_escape_are_rejected(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="separate"):
-        CA16AssetSource(Path(__file__).resolve().parents[1])
+        CA16AssetSource(Path(h7.ROOT))
     with pytest.raises(ValueError, match="fixed"):
         H7ContinuationSpec(2026).output_dir(tmp_path)
 
@@ -107,20 +107,25 @@ def test_text_image_loader_accepts_an_explicit_external_image_root(
     assert observed == [tmp_path]
 
 
-def test_external_ca16_archive_is_used_when_h7_archive_is_absent() -> None:
+def test_image_preload_uses_the_explicit_archive_root(tmp_path: Path) -> None:
     ca16 = Path(r"C:\Users\Bartolo\Desktop\PROGETTI\DL_Project_CA16")
     manifest = ca16 / "data" / "processed" / "dr01_v1" / "text" / "10k" / "train.jsonl"
     record = json.loads(manifest.read_text(encoding="utf-8").splitlines()[0])
     relative_archive = Path(record["source_image_path"].split("::", 1)[0])
-    assert not (Path(h7.ROOT) / relative_archive).is_file()
+    assert (ca16 / relative_archive).is_file()
+
+    # A separate runner worktree without the archive must not silently fall back.
     with pytest.raises(FileNotFoundError):
-        preload_images([record], root=Path(h7.ROOT))
+        preload_images([record], root=tmp_path / "separate-h7-root")
+
+    # This also models an integrated repository whose explicit root contains it.
     image = preload_images([record], root=ca16)
     assert image.shape == (1, 3, 32, 32)
 
 
 def test_h7_runner_binds_training_images_to_the_explicit_ca16_root(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     ca16 = Path(r"C:\Users\Bartolo\Desktop\PROGETTI\DL_Project_CA16")
 
@@ -138,6 +143,11 @@ def test_h7_runner_binds_training_images_to_the_explicit_ca16_root(
 
     monkeypatch.setattr(h7, "preflight", lambda *_: {})
     monkeypatch.setattr(h7, "verify_source_checkpoint", lambda *_: {})
+    monkeypatch.setattr(
+        H7ContinuationSpec,
+        "output_dir",
+        lambda spec, root: tmp_path / spec.run_id,
+    )
     monkeypatch.setattr(
         h7, "_restore_source", lambda *_: (None,) * 7 + (SimpleNamespace(step=20_000),)
     )
