@@ -20,6 +20,8 @@ The completed CA16 CA8-versus-CA8+CA16 comparison is documented in [the closure 
 
 The completed H7 CA8+CA16 continuation extends the three selected CA16 20k checkpoints to 40k successful updates for seeds 2026, 2027, and 2028. Its frozen R11 semantic results and corrected R13 batch-8 KID/FID results are summarized in [the H7 experiment report](docs/experiments/h7_extended_training.md); CA16 examiner-facing context remains in [the CA16 closure record](docs/experiments/ca16_ablation/FINAL_CLOSURE.md).
 
+The CPU-only [H7 examiner notebook](notebooks/06_h7_extended_training_results.ipynb) reads the versioned snapshot and requires Python with Matplotlib; it needs no CUDA, checkpoint, dataset, or external CA16/H7 result directory.
+
 **CPU-only snapshot reproduction** needs Python with Matplotlib, but no PyTorch, dataset, checkpoint, CA16 root, or H7 result root:
 
 ```powershell
@@ -317,8 +319,10 @@ The tabs are **Generate**, **Compare**, and **Frozen Results**. Images, metadata
 | `notebooks/02_model_and_diffusion.ipynb` | CPU-safe architecture, shape, parameter, and schedule checks. |
 | `notebooks/03_evaluation_and_results.ipynb` | Analysis through the validated frozen-results loader. |
 | `notebooks/04_interactive_generation.ipynb` | Inference contract; live generation and paired comparison default to `False`. |
+| `notebooks/05_ca16_ablation_results.ipynb` | CPU-only examiner summary of the completed CA8 versus CA8+CA16 study. |
+| `notebooks/06_h7_extended_training_results.ipynb` | CPU-only snapshot-driven analysis of CA8+CA16 extended training from 20k to 40k across three seeds. |
 
-All four passed independent fresh-kernel default Run All during Phase 5. No training or expensive generation/metric/benchmark campaign occurs by default.
+Notebooks 01 through 04 passed independent fresh-kernel default Run All during Phase 5. Notebooks 05 and 06 were separately validated through complete CPU-only execution. No training or expensive generation/metric/benchmark campaign occurs by default.
 
 ## 17. Expected outputs and protected directories
 

@@ -20,7 +20,7 @@ structured attributes → scratch text encoder → cross-attention
 - Prompt grammar: `avatar <face_shape> <glasses> <hair_color> <face_color>`.
 - Main model: a 4,723,907-parameter conditional DDPM trained for 20,000 successful updates.
 - Generalization test: individual attribute values remain known, while selected pairs of values are held out as unseen compositions.
-- Released interfaces: Python package, `tiny-avatar` CLI, optional Streamlit application, and four executed scientific notebooks.
+- Released interfaces: Python package, `tiny-avatar` CLI, optional Streamlit application, and six scientific notebooks.
 
 ## Research question
 
@@ -134,8 +134,9 @@ This reads validated frozen DR04/DR05 evidence. It does not train models, genera
 | [03_evaluation_and_results.ipynb](notebooks/03_evaluation_and_results.ipynb) | Validated analysis of frozen conditioning, quality, diversity, and engineering evidence. |
 | [04_interactive_generation.ipynb](notebooks/04_interactive_generation.ipynb) | Frozen inference contract and optional live trajectory/paired demonstration. |
 | [05_ca16_ablation_results.ipynb](notebooks/05_ca16_ablation_results.ipynb) | CPU-only examiner summary of the completed CA8 versus CA8+CA16 study; uses verified compact summaries, not local checkpoints or generated images. |
+| [06_h7_extended_training_results.ipynb](notebooks/06_h7_extended_training_results.ipynb) | CPU-only, snapshot-driven analysis of CA8+CA16 extended training from 20k to 40k successful optimizer steps across three seeds. |
 
-All four passed fresh-kernel default Run All during the Phase-5 notebook release pass. The fourth notebook keeps live generation and paired comparison disabled by default, so no expensive sampling occurs during its default run.
+Notebooks 01 through 04 passed fresh-kernel default Run All during the Phase-5 notebook release pass. Notebooks 05 and 06 were separately validated through complete CPU-only execution. The fourth notebook keeps live generation and paired comparison disabled by default, so no expensive sampling occurs during its default run.
 
 ## Repository structure
 
