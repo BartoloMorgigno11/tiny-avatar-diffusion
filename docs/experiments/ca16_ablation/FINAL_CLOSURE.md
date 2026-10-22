@@ -1,5 +1,13 @@
 # CA16 scientific closure
 
+> **Historical-status notice.** This closure records the CA16 experiment at
+> its frozen baseline and must not be read as a statement of the current
+> release. The official public models are **DDPM-U32, DDPM-C32, DDPM-U64, and
+> DDPM-C64**; their immutable public identities are in
+> `src/tiny_avatar_diffusion/public_model_manifest.json`. References below to
+> future H7 or native64 work describe the historical closure state, not the
+> final release implementation or its supported interfaces.
+
 **Frozen baseline:** `82db5255caa86d7ed8201b6dfa90346680e4448d` (`ca16-ablation-r14-diversity-efficiency-v3`).  This document closes the CA16 scientific comparison; it does not select the ultimate project architecture.
 
 ## Question, data, and intervention

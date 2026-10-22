@@ -1,10 +1,18 @@
 # Four-model benchmark input contract
 
+> **Historical protocol notice.** This document preserves the DR07 planning
+> contract and its historical CA8/H7/V2-A/V2-B model set; it is not the public
+> inference or benchmark contract for this release. The current official
+> public models are **DDPM-U32, DDPM-C32, DDPM-U64, and DDPM-C64**, identified
+> by `src/tiny_avatar_diffusion/public_model_manifest.json`. Historical
+> benchmark execution also requires assets that are not distributed with the
+> four public checkpoints.
+
 `tiny_avatar_diffusion.four_model_benchmark` is a CPU-only planning and
 validation module. It does not open protected manifests, load models, generate
 images, or calculate metrics.
 
-Version 2 is the active public protocol. Version 1 (`8e5eab23ae8eec213443baa4d1637cb666e6ffe65081edc7573627cf91932ae`) remains immutable provenance for historical DR07 artifacts and must not be silently remapped.
+Version 2 is the preserved DR07 protocol. Version 1 (`8e5eab23ae8eec213443baa4d1637cb666e6ffe65081edc7573627cf91932ae`) remains immutable provenance for historical DR07 artifacts and must not be silently remapped.
 Version 2 binds the public frozen-H7 geometry and the four-model native-resolution
 rules, not a sealed H7 plan file. The manifest hash for a production run is
 computed only after a separately authorized case/reference plan is supplied.

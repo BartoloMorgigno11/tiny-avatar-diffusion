@@ -10,11 +10,15 @@ DDPM-U64 and DDPM-C64. Their immutable identities are recorded in
 - four notebooks in `notebooks/final/` and their compact saved inputs;
 - DR01 tokenizer/split metadata and frozen DR04/DR05 summaries;
 - the compact STEP 9B endpoint comparison and STEP 13 unconditional summary read by notebooks 03--04;
-- definitive PNG/PDF exports from all four final notebooks;
+- the four final notebook source files with their saved outputs and compact
+  read-only inputs; separate executed-notebook PNG/PDF exports are not part of
+  this Git archive;
 - the 20-image conditional 4x5 gallery and its provenance manifest, plus the
   eight-image final four-model gallery and its provenance manifest, solely for
   CPU notebook visualization and hash verification;
-- report LaTeX source and figure assets, plus selected release documentation;
+- historical LaTeX report source and figure assets, plus selected release
+  documentation; this source is not a substitute for the separately finalized
+  report PDF;
 - four public checkpoint packages, each verified against its manifest SHA-256.
 
 Public checkpoints are named `ddpm-u32-ema-40k.pt`, `ddpm-c32-ema-40k.pt`,
