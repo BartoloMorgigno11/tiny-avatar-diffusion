@@ -124,6 +124,24 @@ data/raw/cartoonset/archives/cartoonset100k.tgz
 
 See [dataset attribution](docs/release/DATASET_ATTRIBUTION.md). The project source is Apache-2.0; Cartoon Set is Google LLC material under CC BY 4.0.
 
+### Supported DDPM-U64 training protocol
+
+`scripts/train_v2a_unconditional_native64.py` can initiate a **new** native64 unconditional DDPM-U64 run when the caller supplies the canonical TRAIN manifest and an externally prepared, authenticated native64 cache. It is derived from the recovered historical U64 runner, but its path arguments make no claim that a new run is the historical run.
+
+The cache directory must contain `train64_rgb_uint8.npy` and `integrity_report.json` for the canonical 8,388-image TRAIN split. The runner rejects a cache or manifest unless their SHA-256 values match the recorded native64 contract. It requires CUDA for smoke or training and uses the recorded configuration by default: 60,000 successful optimizer updates, microbatch 16 × accumulation 2 (effective batch 32), AdamW (LR `2e-4`, zero weight decay), FP16 AMP, EMA `0.9999`, and the 1,000-step linear DDPM schedule. `--microbatch 8` is retained from the authentic runner as an alternate 8 × 4 effective-batch-32 mode; it was not the recorded final U64 run.
+
+After installation, use a caller-owned output directory outside frozen `artifacts/` and `results/` records:
+
+```powershell
+python scripts/train_v2a_unconditional_native64.py --preflight --data-root . --cache-dir D:\cartoonset\v2_authentic_native64_train --run-dir D:\runs\u64_new
+python scripts/train_v2a_unconditional_native64.py --execute --data-root . --cache-dir D:\cartoonset\v2_authentic_native64_train --run-dir D:\runs\u64_new --microbatch 16
+python scripts/train_v2a_unconditional_native64.py --execute --resume D:\runs\u64_new\latest.pt --data-root . --cache-dir D:\cartoonset\v2_authentic_native64_train --run-dir D:\runs\u64_new --microbatch 16
+```
+
+`--preflight` is CPU-only and checks identities, model parameter count, and disposable full-state serialization without training or creating a run directory. `--smoke` performs three CUDA optimizer updates and is optional. `--execute` writes caller-owned full-state checkpoints every 5,000 successful updates, `latest.pt`, an EMA-only `ema_step60000.pt`, configuration/provenance, progress, and terminal telemetry. Resume requires one of those compatible full-state checkpoints plus identical configuration and authenticated input provenance. The public `ddpm-u64-ema-60k.pt` package is inference-only and cannot resume training.
+
+This entry point has received static and CLI-help validation only in the academic release; clean-clone end-to-end training has not been re-executed.
+
 ### Historical workflows and availability
 
 The DR01–DR05 modules and historical CA16/H7 scripts are retained as provenance for the original research program. They are not public quickstart commands. In particular, historical CA16/H7 continuation, selection, quality, FID/KID, and diversity workflows require original local checkpoint/result roots, datasets, evaluator/metric assets, and CUDA where applicable. The four public EMA inference packages do **not** contain optimizer, scaler, RNG, sampler-progress, or full-state checkpoint information and cannot resume those experiments.

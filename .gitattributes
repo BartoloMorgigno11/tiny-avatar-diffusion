@@ -1,6 +1,7 @@
 data/processed/dr01_v1/text/10k/id_test.jsonl text eol=lf
 data/processed/dr01_v1/text/10k/final_ood.jsonl text eol=lf
 data/processed/dr01_v1/text/10k/id_val.jsonl text eol=lf
+data/processed/dr01_v1/text/10k/train.jsonl text eol=lf
 data/processed/dr04_final_eval_v1/dr04_freeze_manifest.json text eol=crlf
 data/processed/dr05_final_eval_v1/dr05_main_quality_generation_plan.jsonl text eol=crlf
 data/processed/dr05_final_eval_v1/dr05_main_quality_generation_plan_meta.json text eol=crlf
