@@ -1,0 +1,54 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance=8mm and 7mm,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=8mm, minimum width=22mm, fill=blue!5},
+  data/.style={box, fill=green!8},
+  model/.style={box, fill=orange!10},
+  arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[data] (images) {CartoonSet10k\\RGB images};
+\node[data, below=of images] (caption) {Canonical caption\\and tokenizer};
+\node[model, right=of caption] (text) {Scratch\\Transformer};
+\node[model, right=of images] (unet) {Conditional U-Net\\DDPM denoiser};
+\node[model, right=of unet] (sample) {Ancestral reverse\\sampling};
+\node[data, right=of sample] (avatar) {RGB avatar};
+\draw[arrow] (images) -- node[above, font=\scriptsize] {$x_0$} (unet);
+\draw[arrow] (caption) -- (text);
+\draw[arrow] (text) -- node[above, font=\scriptsize] {context $C$} (unet);
+\draw[arrow] (unet) -- node[above, font=\scriptsize] {$\epsilon_\theta$} (sample);
+\draw[arrow] (sample) -- (avatar);
+\end{tikzpicture}
+\caption{Conditional-generation pipeline. CartoonSet10k images train the DDPM objective; canonical captions are tokenized and encoded by a jointly trained Transformer. The independent CartoonSet100k evaluator is outside this training path. Unconditional V1 and V2-A use the image backbone and reverse sampler but bypass the caption, tokenizer, Transformer, and cross-attention path.}\label{fig:pipeline}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance=5mm and 4mm,
+  stage/.style={draw, rounded corners=2pt, align=center, minimum height=7mm, minimum width=18mm, fill=blue!5},
+  ca/.style={draw, rounded corners=2pt, align=center, minimum height=7mm, minimum width=18mm, fill=orange!18},
+  arrow/.style={-{Latex[length=1.7mm]}, thick}
+]
+\node[font=\small\bfseries] (n32) {native32 public pair};
+\node[stage, below=of n32] (d32) {$32\to16\to8$};
+\node[ca, right=of d32] (ca8a) {CA8};
+\node[ca, right=of ca8a] (ca16a) {CA16};
+\node[stage, right=of ca16a] (u32) {$8\to16\to32$};
+\draw[arrow] (d32) -- (ca8a);
+\draw[arrow] (ca8a) -- (ca16a);
+\draw[arrow] (ca16a) -- (u32);
+\node[font=\scriptsize, below=2mm of ca16a] {H7 uses text + CA8+CA16; V1 bypasses both};
+
+\node[font=\small\bfseries, below=15mm of n32] (n64) {native64 public pair};
+\node[stage, below=of n64] (d64) {$64\to32\to16$};
+\node[ca, right=of d64] (ca8b) {CA8};
+\node[ca, right=of ca8b] (ca16b) {CA16};
+\node[stage, right=of ca16b] (u64) {$16\to32\to64$};
+\draw[arrow] (d64) -- (ca8b);
+\draw[arrow] (ca8b) -- (ca16b);
+\draw[arrow] (ca16b) -- (u64);
+\node[font=\scriptsize, below=2mm of ca16b] {Conditional V2-A uses text + CA8+CA16; unconditional V2-A bypasses both};
+\end{tikzpicture}
+\caption{Final $2\times2$ architecture. Each resolution has a shared image backbone. Conditional variants add the scratch text encoder and cross-attention at $8\times8$ and $16\times16$; unconditional variants do not contain a conditioning pathway. The diagram records module placement, not a causal or performance claim.}\label{fig:cross-attention-placement}
+\end{figure}

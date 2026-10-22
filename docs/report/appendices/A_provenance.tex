@@ -1,0 +1,21 @@
+\section{Condensed provenance register}\label{app:provenance}
+This appendix identifies the frozen artifacts cited in the report. A source/full-state digest and an EMA-package digest identify different artifacts and are not interchangeable.
+\begin{longtable}{p{0.27\linewidth}p{0.65\linewidth}}
+\toprule
+Artifact & Canonical repository record \\
+\midrule
+\endhead
+Public four-model manifest & \repoPath{src/tiny_avatar_diffusion/public_model_manifest.json} \\
+V1 unconditional 40k & EMA package \shortHash{578aa930}{a5694974}; source full-state \shortHash{b0dbc80f}{d1acb5d89} \\
+H7 conditional 40k & EMA package \shortHash{438e4672}{d2f89944}; source full-state \shortHash{80eedea8}{ac6f10dd} \\
+V2-A unconditional 60k & EMA package \shortHash{36925385}{e08e14d0}; source full-state \shortHash{244b5fc3}{20e58826} \\
+V2-A conditional 60k & EMA package \shortHash{42666355}{460762e4}; source full-state \shortHash{f47132dc}{206cb0f14} \\
+Conditional five-endpoint table & \repoPath{results/runs/v2a_step9b_final_supplementary_ema60k_v1/five_endpoint_comparison.json}; first two endpoints additionally \repoPath{results/runs/step10_supplementary_conditional_20k_v1/scoring/step10_results.json} \\
+STEP 13 unconditional final summary & \repoPath{results/runs/step13_final_unconditional_benchmark_v1/summary.json} \\
+Frozen dual-view evaluator & \shortHash{963a8c35}{1561d075}; checkpoint \repoPath{artifacts/checkpoints/dr04_evaluator_epoch41.pt} \\
+Sealed conditional panel & \shortHash{70563589}{4c1b0d8}; STEP 9B protocol \repoPath{results/runs/v2a_step9b_final_supplementary_ema60k_v1/supplementary_protocol.json} \\
+M4.9 release validation & \repoPath{results/release_validation/m4_9_gpu_validation_20261021/validation.json} \\
+\bottomrule
+\end{longtable}
+
+The historical evaluation and decision ledger is \repoPath{docs/release/HISTORICAL_EVALUATION_AND_DECISION_AUDIT.md}. This report neither opens protected memberships nor substitutes its own records for original manifests. The legacy Evaluator64 is excluded from final metrics.

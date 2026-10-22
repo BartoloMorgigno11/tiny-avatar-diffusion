@@ -1,0 +1,32 @@
+\section{Independent evaluator and benchmark protocol}\label{sec:evaluation}
+The evaluation instrument evolved with the project. Early V1 development used an earlier native32 evaluator and development pools; those results informed exploration but are not numerically merged with later metrics. Subsequent native64 work exposed the difference between direct64 and downsampled routes. The frozen CartoonSet100k dual-view evaluator below is the later measuring instrument used by the sealed registry and by the explicitly labelled STEP~9B/STEP~10 supplementary applications. Thus an identical metric label does not establish numerical comparability across evaluator weights, pools, preprocessing, or scoring definitions.
+Conditioning adherence is measured by an independent CartoonSet100k CNN rather than by generator loss. The dual-view evaluator has 293\,064 parameters and four canonical heads. It shares one set of CNN weights between native RGB64 and official RGB32 bilinearly upscaled to RGB64. It is trained from scratch on \texttt{EVAL\_TRAIN} for 50 epochs with seed 2026 and is selected on \texttt{EVAL\_VAL}; generator outputs, ID\_TEST, FINAL\_OOD, and real-ceiling roles are excluded from this selection procedure. The separation gives the evaluator a defined role as a measuring instrument rather than a learned component of the generator.
+
+The frozen endpoint is \texttt{best.pt}, selected at epoch 47, with abbreviated SHA-256 \shortHash{963a8c35}{1561d075}. Its EVAL\_VAL macro balanced accuracy of 0.999503 is an evaluator-selection statistic on real images, not generated-image accuracy. CA8 and H7 use the \texttt{official\_rgb32\_bilinear\_up64} view; V2-A uses \texttt{native\_rgb64}. The legacy Evaluator64 is excluded from final metrics. The complete path and digest remain in the checkpoint manifest listed in \cref{app:provenance}, rather than in a narrow main-text line.
+
+For a generated prompt $i$, seed $s$, and attribute $j\in\{1,\ldots,4\}$, let $y_{ij}$ be the requested class and $\hat y_{isj}$ the evaluator prediction. Mean attribute accuracy (MAA) averages atomic correctness,
+\begin{equation}\label{eq:maa}
+\operatorname{MAA}=\frac{1}{4PS}\sum_{i=1}^{P}\sum_{s=1}^{S}\sum_{j=1}^{4}\mathbb{1}[\hat y_{isj}=y_{ij}],
+\end{equation}
+The corresponding exact attribute match (EAM) requires all four requested attributes to be correct,
+\begin{equation}\label{eq:eam}
+\operatorname{EAM}=\frac{1}{PS}\sum_{i=1}^{P}\sum_{s=1}^{S}\prod_{j=1}^{4}\mathbb{1}[\hat y_{isj}=y_{ij}].
+\end{equation}
+
+DR04 defines the compositional primary metric differently. Each OOD family $h$ fixes a pair of primitive attributes $(a_h,b_h)$. Its pair-success rate is
+\begin{equation}\label{eq:psr-h}
+\operatorname{PSR}_h=\frac{1}{|\mathcal{I}_h|S}\sum_{i\in\mathcal{I}_h}\sum_{s=1}^{S}\mathbb{1}[\hat y_{is,a_h}=y_{i,a_h}]\,\mathbb{1}[\hat y_{is,b_h}=y_{i,b_h}],
+\end{equation}
+and the primary compositional aggregate is the unweighted family mean
+\begin{equation}\label{eq:macro-psr}
+\operatorname{MacroPSR}=\frac{1}{4}\sum_{h=1}^{4}\operatorname{PSR}_h.
+\end{equation}
+This distinction is substantive: EAM asks the evaluator to confirm every requested attribute, whereas $\operatorname{PSR}_h$ tests the two primitives that define the withheld combination. Per-attribute accuracy identifies the source of aggregate error. FID \parencite{heusel2017ttur} and KID \parencite{binkowski2018mmd} are meaningful only within a common resolution namespace and matched real/generated pools; LPIPS \parencite{zhang2018lpips} quantifies seed diversity rather than realism.
+
+The v3 scorer now serializes EAM separately, computes \texttt{psr\_h} only for the four OOD families, and computes \texttt{macro\_psr} as their unweighted mean. Its paired bootstrap resamples prompt-level differences independently within each OOD family before averaging the four family draws. This preserves prompt clustering and avoids assigning an invented compositional pair to ID cases.
+
+The frozen benchmark specifies 40 ID prompts and 40 compositional-OOD prompts, with 10 prompts in each of four OOD families and seeds 2026--2030. This yields 400 authenticated images per conditional endpoint. Its paired percentile bootstrap uses 10\,000 resamples at prompt level, preserving all five seeds and estimating H7--CA8 differences within each OOD family before averaging. Such intervals quantify sampling uncertainty under the fixed panel; they do not compensate for evaluator error. There is no structured human audit; qualitative grids are illustrative only.
+
+For image quality, the Common-32 protocol uses the same 808 authenticated DR05 real RGB32 references and 400 unique generated images for every endpoint. CA8 and H7 retain native32 outputs; V2-A is converted only in an isolated, provenance-recorded 64-to-32 LANCZOS-derived pool. Clean-FID 0.1.35 Inception-v3 features are used, with KID computed from 100 subsets of size 400 (seed 2026) and FID as a finite-sample plug-in estimate. These are global distributional measures in a common 32-pixel space, not text-adherence measures and not a native64-detail measurement.
+
+LPIPS is an independent diversity estimand. Conditional values are within-prompt, across-seed LPIPS macro-averaged over prompts. STEP~13 unconditional values use 200 deterministic disjoint marginal pairs, pairing sorted samples at ranks $i$ and $i+200$; they do not measure same-prompt diversity. Native64 LPIPS is descriptive and must not be ranked numerically against native32 LPIPS. Conditional and unconditional LPIPS are therefore not interchangeable.

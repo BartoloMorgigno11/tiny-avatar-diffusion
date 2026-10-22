@@ -1,0 +1,19 @@
+{
+  "schema": "tiny_avatar_diffusion.final_four_model_qualitative_gallery.v1",
+  "kind": "qualitative_samples_not_quantitative_evidence",
+  "sampler": "ancestral_ddpm_1000_steps",
+  "checkpoint_weight_variant": "EMA",
+  "unconditional": [
+    {"model":"DDPM-U32","checkpoint":"artifacts/checkpoints/ddpm-u32-ema-40k.pt","checkpoint_sha256":"578aa9301d19910f323332f46062b3803b8f8ad5236d67e9e0cbfb11a5694974","resolution":32,"seed":2026,"png":"results/qualitative/final_four_model_gallery_seed2026/unconditional/DDPM-U32_seed2026.png","png_sha256":"66ad59930c20f7ecd606322a686937c72437d0db4a4ee996a8869556ff3442d3"},
+    {"model":"DDPM-U32","checkpoint":"artifacts/checkpoints/ddpm-u32-ema-40k.pt","checkpoint_sha256":"578aa9301d19910f323332f46062b3803b8f8ad5236d67e9e0cbfb11a5694974","resolution":32,"seed":2027,"png":"results/qualitative/final_four_model_gallery_seed2026/unconditional/DDPM-U32_seed2027.png","png_sha256":"8c307ecca479fec4b056bda8e49a0b50738bc6afeec99f610e8dfd079cd08f2a"},
+    {"model":"DDPM-U64","checkpoint":"artifacts/checkpoints/ddpm-u64-ema-60k.pt","checkpoint_sha256":"36925385824a4915f1e13a0fe0c896d88c7c57c3296d31f24703fa18e08e14d0","resolution":64,"seed":2026,"png":"results/qualitative/final_four_model_gallery_seed2026/unconditional/DDPM-U64_seed2026.png","png_sha256":"3226d81f40938eadee4d90cf6a2ba87a74798e447ed590eef095b958af2a5463"},
+    {"model":"DDPM-U64","checkpoint":"artifacts/checkpoints/ddpm-u64-ema-60k.pt","checkpoint_sha256":"36925385824a4915f1e13a0fe0c896d88c7c57c3296d31f24703fa18e08e14d0","resolution":64,"seed":2027,"png":"results/qualitative/final_four_model_gallery_seed2026/unconditional/DDPM-U64_seed2027.png","png_sha256":"f20cec84f5451c1b44932e5c97328fc4eb7c8139d06e41ab7a7f780c3617d3ee"}
+  ],
+  "conditional": [
+    {"ood":"OOD1","caption":"avatar face_shape_oval glasses_rimless_glasses hair_color_blue_gray face_color_golden_tan","model":"DDPM-C32","checkpoint":"artifacts/checkpoints/ddpm-c32-ema-40k.pt","checkpoint_sha256":"438e4672888e6d9177820db5756e32a71649fa1ec16b7ccef11c6e38d2f89944","resolution":32,"seed":2026,"png":"results/qualitative/final_four_model_gallery_seed2026/conditional/OOD1_DDPM-C32_seed2026.png","png_sha256":"b9239812c51db5cd0d4857237bc14794e194321d3372a2ca963ae5507c577a73"},
+    {"ood":"OOD1","caption":"avatar face_shape_oval glasses_rimless_glasses hair_color_blue_gray face_color_golden_tan","model":"DDPM-C64","checkpoint":"artifacts/checkpoints/ddpm-c64-ema-60k.pt","checkpoint_sha256":"42666355b5de3dfe5091f1c48036acb6782c76c2bed013a129b885cc460762e4","resolution":64,"seed":2026,"png":"results/qualitative/final_four_model_gallery_seed2026/conditional/OOD1_DDPM-C64_seed2026.png","png_sha256":"e41353a167e0c89bcd6b7564a205e467bfd1b2f11a93d7feecd1f6ce19c6b676"},
+    {"ood":"OOD2","caption":"avatar face_shape_round glasses_no_glasses hair_color_dark_brown face_color_peach_tan","model":"DDPM-C32","checkpoint":"artifacts/checkpoints/ddpm-c32-ema-40k.pt","checkpoint_sha256":"438e4672888e6d9177820db5756e32a71649fa1ec16b7ccef11c6e38d2f89944","resolution":32,"seed":2026,"png":"results/qualitative/final_four_model_gallery_seed2026/conditional/OOD2_DDPM-C32_seed2026.png","png_sha256":"70d9bc99b4e9d9987176f3079187b03148bb5cc90b9a525b9f7dfb222c1b0af8"},
+    {"ood":"OOD2","caption":"avatar face_shape_round glasses_no_glasses hair_color_dark_brown face_color_peach_tan","model":"DDPM-C64","checkpoint":"artifacts/checkpoints/ddpm-c64-ema-60k.pt","checkpoint_sha256":"42666355b5de3dfe5091f1c48036acb6782c76c2bed013a129b885cc460762e4","resolution":64,"seed":2026,"png":"results/qualitative/final_four_model_gallery_seed2026/conditional/OOD2_DDPM-C64_seed2026.png","png_sha256":"124f0fc17f43ae50a7cd3167f289c3d5ccc011e963ccb7b62d5f5789ea546de8"}
+  ],
+  "note": "Unconditional samples have no prompt. Conditional rows use the same canonical caption and nominal seed for C32/C64; different architectures/resolutions do not imply identical initial noise."
+}

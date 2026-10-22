@@ -11,3 +11,7 @@ results/runs/dr05_final_efficiency_v1/conditional_b1.json text eol=crlf
 results/runs/dr05_final_efficiency_v1/unconditional_b1.json text eol=crlf
 results/runs/dr05_final_efficiency_v1/conditional_b16.json text eol=crlf
 results/runs/dr05_final_efficiency_v1/unconditional_b16.json text eol=crlf
+data/processed/ca16_eval_v1/robust_conditioning_manifest.json -text
+data/processed/ca16_eval_v1/checkpoint_selection_manifest.json -text
+data/processed/ca16_eval_v1/quality_guardrail_manifest.json -text
+data/processed/ca16_eval_v1/manifest_audit.json -text

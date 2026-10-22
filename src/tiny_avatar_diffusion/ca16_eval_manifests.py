@@ -12,7 +12,9 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable
 
-ROOT = Path(__file__).resolve().parents[2]
+from tiny_avatar_diffusion.release_paths import release_root
+
+ROOT = release_root()
 SOURCE_ROOT = ROOT / "data" / "processed" / "dr01_v1" / "text" / "10k"
 SUMMARY_PATH = ROOT / "data" / "processed" / "dr01_v1" / "split_summary.json"
 BASELINE_TAG = "v1.0.0"

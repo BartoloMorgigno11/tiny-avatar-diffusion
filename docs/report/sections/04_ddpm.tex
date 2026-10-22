@@ -1,0 +1,17 @@
+\section{Denoising diffusion model}\label{sec:ddpm}
+A DDPM defines a Gaussian noising chain on a clean image $x_0$ and learns to reverse it \parencite{ho2020ddpm}. The implementation uses $T=1000$ steps and a linear schedule from $\beta_1=10^{-4}$ to $\beta_T=2\cdot10^{-2}$. With $\alpha_t=1-\beta_t$ and $\bar\alpha_t=\prod_{s=1}^{t}\alpha_s$, the marginal forward process is
+\begin{equation}\label{eq:forward-diffusion}
+q(x_t\mid x_0)=\mathcal{N}\!\left(\sqrt{\bar\alpha_t}\,x_0,(1-\bar\alpha_t)I\right).
+\end{equation}
+Equivalently, a noisy state can be drawn directly as
+\begin{equation}\label{eq:reparameterization}
+x_t=\sqrt{\bar\alpha_t}\,x_0+\sqrt{1-\bar\alpha_t}\,\epsilon,
+\qquad \epsilon\sim\mathcal{N}(0,I).
+\end{equation}
+The conditional denoiser predicts the injected noise from $x_t$, $t$, and text context $c$:
+\begin{equation}\label{eq:epsilon-loss}
+\mathcal{L}_{\epsilon}=\mathbb{E}_{x_0,t,\epsilon}\left[\left\lVert\epsilon-\epsilon_\theta(x_t,t,c)\right\rVert_2^2\right].
+\end{equation}
+Sampling uses the ancestral DDPM reverse chain with fixed-small posterior variance and predicted-$x_0$ clipping. Classifier-free guidance is not used. Keeping the prediction target, noise schedule, and reverse-process semantics fixed is essential: it makes the location and presence of cross-attention the intended architectural intervention.
+
+More explicitly, the learned reverse transition is parameterized as $p_\theta(x_{t-1}\mid x_t,c)$, with its mean derived from $\epsilon_\theta(x_t,t,c)$. At sampling time the procedure starts from Gaussian noise $x_T$ and applies the reverse transition sequentially from $T$ to 1. This full ancestral trajectory is computationally expensive because it requires 1\,000 denoiser evaluations per image, but it preserves the same sampling semantics across the compared architectures. Predicted-$x_0$ clipping is a numerical safeguard in the reverse update; it is not an image-editing operation and does not alter the training target in \cref{eq:epsilon-loss}.

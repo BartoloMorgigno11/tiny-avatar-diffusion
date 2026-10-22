@@ -1,6 +1,15 @@
 # Reproducibility Guide
 
-This document describes the frozen Tiny Avatar Diffusion V1 repository as implemented. Displayed metrics use reporting precision; canonical serialized values remain unchanged in the frozen evidence artifacts.
+This document describes the frozen Tiny Avatar Diffusion repository as implemented. Displayed metrics use reporting precision; canonical serialized values remain unchanged in the frozen evidence artifacts.
+
+## Public release names
+
+Professor-facing interfaces use only `DDPM-U32`, `DDPM-C32`, `DDPM-U64` and
+`DDPM-C64`; their paths and hashes are in
+`src/tiny_avatar_diffusion/public_model_manifest.json`. Historical identifiers
+remain below only where they are immutable checkpoint fields, frozen-record keys
+or technical loader identities required to reproduce provenance. They are not
+public model selections.
 
 ## 1. Reproducibility scope
 
@@ -11,6 +20,29 @@ Three activities must not be confused:
 3. **Full experimental recomputation** — rebuild DR01 artifacts, train models, regenerate evaluation populations, and rerun metrics. These workflows are expensive and write scientific artifacts.
 
 The final clean-release audit procedure is documented for later execution. This guide does not claim that a clean-clone audit has already passed.
+
+### Professor-facing four-model package
+
+The public package contains exactly four inference endpoints: DDPM-U32
+(`v1_unconditional_40k`), DDPM-C32 (`h7_conditional_40k`), DDPM-U64
+(`v2a_unconditional_60k`) and DDPM-C64 (`v2a_conditional_60k`). Their paths,
+EMA identity, source provenance and SHA-256 values are immutable fields in
+`src/tiny_avatar_diffusion/public_model_manifest.json`. The four CPU-default
+notebooks are in `notebooks/final/`; their saved-input boundary is recorded in
+`docs/RELEASE_CONTENTS.md`. This packaging statement does not create a new
+scientific evaluation or supersede the frozen DR04/DR05 records.
+
+### Packaged CPU notebook evidence
+
+The release packages the default inputs and exported figures for all four
+notebooks in `notebooks/final/`. Notebook 03 additionally packages its 20
+native 4x5 qualitative PNGs and provenance manifest; Notebook 04 packages its
+eight four-model gallery PNGs and provenance manifest. These are saved,
+hash-recorded visual evidence for display and verification, not a new benchmark.
+Optional notebook regeneration/inference cells remain disabled and require CUDA
+plus the documented historical intermediate checkpoints where applicable; the
+four public EMA inference checkpoints alone do not reproduce every historical
+training trajectory bit-for-bit.
 
 ### CA16 closure boundary
 
@@ -35,6 +67,10 @@ python scripts/generate_h7_report.py --snapshot docs/experiments/data/h7_results
 ```
 
 Strict verification fails on an identity or metric mismatch and never substitutes the snapshot. Full H7 training, sampling, R11, R13, KID, and FID reproduction requires the external historical CA16/H7 checkpoints, result roots, Cartoon Set assets, evaluator/metric assets, and CUDA where the corresponding frozen workflow requires it; those assets are intentionally not Git-shipped.
+
+### Selected H7 inference release
+
+R2 packages the selected seed-2026 H7 EMA state as `artifacts/checkpoints/h7_ca8_ca16_40k_ema_seed2026.pt`. It is a native 32×32 RGB, epsilon-prediction, 1,000-step linear DDPM with CA8+CA16, a scratch two-layer text Transformer, no classifier-free guidance, and 4,749,059 total parameters. The package includes only model/text EMA weights plus immutable architecture and vocabulary identity; it contains no optimizer, training-state, or Cartoon Set archive. Use the normal package CLI from this release worktree; no H7 research-worktree command is required. See [the H7 inference release note](docs/release/h7_inference.md) for the exact command and integrity hashes.
 
 ## 2. Repository and software requirements
 
@@ -65,6 +101,11 @@ On Linux or macOS, activate with `source .venv/bin/activate`. A minimal inferenc
 ## 4. Data acquisition and expected layout
 
 The project uses the official **Google Cartoon Set** 10k and 100k archives. The repository contains no automatic downloader. Obtain the archives manually from the [official Google Cartoon Set download page](https://google.github.io/cartoonset/download.html), retaining these names and locations:
+
+Cartoon Set data are licensed by Google LLC under CC BY 4.0. The project-code
+Apache-2.0 license does not apply to the dataset, and this repository does not
+redistribute its original archives or raw image corpus. See
+[dataset attribution and acquisition](docs/release/DATASET_ATTRIBUTION.md).
 
 ```text
 data/raw/cartoonset/archives/
@@ -248,11 +289,12 @@ These hashes were computed from the actual files. The inference loader also enfo
 | Role | Logical repository path | SHA256 | Expected metadata |
 |---|---|---|---|
 | Conditional generator | `artifacts/checkpoints/conditional_main_ema_step20000.pt` | `a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb` | `conditional_main`; EMA; step 20000; 4,723,907 parameters |
+| Selected H7 conditional generator | `artifacts/checkpoints/h7_ca8_ca16_40k_ema_seed2026.pt` | `438e4672888e6d9177820db5756e32a71649fa1ec16b7ccef11c6e38d2f89944` | `h7_ca8_ca16_40k`; EMA; step 40000; 4,749,059 parameters; source `80eedea866a8f73b728b0d8bdc184910c814e93857d051f0cbb5a680ac6f10dd` |
 | Unconditional generator | `artifacts/checkpoints/unconditional_main_ema_step20000.pt` | `70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e` | `unconditional_main`; EMA; step 20000; 4,595,779 parameters |
 | Evaluator | `artifacts/checkpoints/dr04_evaluator_epoch41.pt` | `414d2e0bb597c53041f6cf695d965231ab1c4f38c9080b68c06f9c09dcf001dc` | `dr04_evaluator`; epoch 41; 293,064 parameters |
 
 ```powershell
-Get-FileHash -Algorithm SHA256 artifacts/checkpoints/conditional_main_ema_step20000.pt,artifacts/checkpoints/unconditional_main_ema_step20000.pt,artifacts/checkpoints/dr04_evaluator_epoch41.pt
+Get-FileHash -Algorithm SHA256 artifacts/checkpoints/h7_ca8_ca16_40k_ema_seed2026.pt,artifacts/checkpoints/conditional_main_ema_step20000.pt,artifacts/checkpoints/unconditional_main_ema_step20000.pt,artifacts/checkpoints/dr04_evaluator_epoch41.pt
 ```
 
 ## 12. Frozen evidence and canonical artifacts

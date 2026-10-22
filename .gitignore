@@ -19,6 +19,9 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
+# Internal read-only release-audit inventories; not professor-facing deliverables.
+.release_audit/
+
 # Environment and secrets
 .env
 .env.*
@@ -35,9 +38,13 @@ checkpoints/
 *.pth
 !artifacts/
 !artifacts/checkpoints/
-!artifacts/checkpoints/conditional_main_ema_step20000.pt
-!artifacts/checkpoints/unconditional_main_ema_step20000.pt
-!artifacts/checkpoints/dr04_evaluator_epoch41.pt
+artifacts/checkpoints/conditional_main_ema_step20000.pt
+artifacts/checkpoints/unconditional_main_ema_step20000.pt
+artifacts/checkpoints/dr04_evaluator_epoch41.pt
+!artifacts/checkpoints/h7_ca8_ca16_40k_ema_seed2026.pt
+!artifacts/checkpoints/v1_unconditional_ema_step40000.pt
+!artifacts/checkpoints/v2_a_unconditional_ema_step60000.pt
+!artifacts/checkpoints/v2_a_conditional_ema_step60000.pt
 
 # Temporary experimental outputs
 outputs/
@@ -94,3 +101,13 @@ reports/dr03_lr_pilot/lr_*/
 reports/dr03_main_training/
 reports/dr03_main_training_integrity/gate_*/
 reports/dr03_main_training_integrity/integrity_*/
+
+# Local blinded H12 review package and temporary builder
+.review_h12_h7_only/
+.review_h12_build.py
+
+# Local independent H12 second-review package
+.review_h12_h7_second/
+
+# Local H13 paired-counterfactual outputs and blinded review
+.review_h13_face_color_counterfactual/

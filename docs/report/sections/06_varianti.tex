@@ -1,0 +1,18 @@
+\section{Final model family and comparison logic}\label{sec:variants}
+The public release contains exactly the four EMA endpoints in \cref{tab:models}. ``40k'' and ``60k'' denote successful optimizer updates, not dataloader iterations. Within each native resolution, the unconditional and conditional endpoint use the corresponding image backbone; conditioning adds the scratch text encoder and CA8+CA16. This architectural relationship does not turn independently trained unconditional and conditional trajectories into a one-factor causal experiment.
+
+\begin{table}[htbp]
+\centering
+\caption{Final public $2\times2$ model family. SHA-256 package identities are listed in \cref{app:provenance}.}\label{tab:models}
+\small
+\begin{tabularx}{\linewidth}{l Y Y r Y}
+\toprule
+Resolution & Unconditional & Conditional & Updates & Parameters (U/C) \\
+\midrule
+$32\times32$ & V1 & H7: scratch text encoder, CA8+CA16 & 40k & 4\,595\,779 / 4\,749\,059 \\
+$64\times64$ & V2-A & V2-A: scratch text encoder, CA8+CA16 & 60k & 5\,077\,123 / 5\,230\,403 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The historical conditional ablation endpoints are retained separately in \cref{tab:conditional-chain}; they are not additional public models. CA16 adds 25\,152 parameters relative to CA8. Capacity is consequently a declared confound: CA8--H7 estimates the complete CA16 intervention, not a causal effect attributable solely to an attention location. Native32-to-native64 comparisons are descriptive because resolution, architecture, and preprocessing change together.

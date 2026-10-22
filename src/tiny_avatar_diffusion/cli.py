@@ -85,6 +85,33 @@ def _add_conditional_description(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--face-color", choices=_attribute_choices("face_color"))
 
 
+def _add_conditional_model_selection(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--model",
+        choices=("h7", "v1-ca8"),
+        default="h7",
+        help=(
+            "Conditional checkpoint: h7 is the selected CA8+CA16 40k EMA release; "
+            "v1-ca8 is the historical 20k CA8 baseline."
+        ),
+    )
+
+
+def _add_v2_model_selection(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--model",
+        choices=("v2-a", "v2-b"),
+        required=True,
+        help="Native64 model architecture; an exact authenticated external checkpoint is required.",
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        required=True,
+        help="Path to the authenticated V2 40k training checkpoint (not package-shipped).",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="tiny-avatar",
@@ -105,6 +132,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Generate a conditional avatar using structured attributes XOR --prompt.",
     )
     _add_conditional_description(conditional)
+    _add_conditional_model_selection(conditional)
     _add_runtime_arguments(conditional)
     conditional.add_argument("--output", type=Path, help="Explicit .png destination.")
     conditional.add_argument(
@@ -130,6 +158,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     unconditional.set_defaults(handler=_run_generate_unconditional)
 
+    native64 = variants.add_parser(
+        "v2",
+        help="Generate one native64 V2-A or V2-B avatar from an authenticated external checkpoint.",
+        description="Native64 V2 generation; no resize is applied before or after sampling.",
+    )
+    _add_conditional_description(native64)
+    _add_v2_model_selection(native64)
+    native64.add_argument("--seed", type=_seed, default=2026, help="Generation seed (default: 2026).")
+    native64.add_argument("--device", choices=("auto", "cuda", "cpu"), default="auto")
+    native64.add_argument("--metadata", action="store_true", help="Write JSON metadata.")
+    native64.add_argument("--overwrite", action="store_true", help="Allow replacing output files.")
+    native64.add_argument("--output", type=Path, help="Explicit .png destination.")
+    native64.set_defaults(handler=_run_generate_v2)
+
     compare = commands.add_parser(
         "compare",
         help="Generate a qualitative paired conditional/unconditional comparison.",
@@ -140,6 +182,7 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     _add_conditional_description(compare)
+    _add_conditional_model_selection(compare)
     _add_runtime_arguments(compare)
     compare.add_argument(
         "--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="Output directory."
@@ -270,6 +313,14 @@ def _png_bytes(image: Any) -> bytes:
     return stream.getvalue()
 
 
+def _native64_png_bytes(image: Any) -> bytes:
+    if image.mode != "RGB" or image.size != (64, 64):
+        raise RuntimeError("V2 CLI serialization requires an RGB 64x64 image")
+    stream = io.BytesIO()
+    image.save(stream, format="PNG")
+    return stream.getvalue()
+
+
 def _json_bytes(payload: dict[str, Any]) -> bytes:
     return (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8")
 
@@ -373,6 +424,39 @@ def _run_generate_unconditional(args: argparse.Namespace) -> int:
     return _run_generate(args, api=_inference_api(), variant="unconditional", attributes=None, prompt=None)
 
 
+def _run_generate_v2(args: argparse.Namespace) -> int:
+    api = _inference_api()
+    attributes, prompt = _structured_attributes(args, api)
+    explicit_output = _validate_output_path(args.output) if args.output is not None else None
+    if explicit_output is not None:
+        _preflight([explicit_output, *( [explicit_output.with_suffix(".json")] if args.metadata else [])], [], overwrite=args.overwrite)
+    variant = args.model.replace("-", "_")
+    bundle = api.load_v2_native64_bundle(variant, args.checkpoint, device=args.device)
+    print("Sampling native64 with 1000 ancestral DDPM reverse steps...")
+    image = api.generate_v2_native64(bundle, caption=prompt, seed=args.seed)
+    pixel_prefix = hashlib.sha256(image.tobytes()).hexdigest()[:8]
+    image_path = explicit_output or (DEFAULT_OUTPUT_DIR / f"{args.model}_native64_seed{args.seed}_{pixel_prefix}.png").resolve()
+    files = [image_path, *( [image_path.with_suffix(".json")] if args.metadata else [])]
+    _preflight(files, [], overwrite=args.overwrite)
+    payloads: list[tuple[Path, bytes]] = [(image_path, _native64_png_bytes(image))]
+    if args.metadata:
+        payloads.append((image_path.with_suffix(".json"), _json_bytes({
+            "model_variant": variant,
+            "native_resolution": [64, 64],
+            "resize_applied": False,
+            "checkpoint_sha256": bundle.checkpoint_sha256,
+            "checkpoint_path": str(bundle.checkpoint_path),
+            "seed": args.seed,
+            "canonical_prompt": prompt,
+            "attributes": {name: getattr(attributes, name) for name in ("face_shape", "glasses", "hair_color", "face_color")},
+            "sampler": "ancestral_ddpm_1000",
+            "png_sha256": hashlib.sha256(_native64_png_bytes(image)).hexdigest(),
+        })))
+    _write_payloads(payloads)
+    print(f"\nGeneration completed\nImage: {image_path}\nModel: {args.model}\nNative resolution: 64x64\nSeed: {args.seed}")
+    return 0
+
+
 def _run_generate(
     args: argparse.Namespace,
     *,
@@ -391,7 +475,12 @@ def _run_generate(
     print("Sampling 1000 reverse steps...")
     snapshot_timesteps = CLI_SNAPSHOT_TIMESTEPS if args.save_steps else None
     if variant == "conditional":
-        bundle = api.load_conditional_bundle(args.device)
+        model_choice = getattr(args, "model", "h7")
+        bundle = (
+            api.load_h7_conditional_bundle(args.device)
+            if model_choice == "h7"
+            else api.load_conditional_bundle(args.device)
+        )
         result = api.generate_conditional(
             bundle,
             seed=args.seed,
@@ -465,7 +554,11 @@ def _run_compare(args: argparse.Namespace) -> int:
     print("QUALITATIVE PAIRED COMPARISON")
     print("Sampling 1000 reverse steps per branch...")
     snapshot_timesteps = CLI_SNAPSHOT_TIMESTEPS if args.save_steps else None
-    conditional_bundle = api.load_conditional_bundle(args.device)
+    conditional_bundle = (
+        api.load_h7_conditional_bundle(args.device)
+        if args.model == "h7"
+        else api.load_conditional_bundle(args.device)
+    )
     unconditional_bundle = api.load_unconditional_bundle(args.device)
     pair = api.generate_paired(
         conditional_bundle,

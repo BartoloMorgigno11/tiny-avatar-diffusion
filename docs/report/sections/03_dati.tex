@@ -1,0 +1,27 @@
+\section{Data, captions, and compositional splits}\label{sec:data}
+The generators are trained on CartoonSet10k, whereas the independent conditioning evaluator is trained on CartoonSet100k, a separate archive from the same domain \parencite{cartoonset}. This division is methodological rather than cosmetic: a classifier trained on the same source identities as the generator could conflate memorized image regularities with measurement of prompt adherence. CartoonSet10k supplies the generator data; CartoonSet100k supplies the evaluator data and is not used to train the denoiser or text encoder.
+
+\begin{table}[htbp]
+\centering
+\caption{Frozen CartoonSet10k roles in the generative split. Only \texttt{TRAIN} is used to optimize generator parameters.}\label{tab:generative-splits}
+\small
+\begin{tabularx}{\linewidth}{l r Y}
+\toprule
+Role & Images & Purpose \\
+\midrule
+\texttt{TRAIN} & 8\,388 & generator optimization and TRAIN-only vocabulary \\
+\texttt{ID\_VAL} & 466 & development diagnostics \\
+\texttt{ID\_TEST} & 466 & protected in-distribution evaluation \\
+\texttt{COMP\_VAL} & 338 & development compositional diagnostics \\
+\texttt{FINAL\_OOD} & 342 & protected compositional evaluation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The canonical variables are \texttt{face\_shape}, \texttt{glasses}, \texttt{hair\_color}, and \texttt{face\_color}, with 7, 12, 10, and 11 classes respectively. Each caption follows the deterministic grammar \texttt{avatar <face\_shape> <glasses> <hair\_color> <face\_color>}. DR01 lowercases and whitespace-normalizes the text, tokenizes by whitespace, and treats underscores as atomic. The vocabulary is built only from \texttt{TRAIN} captions: it contains 45 tokens, and serialized sequences have length seven, comprising \texttt{<bos>}, five lexical tokens, and \texttt{<eos>}.
+
+The compositional split design withholds selected attribute pairs while retaining each participating primitive in training. The five roles are mutually disjoint and their union covers the 10k source identities; structural checks also verify that held-out pairs are absent from \texttt{TRAIN}, their primitives remain represented there, and exact image hashes do not cross role boundaries. A failure on such a case can therefore be interpreted as a compositional failure rather than mere exposure to an unseen class. Protected memberships are neither reproduced nor reconstructed in this report.
+
+The four final pair holdouts are explicit: OOD1 holds out \texttt{face\_shape=2} with \texttt{glasses=3}; OOD2 holds out \texttt{face\_shape=4} with \texttt{hair\_color=6}; OOD3 holds out \texttt{glasses=10} with \texttt{face\_color=10}; and OOD4 holds out \texttt{hair\_color=0} with \texttt{face\_color=0}. We retain numeric identifiers because the authenticated split manifest, rather than an informal colour-name translation, defines the experimental intervention.
+
+Input images are alpha-composited on white and converted to RGB. Native32 generation uses the official RGB32 preprocessing route. Native64 V2 models use a direct source-to-RGB64 route, rather than resizing a native32 generator input. The evaluator preserves this distinction: native32 generator images are bilinearly upscaled from official RGB32 to RGB64, whereas V2 outputs enter through the native RGB64 view. Thus common evaluator weights do not erase the provenance of the model's native image resolution.

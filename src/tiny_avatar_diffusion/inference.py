@@ -43,18 +43,35 @@ from tiny_avatar_diffusion.text_conditioning import (
 )
 from tiny_avatar_diffusion.tokenizer import UNK_ID, WhitespaceTokenizer
 from tiny_avatar_diffusion.unet import ConditionalTinyUNet, TinyUNet
+from tiny_avatar_diffusion.h7_release import (
+    H7_PARAMETER_COUNT,
+    H7_SOURCE_SHA256,
+    H7_VOCABULARY_SHA256,
+    h7_architecture,
+)
+from tiny_avatar_diffusion.release_paths import release_root
+from tiny_avatar_diffusion.v2_release import (
+    V2Native64InferenceBundle,
+    generate_v2_native64,
+    load_v2_native64_bundle,
+)
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = release_root()
 CHECKPOINT_ROOT = ROOT / "artifacts" / "checkpoints"
 VOCABULARY_PATH = ROOT / "data" / "processed" / "dr01_v1" / "text" / "10k" / "vocab.json"
 
 CONDITIONAL_CHECKPOINT = CHECKPOINT_ROOT / "conditional_main_ema_step20000.pt"
 UNCONDITIONAL_CHECKPOINT = CHECKPOINT_ROOT / "unconditional_main_ema_step20000.pt"
 EVALUATOR_CHECKPOINT = CHECKPOINT_ROOT / "dr04_evaluator_epoch41.pt"
+H7_CONDITIONAL_CHECKPOINT = CHECKPOINT_ROOT / "ddpm-c32-ema-40k.pt"
 
 CONDITIONAL_SHA256 = "a1abad595c53887b621021b67154a04af2505a4b68e6b9229841601250ca14fb"
 UNCONDITIONAL_SHA256 = "70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e"
 EVALUATOR_SHA256 = "414d2e0bb597c53041f6cf695d965231ab1c4f38c9080b68c06f9c09dcf001dc"
+# Set only after packaging from the authoritative H7 source checkpoint.
+H7_CONDITIONAL_SHA256 = "438e4672888e6d9177820db5756e32a71649fa1ec16b7ccef11c6e38d2f89944"
+CA8_40K_RUN_ID = "ca8_40k_native32_seed2026"
+CA8_40K_PARAMETER_COUNT = 4_723_907
 
 CONDITIONAL_PARAMETER_COUNT = 4_723_907
 UNCONDITIONAL_PARAMETER_COUNT = 4_595_779
@@ -90,6 +107,7 @@ class ConditionalInferenceBundle:
     tokenizer: WhitespaceTokenizer
     device: torch.device
     requested_device: str = "auto"
+    model_identity: str = "conditional_v1"
 
 
 @dataclass(frozen=True)
@@ -257,6 +275,26 @@ def _load_tokenizer(path: Path = VOCABULARY_PATH) -> WhitespaceTokenizer:
     return WhitespaceTokenizer(artifact["token_to_id"])
 
 
+def _h7_tokenizer(artifact: dict[str, Any]) -> WhitespaceTokenizer:
+    vocabulary = artifact.get("vocabulary")
+    if not isinstance(vocabulary, dict):
+        raise ValueError("H7 artifact lacks an embedded vocabulary")
+    if artifact.get("vocabulary_sha256") != H7_VOCABULARY_SHA256:
+        raise ValueError("H7 artifact vocabulary SHA256 mismatch")
+    if artifact.get("vocabulary_relative_path") != "data/processed/dr01_v1/text/10k/vocab.json":
+        raise ValueError("H7 artifact vocabulary path identity mismatch")
+    if (
+        vocabulary.get("schema") != "tiny_avatar_diffusion.dr01_train_vocabulary"
+        or vocabulary.get("version") != "dr01_v1"
+        or vocabulary.get("dataset_variant") != "10k"
+        or vocabulary.get("source_split") != "TRAIN"
+        or vocabulary.get("vocab_size") != 45
+        or not isinstance(vocabulary.get("token_to_id"), dict)
+    ):
+        raise ValueError("H7 embedded vocabulary identity or schema mismatch")
+    return WhitespaceTokenizer(vocabulary["token_to_id"])
+
+
 def load_conditional_bundle(device: str = "auto") -> ConditionalInferenceBundle:
     """Load the only canonical V1 conditional checkpoint on CPU, then move it."""
     resolved = resolve_device(device)
@@ -295,6 +333,89 @@ def load_conditional_bundle(device: str = "auto") -> ConditionalInferenceBundle:
     return ConditionalInferenceBundle(
         text_encoder, model, schedule, _load_tokenizer(), resolved, device
     )
+
+
+def load_h7_conditional_bundle(device: str = "auto") -> ConditionalInferenceBundle:
+    """Load the selected H7 CA8+CA16 40k EMA checkpoint strictly on CPU first."""
+    resolved = resolve_device(device)
+    artifact = _load_artifact(
+        H7_CONDITIONAL_CHECKPOINT,
+        expected_sha256=H7_CONDITIONAL_SHA256,
+        artifact_type="canonical_inference_checkpoint",
+        model_role="h7_ca8_ca16_40k",
+        expected_parameter_count=H7_PARAMETER_COUNT,
+        selected_field="selected_step",
+        selected_value=40_000,
+        require_ema=True,
+        expected_architecture=h7_architecture(),
+    )
+    if artifact.get("source_checkpoint_sha256") != H7_SOURCE_SHA256:
+        raise ValueError("H7 artifact source checkpoint identity mismatch")
+    if artifact.get("expected_denoiser_parameter_count") != 4_646_083:
+        raise ValueError("H7 artifact denoiser parameter-count identity mismatch")
+    if artifact.get("expected_text_parameter_count") != 102_976:
+        raise ValueError("H7 artifact text parameter-count identity mismatch")
+    text_encoder = TextConditioningEncoder(TextConditioningConfig())
+    model = ConditionalTinyUNet(dropout=0.0, use_decoder16_cross_attention=True)
+    state = artifact["model_state_dict"]
+    try:
+        text_encoder.load_state_dict(state["text_encoder"], strict=True)
+        model.load_state_dict(state["conditional_unet"], strict=True)
+    except (KeyError, RuntimeError) as error:
+        raise ValueError("H7 EMA state_dict is incompatible") from error
+    if _parameter_count(text_encoder, model) != H7_PARAMETER_COUNT:
+        raise ValueError("Loaded H7 model parameter count mismatch")
+    schedule = LinearDDPMSchedule()
+    text_encoder.to(resolved).eval()
+    model.to(resolved).eval()
+    schedule.to(resolved).eval()
+    return ConditionalInferenceBundle(
+        text_encoder,
+        model,
+        schedule,
+        _h7_tokenizer(artifact),
+        resolved,
+        device,
+        "h7_ca8_ca16_40k_ema",
+    )
+
+
+def load_ca8_40k_conditional_bundle(checkpoint_path: Path, *, expected_sha256: str, device: str = "auto") -> ConditionalInferenceBundle:
+    """Strictly load the authenticated CA8-only 40k EMA checkpoint on CPU first."""
+    if not checkpoint_path.is_file():
+        raise FileNotFoundError(checkpoint_path)
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_sha256) or sha256_file(checkpoint_path) != expected_sha256:
+        raise ValueError("CA8 40k checkpoint SHA-256 mismatch")
+    artifact = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    required = {"schema", "run_id", "config", "progress", "text_encoder_state_dict", "conditional_unet_state_dict", "ema_state_dict", "optimizer_state_dict", "grad_scaler_state_dict", "rng_state", "parameter_counts", "provenance"}
+    if not required.issubset(artifact):
+        raise ValueError("CA8 40k checkpoint lacks complete authenticated training state")
+    from tiny_avatar_diffusion.ca8_40k_baseline import phase2_config
+    if artifact["schema"] != "dr03_conditional_main_training_v1" or artifact["run_id"] != CA8_40K_RUN_ID or artifact["config"] != asdict(phase2_config()):
+        raise ValueError("CA8 40k checkpoint identity/configuration mismatch")
+    progress = artifact["progress"]
+    if progress.get("step") != 40_000 or progress.get("images_seen") != 1_280_000:
+        raise ValueError("CA8 40k checkpoint progress mismatch")
+    if progress.get("attempted_batch_count") != 40_014 or progress.get("skipped_step_count") != 14 or progress["attempted_batch_count"] - progress["skipped_step_count"] != progress["step"]:
+        raise ValueError("CA8 40k AMP update accounting mismatch")
+    if artifact["parameter_counts"].get("total") != CA8_40K_PARAMETER_COUNT:
+        raise ValueError("CA8 40k checkpoint parameter-count identity mismatch")
+    ema_state = artifact["ema_state_dict"]
+    if set(ema_state) != {"text_encoder", "conditional_unet"}:
+        raise ValueError("CA8 40k checkpoint lacks a complete EMA state")
+    text_encoder = TextConditioningEncoder(TextConditioningConfig())
+    model = ConditionalTinyUNet(dropout=0.0, use_decoder16_cross_attention=False)
+    try:
+        text_encoder.load_state_dict(ema_state["text_encoder"], strict=True)
+        model.load_state_dict(ema_state["conditional_unet"], strict=True)
+    except (KeyError, RuntimeError) as error:
+        raise ValueError("CA8 40k EMA state_dict is incompatible") from error
+    if _parameter_count(text_encoder, model) != CA8_40K_PARAMETER_COUNT:
+        raise ValueError("Loaded CA8 40k model parameter count mismatch")
+    resolved = resolve_device(device)
+    schedule = LinearDDPMSchedule()
+    text_encoder.to(resolved).eval(); model.to(resolved).eval(); schedule.to(resolved).eval()
+    return ConditionalInferenceBundle(text_encoder, model, schedule, _load_tokenizer(), resolved, device, "ca8_only_native32_40k_ema")
 
 
 def load_unconditional_bundle(device: str = "auto") -> UnconditionalInferenceBundle:
@@ -491,19 +612,32 @@ def _diffusion_metadata(schedule: LinearDDPMSchedule) -> dict[str, Any]:
     }
 
 
-def _model_metadata(model_variant: Literal["conditional", "unconditional"]) -> dict[str, Any]:
+def _model_metadata(model_variant: str) -> dict[str, Any]:
+    selected_step: int
     if model_variant == "conditional":
         checkpoint = CONDITIONAL_CHECKPOINT
         digest = CONDITIONAL_SHA256
-    else:
+        selected_step = 20_000
+    elif model_variant == "unconditional":
         checkpoint = UNCONDITIONAL_CHECKPOINT
         digest = UNCONDITIONAL_SHA256
-    return {
+        selected_step = 20_000
+    else:
+        checkpoint = H7_CONDITIONAL_CHECKPOINT
+        digest = H7_CONDITIONAL_SHA256
+        selected_step = 40_000
+    metadata = {
         "checkpoint_identity": checkpoint.relative_to(ROOT).as_posix(),
         "checkpoint_sha256": digest,
-        "selected_step": 20_000,
+        "selected_step": selected_step,
         "weights_variant": "EMA",
     }
+    if model_variant == "h7_ca8_ca16_40k_ema":
+        metadata.update(
+            architecture="CA8+CA16",
+            source_checkpoint_sha256=H7_SOURCE_SHA256,
+        )
+    return metadata
 
 
 def _sample_parts(
@@ -518,7 +652,7 @@ def _build_generation_result(
     *,
     sample_output: torch.Tensor | ObservedSample,
     initial_x_T: torch.Tensor,
-    model_variant: Literal["conditional", "unconditional"],
+    model_variant: str,
     canonical_prompt: str | None,
     attributes: PromptAttributes | None,
     seed: int,
@@ -597,7 +731,7 @@ def _conditional_from_noise(
     return _build_generation_result(
         sample_output=output,
         initial_x_T=x_T,
-        model_variant="conditional",
+        model_variant=bundle.model_identity if bundle.model_identity != "conditional_v1" else "conditional",
         canonical_prompt=caption,
         attributes=attributes,
         seed=seed,

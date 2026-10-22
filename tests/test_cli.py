@@ -112,6 +112,10 @@ def _fake_api(*, with_snapshots: bool = False) -> tuple[SimpleNamespace, dict[st
         calls.setdefault("conditional_devices", []).append(device)
         return object()
 
+    def load_h7_conditional(device: str) -> object:
+        calls.setdefault("h7_devices", []).append(device)
+        return object()
+
     def load_unconditional(device: str) -> object:
         calls.setdefault("unconditional_devices", []).append(device)
         return object()
@@ -174,6 +178,7 @@ def _fake_api(*, with_snapshots: bool = False) -> tuple[SimpleNamespace, dict[st
         PromptAttributes=inference.PromptAttributes,
         validate_raw_caption=inference.validate_raw_caption,
         load_conditional_bundle=load_conditional,
+        load_h7_conditional_bundle=load_h7_conditional,
         load_unconditional_bundle=load_unconditional,
         load_evaluator_bundle=lambda device: calls.setdefault("evaluator_devices", []).append(device),
         generate_conditional=generate_conditional,
@@ -225,6 +230,24 @@ def test_structured_and_prompt_conditional_inputs(
         ["generate", "conditional", "--prompt", PROMPT, "--no-evaluate", "--output", str(second)]
     ) == 0
     assert calls["conditional_kwargs"]["attributes"] == attributes
+    assert calls["h7_devices"] == ["auto", "auto"]
+
+
+def test_conditional_model_selection_is_explicit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls = _install_api(monkeypatch)
+    assert cli.main(
+        ["generate", "conditional", *ATTR_ARGS, "--no-evaluate", "--output", str(tmp_path / "h7.png")]
+    ) == 0
+    assert cli.main(
+        [
+            "generate", "conditional", *ATTR_ARGS, "--model", "v1-ca8", "--no-evaluate",
+            "--output", str(tmp_path / "v1.png"),
+        ]
+    ) == 0
+    assert calls["h7_devices"] == ["auto"]
+    assert calls["conditional_devices"] == ["auto"]
 
 
 @pytest.mark.parametrize(
@@ -511,7 +534,7 @@ def test_module_entry_and_exact_console_alias() -> None:
     assert completed.returncode == 0
     assert "Tiny Avatar Diffusion" in completed.stdout
     project = tomllib.loads((cli.ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert project["project"]["scripts"] == {"tiny-avatar": "tiny_avatar_diffusion.cli:main"}
+    assert project["project"]["scripts"] == {"tiny-avatar": "tiny_avatar_diffusion.cli:main", "tiny-avatar-public": "tiny_avatar_diffusion.public_cli:main"}
     assert project["project"]["optional-dependencies"]["demo"] == ["streamlit>=1.32,<2"]
 
 

@@ -1,0 +1,172 @@
+{
+  "comparability": {
+    "v1_20k_to_40k": "within-trajectory, matched native32 M1.2 slots",
+    "v1_40k_to_v2a_60k": "not resolution-only: architecture, parameter count, preprocessing and training budget also differ",
+    "v2a_lpips": "native64 marginal LPIPS has a resolution caveat"
+  },
+  "endpoints": {
+    "v1_20k": {
+      "checkpoint": "artifacts\\checkpoints\\unconditional_main_ema_step20000.pt",
+      "checkpoint_sha256": "70def31c417a3aabe2fedbc355c2b6fae8478d1f878690f9bbf2d7263cf9fb3e",
+      "marginal_lpips": {
+        "estimate": 0.08818056030664594,
+        "median": 0.08136732876300812,
+        "metric": "LPIPS AlexNet 0.1.4, network version 0.1",
+        "pair_count": 200,
+        "pairing": "lexicographically sorted PNG ranks i and i+200, for i=0..199; 200 disjoint pairs"
+      },
+      "quality": {
+        "fid_common32_exploratory": 68.49022630542129,
+        "generated_count": 400,
+        "kid_common32": 0.0316932238638401,
+        "real_count": 808
+      },
+      "sample_count": 400,
+      "sample_manifest_paths": [
+        "results\\runs\\dr05_final_quality_v1\\manifests\\unconditional_id.jsonl",
+        "results\\runs\\dr05_final_quality_v1\\manifests\\unconditional_ood.jsonl"
+      ],
+      "status": "REUSED_AUTHENTICATED"
+    },
+    "v1_40k": {
+      "checkpoint": {
+        "parameters": 4595779,
+        "path": "artifacts\\checkpoints\\v1_unconditional_ema_step40000.pt",
+        "resolution": 32,
+        "selected_step": 40000,
+        "sha256": "578aa9301d19910f323332f46062b3803b8f8ad5236d67e9e0cbfb11a5694974",
+        "status": "VALIDATED",
+        "weight_variant": "EMA"
+      },
+      "efficiency": {
+        "configuration": {
+          "batch_size": 1,
+          "clip_x0": true,
+          "precision": "FP32",
+          "repetitions": 3,
+          "sampler": "ancestral_ddpm",
+          "timesteps": 1000,
+          "warmups": 1
+        },
+        "device": "NVIDIA GeForce RTX 4060 Laptop GPU",
+        "endpoint": "v1_40k",
+        "gpu_memory_allocated_after_cleanup_bytes": 8519680,
+        "gpu_memory_reserved_after_cleanup_bytes": 20971520,
+        "latency_seconds": {
+          "median": 6.149929000006523,
+          "samples": [
+            6.177590099978261,
+            6.149929000006523,
+            6.100626699975692
+          ]
+        },
+        "parameters": 4595779,
+        "peak_gpu_memory_bytes": 30732288,
+        "peak_gpu_memory_reserved_bytes": 41943040
+      },
+      "metrics": {
+        "checkpoint": {
+          "parameters": 4595779,
+          "path": "artifacts\\checkpoints\\v1_unconditional_ema_step40000.pt",
+          "resolution": 32,
+          "selected_step": 40000,
+          "sha256": "578aa9301d19910f323332f46062b3803b8f8ad5236d67e9e0cbfb11a5694974",
+          "status": "VALIDATED",
+          "weight_variant": "EMA"
+        },
+        "endpoint": "v1_40k",
+        "manifest": "results\\runs\\step13_final_unconditional_benchmark_v1\\endpoints\\v1_40k\\generation_manifest.jsonl",
+        "marginal_lpips": {
+          "estimate": 0.08889223315520212,
+          "input": "native RGB PNG in [-1,1]",
+          "median": 0.08167409896850586,
+          "metric": "LPIPS AlexNet 0.1.4, network version 0.1",
+          "pair_count": 200,
+          "pairing": "lexicographically sorted ranks i and i+200, i=0..199",
+          "resolution_caveat": null
+        },
+        "quality": {
+          "fid_common32_exploratory": 41.54688799998178,
+          "generated_count": 400,
+          "kid_common32": 0.008133945055305958,
+          "real_count": 808
+        },
+        "real_reference": {
+          "count": 808,
+          "path": "results\\runs\\m12_common32_unified_v1\\pools\\real"
+        },
+        "status": "SCORED"
+      }
+    },
+    "v2a_60k": {
+      "checkpoint": {
+        "parameters": 5077123,
+        "path": "artifacts\\checkpoints\\v2_a_unconditional_ema_step60000.pt",
+        "resolution": 64,
+        "selected_step": 60000,
+        "sha256": "36925385824a4915f1e13a0fe0c896d88c7c57c3296d31f24703fa18e08e14d0",
+        "status": "VALIDATED",
+        "weight_variant": "EMA"
+      },
+      "efficiency": {
+        "configuration": {
+          "batch_size": 1,
+          "clip_x0": true,
+          "precision": "FP32",
+          "repetitions": 1,
+          "sampler": "ancestral_ddpm",
+          "timesteps": 1000,
+          "warmups": 1
+        },
+        "device": "NVIDIA GeForce RTX 4060 Laptop GPU",
+        "endpoint": "v2a_60k",
+        "gpu_memory_allocated_after_cleanup_bytes": 8519680,
+        "gpu_memory_reserved_after_cleanup_bytes": 20971520,
+        "latency_seconds": {
+          "median": 8.013269699993543,
+          "samples": [
+            8.013269699993543
+          ]
+        },
+        "parameters": 5077123,
+        "peak_gpu_memory_bytes": 37800960,
+        "peak_gpu_memory_reserved_bytes": 48234496
+      },
+      "metrics": {
+        "checkpoint": {
+          "parameters": 5077123,
+          "path": "artifacts\\checkpoints\\v2_a_unconditional_ema_step60000.pt",
+          "resolution": 64,
+          "selected_step": 60000,
+          "sha256": "36925385824a4915f1e13a0fe0c896d88c7c57c3296d31f24703fa18e08e14d0",
+          "status": "VALIDATED",
+          "weight_variant": "EMA"
+        },
+        "endpoint": "v2a_60k",
+        "manifest": "results\\runs\\step13_final_unconditional_benchmark_v1\\endpoints\\v2a_60k\\generation_manifest.jsonl",
+        "marginal_lpips": {
+          "estimate": 0.23463342230767012,
+          "input": "native RGB PNG in [-1,1]",
+          "median": 0.23775268346071243,
+          "metric": "LPIPS AlexNet 0.1.4, network version 0.1",
+          "pair_count": 200,
+          "pairing": "lexicographically sorted ranks i and i+200, i=0..199",
+          "resolution_caveat": "native64 result is not an absolute diversity ranking against native32"
+        },
+        "quality": {
+          "fid_common32_exploratory": 47.21497420482666,
+          "generated_count": 400,
+          "kid_common32": 0.00972420908510685,
+          "real_count": 808
+        },
+        "real_reference": {
+          "count": 808,
+          "path": "results\\runs\\m12_common32_unified_v1\\pools\\real"
+        },
+        "status": "SCORED"
+      }
+    }
+  },
+  "schema": "step13_unconditional_summary.v1",
+  "status": "COMPLETE"
+}

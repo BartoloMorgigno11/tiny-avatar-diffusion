@@ -9,10 +9,12 @@ requires-python = ">=3.11"
 dependencies = [
     "Pillow",
     "torch==2.5.1",
+    "numpy>=1.26,<2",
 ]
 
 [project.scripts]
 tiny-avatar = "tiny_avatar_diffusion.cli:main"
+tiny-avatar-public = "tiny_avatar_diffusion.public_cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -36,6 +38,9 @@ eval = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+tiny_avatar_diffusion = ["public_model_manifest.json"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

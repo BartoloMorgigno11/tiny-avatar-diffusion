@@ -1,0 +1,12 @@
+\section{Text encoder, U-Net, and cross-attention}\label{sec:architecture}
+The text encoder is a Transformer trained from random initialization \parencite{vaswani2017attention}. It has two pre-layer-normalized blocks, width 64, four attention heads, feed-forward width 256, GELU activations, sinusoidal positions, and dropout 0.1. No pretrained language model, text embedding, or external multimodal representation is used. The encoder maps token IDs and the padding mask to a token-level context $C$, preserving the words that specify the requested attributes.
+
+The native32 denoiser is a compact U-Net \parencite{ronneberger2015unet}. It uses 64 channels at $32\times32$ and 128 channels at $16\times16$ and $8\times8$, with residual blocks, GroupNorm \parencite{wu2018groupnorm}, SiLU, strided-convolution downsampling, nearest-neighbour upsampling followed by convolution, and skip connections. The V2-A native64 backbone adds an outer image scale. A timestep embedding is injected into residual blocks, so the denoiser can adapt its prediction to the current noise level without making the text pathway responsible for time information.
+
+Cross-attention uses image features as queries and text context as keys and values. For flattened image features $H$, one attention block is
+\begin{equation}\label{eq:cross-attention}
+\operatorname{CA}(H,C)=\operatorname{softmax}\!\left(\frac{(HW_Q)(CW_K)^\top}{\sqrt{d_k}}\right)CW_V.
+\end{equation}
+The resulting representation is projected back to image channels through a residual pathway. CA8 applies this mechanism at the $8\times8$ bottleneck, where each query has a broad receptive field. CA16 adds it in the $16\times16$ decoder, where spatial detail is being reconstructed. H7 and conditional V2-A use CA8+CA16; their unconditional partners bypass the tokenizer and both cross-attention blocks.
+
+\input{figures/architecture_diagrams}

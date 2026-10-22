@@ -1,0 +1,9 @@
+Tiny Avatar Diffusion
+Copyright 2026 BartoloMorgigno11
+
+This project code is licensed under the Apache License, Version 2.0.
+See LICENSE for the complete terms.
+
+Dataset attribution is separate from the project-code license. The project uses
+Google Cartoon Set v1.0 data, licensed by Google LLC under Creative Commons
+Attribution 4.0 International (CC BY 4.0). See docs/release/DATASET_ATTRIBUTION.md.

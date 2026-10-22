@@ -1,160 +1,149 @@
-# Tiny Avatar Diffusion
+# Tiny Text-Conditioned Avatar Diffusion from Scratch
 
-Tiny Avatar Diffusion is a compact, 32×32, text-conditioned pixel-space DDPM for cartoon avatars. Both the image denoiser and the text encoder are trained from scratch. The frozen V1 study asks whether this small system can follow structured descriptions and generalize to attribute combinations excluded from training.
+Course project for the **Deep Learning 2026** exam. The project studies whether a compact pixel-space diffusion model trained from scratch can generate CartoonSet-style avatars that follow a structured four-attribute prompt.
+
+> **Release status:** professor-facing release assembly is in progress. This repository packages exactly four authenticated public EMA endpoints. Frozen scientific records remain immutable; a clean-clone validation is still required before delivery.
+
+## Objective
+
+Each prompt has the fixed grammar:
 
 ```text
-structured attributes → scratch text encoder → cross-attention
-                      → Tiny U-Net DDPM → 32×32 RGB avatar
+avatar <face_shape> <glasses> <hair_color> <face_color>
 ```
 
-## Study status
+The work evaluates conditional adherence, visual quality, diversity, efficiency, and whether additional cross-attention improves glasses adherence. The dataset is Google Cartoon Set (CartoonSet); source archives are not redistributed by this repository. See [dataset attribution](docs/release/DATASET_ATTRIBUTION.md) and [reproducibility](REPRODUCIBILITY.md).
 
-- **Original V1 baseline:** the released conditional/unconditional system and its frozen DR01–DR05 evidence, described below.
-- **Completed CA16 comparison:** a separate, paired three-seed comparison of bottleneck cross-attention (CA8) with CA8+CA16 on the 10k compositional task. At the selected 20k checkpoints, CA8+CA16 had higher mean R12 ID_TEST MAA (0.7184 vs 0.5854), FINAL_OOD MAA (0.6758 vs 0.5163), and MacroPSR (0.488 vs 0.267). The full scope, provenance, metrics, and limitations are in [the CA16 closure record](docs/experiments/ca16_ablation/FINAL_CLOSURE.md).
-- **Available now:** the V1 package, CLI, inference, comparison, and Streamlit demo. CA16 experiment checkpoints and result roots are local-only evidence, not Git-shipped inference assets.
-- **Completed H7 continuation:** CA8+CA16 was continued from 20k to 40k successful updates for seeds 2026, 2027, and 2028. Frozen R11 semantic evaluation and R13 batch-8 KID/FID evaluation are complete. A portable CPU-only report with five figure pairs is available in [the H7 experiment report](docs/experiments/h7_extended_training.md). Native 64×64 output remains out of scope; H7 does not select a final project architecture.
+The canonical attributes are `face_shape` (7 classes), `glasses` (12), `hair_color` (10), and `face_color` (11). Captions use the frozen DR01 vocabulary and tokenizer; labels are never silently aliased.
 
-## Project at a glance
+## Model family
 
-- Dataset: Google Cartoon Set, with four controlled attributes: `face_shape`, `glasses`, `hair_color`, and `face_color`.
-- Prompt grammar: `avatar <face_shape> <glasses> <hair_color> <face_color>`.
-- Main model: a 4,723,907-parameter conditional DDPM trained for 20,000 successful updates.
-- Generalization test: individual attribute values remain known, while selected pairs of values are held out as unseen compositions.
-- Released interfaces: Python package, `tiny-avatar` CLI, optional Streamlit application, and six scientific notebooks.
+All generators use a scratch text Transformer, a small U-Net denoiser, epsilon prediction, and a 1,000-step linear ancestral DDPM. Cross-attention is from image features to text context.
 
-## Research question
+| Public name | Release endpoint | Resolution | Conditioning | Weights |
+|---|---:|---|---:|---|
+| DDPM-U32 | 32x32 | unconditional | EMA 40k |
+| DDPM-C32 | 32x32 | CA8+CA16 | EMA 40k |
+| DDPM-U64 | 64x64 | unconditional | EMA 60k |
+| DDPM-C64 | 64x64 | CA8+CA16 | EMA 60k |
 
-**Can a very small diffusion model, with both denoiser and text encoder trained from scratch, generalize to unseen combinations of avatar attributes?**
+The exact paths, SHA-256 identities and adapters are in `src/tiny_avatar_diffusion/public_model_manifest.json`. Experiments A-D are retained as historical/development evidence; they are not silently converted into a new controlled cross-resolution claim.
 
-## Method overview
+## Evaluation
 
-| Component | Frozen V1 configuration |
-|---|---|
-| Resolution | 32×32 RGB |
-| Diffusion | Pixel-space ancestral DDPM |
-| Prediction target | Epsilon |
-| Timesteps | 1,000; linear beta schedule from `1e-4` to `0.02` |
-| Image denoiser | Tiny U-Net; channels 64 → 128 → 128; two residual blocks per stage |
-| Text encoder | 64-wide, two-layer, four-head scratch Transformer; FFN 256 |
-| Conditioning | Image-to-text cross-attention at the 8×8 bottleneck stage |
-| Reverse variance | Fixed-small posterior variance, with predicted-x0 clipping |
-| Classifier-free guidance | Not used in MAIN |
-| Pretrained generator components | None; no pretrained diffusion model, text encoder, or conditioning image encoder |
+The shared benchmark contract fixes prompts, canonical targets, seeds, source-image identities, split membership, and metric definitions across models. Generated samples are evaluated at their native resolution:
 
-## Key frozen results
+- Conditioning: per-attribute accuracy, mean attribute accuracy (MAA), prompt success rate (PSR), MacroPSR, and glasses-specific diagnostics.
+- Quality: Clean-FID and KID against source-identical real references at the matching native resolution.
+- Diversity: LPIPS AlexNet under a fixed prompt/seed-pair schedule.
+- Engineering: parameter count, latency, throughput, and available peak-VRAM measurements.
 
-| Conditioning result | Value |
-|---|---:|
-| ID mean attribute accuracy (MAA) | 0.5224 |
-| Compositional OOD MAA | 0.4250 |
-| Absolute ID→OOD MAA gap | 0.0974 |
-| Macro prompt success rate (MacroPSR) | 0.2240 |
+Evaluator32 and Evaluator64 are separate classifiers. Evaluator64 is required for primary native64 attribute scoring. A native32 evaluator applied after 64-to-32 conversion is a secondary diagnostic only. Development validation—not protected final-test outcomes—will determine whether a final model can be selected. See [the four-model benchmark contract](docs/release/FOUR_MODEL_BENCHMARK_CONTRACT.md) and [native64 evaluator readiness](docs/release/NATIVE64_EVALUATOR_READINESS.md).
 
-| Model | Global KID ↓ | Global FID ↓ | Parameters |
-|---|---:|---:|---:|
-| Conditional | 0.018366 | 41.00 | 4,723,907 |
-| Unconditional | 0.031913 | 53.20 | 4,595,779 |
+## Install
 
-**QUALITY != CONDITIONING.** MAA and MacroPSR measure adherence to requested structured attributes. KID and FID measure distribution-level generative quality; they do not establish whether a request was followed.
-
-The frozen evidence supports partial rather than robust compositional control: adherence is moderate and decreases on unseen combinations. Checkpoint and evidence identities are integrity-checked; complete hashes and protocols are in [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
-
-## Quick start
-
-Python 3.11 or newer is required. From Windows PowerShell:
+Python 3.11 or later is required. The commands below are repository-relative and suitable for a clean environment, but a final clean-clone installation audit remains pending.
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-python -m pip install -e ".[demo]"
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev,notebook,demo,eval]"
 tiny-avatar --help
 ```
 
-On Linux or macOS, replace the activation command with:
-
-```bash
-source .venv/bin/activate
-```
-
-Use `tiny-avatar <command> --help` for the complete option surface.
-
-## Generate an avatar
-
-Conditional generation with valid canonical attribute labels:
+Minimal inference installation:
 
 ```powershell
-tiny-avatar generate conditional --face-shape pointed --glasses no_glasses --hair-color black --face-color pale_pink --seed 2026 --metadata --output outputs/demo/conditional.png --overwrite
+python -m pip install -e .
+python -m tiny_avatar_diffusion.cli --help
 ```
 
-Unconditional baseline generation:
+Core dependencies are declared in [pyproject.toml](pyproject.toml). Evaluation additionally requires `clean-fid==0.1.35`, `lpips==0.1.4`, and `scipy==1.15.3`. The project currently has no lockfile and Pillow is not pinned; platform-specific PyTorch/CUDA installation and a fully locked environment remain release work.
+
+## Quickstart: authenticated public inference
+
+The packaged DDPM-C32 EMA checkpoint is at `artifacts/checkpoints/ddpm-c32-ema-40k.pt`. Verify it before use:
 
 ```powershell
-tiny-avatar generate unconditional --seed 2026 --metadata --output outputs/demo/unconditional.png --overwrite
+Get-FileHash -Algorithm SHA256 artifacts\checkpoints\ddpm-c32-ema-40k.pt
+# Expected: 438e4672888e6d9177820db5756e32a71649fa1ec16b7ccef11c6e38d2f89944
 ```
 
-Generation performs the complete frozen 1,000-step sampler. `--device auto` is the default. The CLI refuses demo writes under protected scientific namespaces such as `results/`, `data/processed/`, `artifacts/`, and `reports/`.
-
-## Compare conditional vs unconditional
+Generate a native32 image:
 
 ```powershell
-tiny-avatar compare --face-shape pointed --glasses no_glasses --hair-color black --face-color pale_pink --seed 2026 --metadata --output-dir outputs/demo --overwrite
+tiny-avatar-public --model DDPM-C32 --face-shape wide --glasses thick_rectangular_glasses --hair-color silver --face-color deep_brown --seed 2026 --device auto --output outputs\demo\ddpm-c32_seed2026.png
 ```
 
-This is a **QUALITATIVE PAIRED COMPARISON**: both branches use the same explicit initial Gaussian `x_T` and equivalent post-`x_T` reverse-noise RNG state. It is not a dataset-level metric and does not provide a numerical ranking or causal estimate.
+This CLI route and checkpoint package were previously smoke-tested in the project environment; they have not yet passed the final clean-clone audit. The 1,000-step sampler can be slow on CPU.
 
-## Interactive demo
+## Four-model Streamlit demo
+
+The release UI serves the four packaged endpoints and validates each checkpoint hash before loading it:
 
 ```powershell
-python -m pip install -e ".[demo]"
-tiny-avatar demo
+python -m streamlit run src/tiny_avatar_diffusion/final_streamlit_app.py
 ```
 
-The Streamlit application provides three tabs:
+The 1,000-step sampler can be slow on CPU. The UI is an inference demonstration, not a benchmark runner and does not rewrite frozen records.
 
-- **Generate** — conditional or unconditional inference with optional denoising observations.
-- **Compare** — the qualitative paired comparison.
-- **Frozen Results** — validated read-only DR04/DR05 evidence.
+## Reproducibility workflows
 
-Downloads are prepared in memory; the application does not automatically write project outputs. Evaluator scores are uncalibrated single-image diagnostics. Installed application construction was smoke-tested in the development environment; the final clean-release audit has not yet been performed.
+Lightweight CPU checks, previously used in the project environment and intended for rerun after installation:
 
-## Inspect frozen results
+```powershell
+python -m pytest tests/test_caption_tokenizer.py -q
+python -m pytest tests/test_v2_native64_release.py -q
+python -m tiny_avatar_diffusion.four_model_benchmark_runner --help
+```
+
+The V2 test requires the authenticated sibling-worktree checkpoints above and is expected to skip when they are unavailable. Full training, DDPM sampling, FID/KID, LPIPS, and evaluator campaigns are intentionally not quickstart operations: they require manually acquired CartoonSet archives, authenticated artifacts, and in several cases CUDA. Use [REPRODUCIBILITY.md](REPRODUCIBILITY.md) for DR01–DR05 frozen-protocol details and release documentation for artifact identities.
+
+To inspect compact evidence without rerunning metrics:
 
 ```powershell
 tiny-avatar results
+Get-ChildItem results\runs
+Get-ChildItem docs\release
 ```
 
-This reads validated frozen DR04/DR05 evidence. It does not train models, generate evaluation panels, recompute bootstrap intervals, or rerun KID, FID, LPIPS, latency, or memory campaigns.
+The four professor-facing notebooks are in [`notebooks/final/`](notebooks/final/): dataset/OOD protocol, DDPM architecture, historical A-D ablation context, and final frozen-evidence/reproducibility. They only read saved records by default. Their exact inputs and intentional exclusions are listed in [the release contents manifest](docs/RELEASE_CONTENTS.md).
 
-## Scientific notebooks
+Development pilot outputs, evaluator64 training records, CA8-40k records, and large generated pools remain local scientific artifacts under `results/`; they are deliberately excluded from ordinary Git distribution.
 
-| Notebook | Purpose |
-|---|---|
-| [01_data_and_protocol.ipynb](notebooks/01_data_and_protocol.ipynb) | Learning task, captions, tokenizer, splits, held-out combinations, and leakage safeguards. |
-| [02_model_and_diffusion.ipynb](notebooks/02_model_and_diffusion.ipynb) | Tiny U-Net, scratch text encoder, cross-attention, and DDPM mechanics. |
-| [03_evaluation_and_results.ipynb](notebooks/03_evaluation_and_results.ipynb) | Validated analysis of frozen conditioning, quality, diversity, and engineering evidence. |
-| [04_interactive_generation.ipynb](notebooks/04_interactive_generation.ipynb) | Frozen inference contract and optional live trajectory/paired demonstration. |
-| [05_ca16_ablation_results.ipynb](notebooks/05_ca16_ablation_results.ipynb) | CPU-only examiner summary of the completed CA8 versus CA8+CA16 study; uses verified compact summaries, not local checkpoints or generated images. |
-| [06_h7_extended_training_results.ipynb](notebooks/06_h7_extended_training_results.ipynb) | CPU-only, snapshot-driven analysis of CA8+CA16 extended training from 20k to 40k successful optimizer steps across three seeds. |
-
-Notebooks 01 through 04 passed fresh-kernel default Run All during the Phase-5 notebook release pass. Notebooks 05 and 06 were separately validated through complete CPU-only execution. The fourth notebook keeps live generation and paired comparison disabled by default, so no expensive sampling occurs during its default run.
-
-## Repository structure
+## Repository map
 
 ```text
-src/tiny_avatar_diffusion/   package, models, training, inference, CLI, and UI
-notebooks/                   canonical scientific lab books
-tests/                       automated regression tests
-data/                        source archives, processed protocols, and caches
-artifacts/checkpoints/       canonical inference checkpoints
-results/                     frozen evaluation runs and evidence
-reports/                     training and protocol records
-outputs/demo/                user/demo outputs, created on demand
+src/tiny_avatar_diffusion/   Models, DDPM, inference, CLI, evaluators, benchmark tools
+tests/                       CPU regression and contract tests
+docs/release/                Checkpoint/evidence registry, benchmark and release notes
+docs/experiments/            Historical experiment records
+notebooks/                   Scientific notebooks (not rewritten by release setup)
+data/processed/              Frozen manifests and development contracts (local/protocol scoped)
+artifacts/checkpoints/       Packaged inference/evaluator artifacts when approved
+results/                     Local training, sampling, and evaluation evidence
 ```
 
-## Reproducibility
+## Checkpoints and frozen evidence
 
-See [REPRODUCIBILITY.md](REPRODUCIBILITY.md) for environment setup, source-data layout, DR01–DR05 procedures, training and resume semantics, checkpoint/evidence hashes, inference behavior, notebook verification, filesystem boundaries, and troubleshooting.
+Every distributed model artifact should have a versioned manifest containing role, architecture, resolution, training step, weight selection (RAW/EMA), source provenance, and SHA-256. Verify files with `Get-FileHash` before loading; the strict V2 loader also performs this check internally.
 
-## V1 scope and constraints
+Release packaging policy:
 
-V1 is deliberately compact and frozen: 32×32 pixel-space diffusion, no pretrained diffusion or text model, no pretrained image encoder for conditioning, no visual self-attention, and no classifier-free guidance in MAIN. Frozen evidence is descriptive and does not establish robust compositional control, statistical significance of the ID→OOD gap, or calibrated correctness probabilities from the evaluator.
+1. The four public EMA inference packages are included directly with their mandatory SHA-256 identities.
+2. Publish essential inference packages separately, beginning with H7 EMA and—after final selection—approved CA8/V2 inference packages with checksummed manifests.
+3. Preserve full resumable research checkpoints, optimizer/RNG state, source manifests, evaluator checkpoints, and generated evidence outside this professor-facing package.
+4. Treat large metric-network dependencies, for example `inception-2015-12-05.pt`, as explicitly versioned external assets or a reviewed LFS/release-asset decision; do not silently commit duplicates.
+
+`tiny-avatar results` reads the tracked DR04/DR05 frozen summaries without recomputing metrics. Raw CartoonSet archives, generated pools, caches, review packages and metric-network weights are not part of this release.
+
+## Remaining release checks
+
+- Run a clean-environment installation, CPU notebook, CLI and Streamlit audit on the staged content.
+- Add the compiled final report PDF manually if the delivery channel requires it; it is not present in this working directory.
+- Do not claim a new benchmark result beyond the frozen records and their documented scopes.
+
+## License and data
+
+Project source code is Apache-2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE). Cartoon Set data belong to Google LLC under CC BY 4.0 and are not redistributed here. Model artifacts and generated examples have separate provenance and distribution scope; see [model artifact notice](docs/release/MODEL_ARTIFACT_NOTICE.md).
