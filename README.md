@@ -2,7 +2,7 @@
 
 Course project for the **Deep Learning 2026** exam. The project studies whether a compact pixel-space diffusion model trained from scratch can generate CartoonSet-style avatars that follow a structured four-attribute prompt.
 
-> **Release status:** professor-facing release assembly is in progress. This repository packages exactly four authenticated public EMA endpoints. Frozen scientific records remain immutable; a clean-clone validation is still required before delivery.
+> **Release status:** the four-model code and authenticated EMA checkpoints are published. Scientific records remain frozen. Final clean-clone acceptance and the separately reviewed report/presentation deliverables remain pending.
 
 ## Objective
 
@@ -18,27 +18,26 @@ The canonical attributes are `face_shape` (7 classes), `glasses` (12), `hair_col
 
 ## Model family
 
-All generators use a scratch text Transformer, a small U-Net denoiser, epsilon prediction, and a 1,000-step linear ancestral DDPM. Cross-attention is from image features to text context.
+All four models use compact U-Net denoisers, epsilon prediction, and a 1,000-step linear ancestral DDPM. Only DDPM-C32 and DDPM-C64 use a scratch-trained Transformer text encoder and CA8/CA16 cross-attention. DDPM-U32 and DDPM-U64 are unconditional.
 
-| Public name | Release endpoint | Resolution | Conditioning | Weights |
-|---|---:|---|---:|---|
-| DDPM-U32 | 32x32 | unconditional | EMA 40k |
+| Public model | Native resolution | Conditioning | Released weights |
+|---|---:|---|---|
+| DDPM-U32 | 32x32 | Unconditional | EMA 40k |
 | DDPM-C32 | 32x32 | CA8+CA16 | EMA 40k |
-| DDPM-U64 | 64x64 | unconditional | EMA 60k |
+| DDPM-U64 | 64x64 | Unconditional | EMA 60k |
 | DDPM-C64 | 64x64 | CA8+CA16 | EMA 60k |
 
 The exact paths, SHA-256 identities and adapters are in `src/tiny_avatar_diffusion/public_model_manifest.json`. Experiments A-D are retained as historical/development evidence; they are not silently converted into a new controlled cross-resolution claim.
 
 ## Evaluation
 
-The shared benchmark contract fixes prompts, canonical targets, seeds, source-image identities, split membership, and metric definitions across models. Generated samples are evaluated at their native resolution:
+The final evaluation follows frozen, explicitly distinguished protocols. Conditional DDPM-C32 and DDPM-C64 are assessed on a fixed supplementary panel of 40 ID and 40 compositional-OOD prompts, with five seeds per prompt. An independent dual-view attribute classifier, trained on separate CartoonSet100k data, estimates MAA, EAM, and OOD MacroPSR. Its shared weights do not eliminate differences between native32-upsampled and native64 input views.
 
-- Conditioning: per-attribute accuracy, mean attribute accuracy (MAA), prompt success rate (PSR), MacroPSR, and glasses-specific diagnostics.
-- Quality: Clean-FID and KID against source-identical real references at the matching native resolution.
-- Diversity: LPIPS AlexNet under a fixed prompt/seed-pair schedule.
-- Engineering: parameter count, latency, throughput, and available peak-VRAM measurements.
+Conditional distributional KID and exploratory FID use the recorded Common-32 protocol and a common real reference pool. Native-resolution LPIPS measures within-prompt, across-seed diversity. The historical conditional ablation endpoints use their named retrospective measurement records.
 
-Evaluator32 and Evaluator64 are separate classifiers. Evaluator64 is required for primary native64 attribute scoring. A native32 evaluator applied after 64-to-32 conversion is a secondary diagnostic only. Development validation—not protected final-test outcomes—will determine whether a final model can be selected. See [the four-model benchmark contract](docs/release/FOUR_MODEL_BENCHMARK_CONTRACT.md) and [native64 evaluator readiness](docs/release/NATIVE64_EVALUATOR_READINESS.md).
+The two unconditional models use the separate STEP 13 marginal-generation protocol. Their LPIPS measures marginal image-pair diversity rather than conditional same-prompt diversity. Conditional and unconditional scores must not be collapsed into a single controlled four-model ranking.
+
+Measurement definitions, evaluator limitations, provenance, and comparison confounders are documented in the scientific report, notebooks, and release records.
 
 ## Install
 

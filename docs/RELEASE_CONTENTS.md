@@ -14,7 +14,7 @@ DDPM-U64 and DDPM-C64. Their immutable identities are recorded in
 - the 20-image conditional 4x5 gallery and its provenance manifest, plus the
   eight-image final four-model gallery and its provenance manifest, solely for
   CPU notebook visualization and hash verification;
-- report source, presentation source/PDF, selected public release documentation;
+- report LaTeX source and figure assets, plus selected release documentation;
 - four public checkpoint packages, each verified against its manifest SHA-256.
 
 Public checkpoints are named `ddpm-u32-ema-40k.pt`, `ddpm-c32-ema-40k.pt`,
