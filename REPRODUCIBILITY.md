@@ -12,7 +12,9 @@ This capability works from the distributed repository and its four public EMA ch
 
 ### Installation
 
-Python 3.11 or later is required. Core inference dependencies are Pillow, PyTorch 2.5.1, and NumPy; see [`pyproject.toml`](pyproject.toml).
+Use CPython 3.11 or 3.12 for the verified installation path. Core inference dependencies are Pillow, PyTorch 2.5.1,
+and NumPy; the pinned PyTorch version does not provide an installation path for every newer Python release. See
+[`pyproject.toml`](pyproject.toml).
 
 The first installation can be slow because PyTorch is a large binary dependency. The optional extras below are deliberately separate: install only the extra required for the activity you intend to run.
 

@@ -21,4 +21,4 @@ jobs:
         run: python -m pip install -e ".[dev]"
 
       - name: Verify distributed public models
-        run: python -m pytest tests/test_public_release.py tests/test_final_streamlit_app.py -q
+        run: python -m pytest tests/test_public_release.py tests/test_final_streamlit_app.py tests/test_public_cli.py -q
