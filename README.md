@@ -48,9 +48,41 @@ Prompts use the fixed grammar `avatar <face_shape> <glasses> <hair_color> <face_
 
 Conditional adherence is estimated by an independent classifier and is not a human evaluation or calibrated probability of correctness. Conditional and unconditional metrics use different estimands; they must not be collapsed into a single four-model ranking. Full training and metric recomputation require external CartoonSet archives, CUDA resources, and—in some historical workflows—full-state checkpoints that are not distributed here.
 
+## Results at a glance (frozen evidence)
+
+The following values are read from the versioned frozen records; they are not recomputed by the public quickstart.
+They are presented in two tables because conditional structured-prompt generation and unconditional marginal
+sampling answer different questions.
+
+**Conditional endpoints.** The 80-prompt × five-seed panel is an authenticated *supplementary* application of a
+frozen protocol, not a new independent held-out test. KID/FID use the documented Common-32 route; FID is
+exploratory.
+
+| Endpoint | Common-32 KID | Common-32 FID† | OOD MAA | EAM | MacroPSR |
+|---|---:|---:|---:|---:|---:|
+| DDPM-C32 (H7, EMA 40k) | 0.010000 | 59.430 | 0.965 | 0.860 | 0.895 |
+| DDPM-C64 (V2-A, EMA 60k) | 0.016694 | 65.007 | 0.980 | 0.920 | 0.960 |
+
+**Unconditional endpoints.** Completed STEP 13 uses 400 generated samples, an 808-image real reference pool,
+and 200 deterministic marginal LPIPS pairs. MAA, EAM, and MacroPSR are undefined because no structured request is
+supplied.
+
+| Endpoint | Common-32 KID | Common-32 FID† | Marginal LPIPS |
+|---|---:|---:|---:|
+| DDPM-U32 (EMA 40k) | 0.008134 | 41.547 | 0.088892 |
+| DDPM-U64 (EMA 60k) | 0.009724 | 47.215 | 0.234633 |
+
+† Common-32 downscales native 64×64 outputs through the recorded LANCZOS route; it does not measure native-detail
+superiority. Conditional LPIPS (within-prompt, across seeds) and unconditional marginal LPIPS are different
+estimands, so neither table supports a cross-mode or cross-resolution ranking. Sources:
+[`results/runs/v2a_step9b_final_supplementary_ema60k_v1/`](results/runs/v2a_step9b_final_supplementary_ema60k_v1/),
+[`results/runs/step13_final_unconditional_benchmark_v1/summary.json`](results/runs/step13_final_unconditional_benchmark_v1/summary.json),
+and the final notebooks.
+
 ## Install
 
-Python 3.11 or later is required. Minimal public inference needs only the core dependencies:
+Use CPython 3.11 or 3.12 for the verified installation path. The pinned `torch==2.5.1` dependency does not provide
+an installation path for every newer Python release. Minimal public inference needs only the core dependencies:
 
 ```powershell
 python -m venv .venv
