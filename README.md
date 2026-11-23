@@ -4,6 +4,23 @@ Course project for the **Deep Learning 2026** exam. This repository implements p
 
 The exam submission is preserved by the immutable Git tag [`exam-submission-d8a0cdf`](../../tree/exam-submission-d8a0cdf). The public release provides four authenticated inference checkpoints, a compact verification suite, professor-facing notebooks, and a Streamlit demonstration.
 
+## Visual snapshots
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/report/figures/final_four_model_unconditional_gallery.png" alt="Qualitative samples from the DDPM-U32 and DDPM-U64 models" width="100%" />
+      <p align="center"><em>Qualitative samples from the two unconditional release models.</em></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/report/figures/final_conditional_adherence.png" alt="Conditional OOD adherence comparison between DDPM-C32 and DDPM-C64" width="100%" />
+      <p align="center"><em>Frozen conditional OOD evaluation under the documented shared protocol.</em></p>
+    </td>
+  </tr>
+</table>
+
+The figures are release evidence, not a claim of open-vocabulary generation or clinical/production-grade image quality. See the final notebooks and [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for the complete protocols and interpretation limits.
+
 ## Public model family
 
 All endpoints use a compact U-Net denoiser, epsilon prediction, and a 1,000-step linear ancestral DDPM. Conditional models add a scratch-trained Transformer text encoder and cross-attention at the 8x8 and 16x16 stages.
