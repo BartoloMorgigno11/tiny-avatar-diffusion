@@ -21,6 +21,14 @@ The exam submission is preserved by the immutable Git tag [`exam-submission-d8a0
 
 The figures are release evidence, not a claim of open-vocabulary generation or clinical/production-grade image quality. See the final notebooks and [`REPRODUCIBILITY.md`](REPRODUCIBILITY.md) for the complete protocols and interpretation limits.
 
+## Interactive demonstration
+
+<p align="center">
+  <img src="docs/images/streamlit-conditional-demo.png" alt="Streamlit demonstration of DDPM-C64 with its constrained attribute controls and generated avatar" width="400" />
+</p>
+
+The local Streamlit demonstration exposes the public DDPM-C64 conditional model, its fixed attribute grammar, and a generated sample. It is an inference demonstration, not a benchmark runner; see the [demo instructions](#four-model-streamlit-demonstration) for setup.
+
 ## Public model family
 
 All endpoints use a compact U-Net denoiser, epsilon prediction, and a 1,000-step linear ancestral DDPM. Conditional models add a scratch-trained Transformer text encoder and cross-attention at the 8x8 and 16x16 stages.
