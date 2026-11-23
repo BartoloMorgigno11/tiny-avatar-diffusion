@@ -2,7 +2,7 @@
 
 Course project for the **Deep Learning 2026** exam. This repository implements pixel-space denoising diffusion models from scratch for CartoonSet-style avatar generation. The examination question is whether a compact model can generate avatars that follow a structured four-attribute text prompt, while making the limits of the evaluation explicit.
 
-The public release passed an independent clean-clone acceptance: fresh installation, four-checkpoint SHA-256 verification and CPU loading, 18 selected automated tests, CPU execution of the four final notebooks, Streamlit smoke tests, and one end-to-end CPU DDPM-U32 generation.
+The exam submission is preserved by the immutable Git tag [`exam-submission-d8a0cdf`](../../tree/exam-submission-d8a0cdf). The public release provides four authenticated inference checkpoints, a compact verification suite, professor-facing notebooks, and a Streamlit demonstration.
 
 ## Public model family
 
@@ -53,6 +53,8 @@ python -m pip install -e ".[eval]"
 
 PyTorch is pinned in [`pyproject.toml`](pyproject.toml); choose a compatible platform/CUDA build when GPU use is intended. The project has no lockfile.
 
+> The first installation can take a while because PyTorch is a large binary dependency. For ordinary inference, install only the core package above; the notebook, demo, development, and evaluation extras are optional and intentionally separate.
+
 ## Quickstart: public inference
 
 Verify the four packaged artifacts against the manifest before loading them:
@@ -77,6 +79,17 @@ python -m streamlit run src/tiny_avatar_diffusion/final_streamlit_app.py
 ```
 
 The UI validates each public checkpoint hash before loading it. It is an inference demonstration, not a benchmark runner.
+
+## Verify a clean public release
+
+Install the development extra, then run the release-focused checks. They authenticate the four distributed checkpoints and load each model on CPU; they do not retrain models or run the 1,000-step sampler.
+
+```powershell
+python -m pip install -e ".[dev]"
+python -m pytest tests/test_public_release.py tests/test_final_streamlit_app.py -q
+```
+
+Historical tests remain in the repository as provenance for the research campaign. They are intentionally not part of this public-release command because some require local historical checkpoints, datasets, or campaign outputs that are not distributed.
 
 ## Final scientific walkthrough
 

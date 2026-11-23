@@ -8,11 +8,13 @@ The only public model names are **DDPM-U32**, **DDPM-C32**, **DDPM-U64**, and **
 
 ## 1. Public verification
 
-This capability works from the distributed repository and its four public EMA checkpoints. Independent clean-clone acceptance passed: fresh installation, SHA-256 verification and CPU loading of all four checkpoints, 18 selected automated tests, CPU execution of all four final notebooks, Streamlit HTTP/interface smoke tests, and one end-to-end DDPM-U32 CPU PNG generation.
+This capability works from the distributed repository and its four public EMA checkpoints. The exact exam submission is retained at Git tag `exam-submission-d8a0cdf`. The public verification suite authenticates and CPU-loads all four distributed checkpoints without requiring raw CartoonSet archives, CUDA, or historical full-state checkpoints.
 
 ### Installation
 
 Python 3.11 or later is required. Core inference dependencies are Pillow, PyTorch 2.5.1, and NumPy; see [`pyproject.toml`](pyproject.toml).
+
+The first installation can be slow because PyTorch is a large binary dependency. The optional extras below are deliberately separate: install only the extra required for the activity you intend to run.
 
 ```powershell
 python -m venv .venv
@@ -72,10 +74,10 @@ The UI verifies a checkpoint hash before loading it. It is an inference demonstr
 The four professor-facing notebooks are in `notebooks/final/`. Their default cells use packaged metadata, frozen summaries, figures, and qualitative PNGs on CPU; optional regeneration cells are disabled.
 
 ```powershell
-python -m pytest tests/test_import.py tests/test_caption_tokenizer.py tests/test_inference.py tests/test_cli.py tests/test_final_streamlit_app.py -q
+python -m pytest tests/test_public_release.py tests/test_final_streamlit_app.py -q
 ```
 
-These are selected regression checks, not a claim that every historical campaign test is runnable from a clean clone.
+These are the public-release regression checks. They are not a claim that every historical campaign test is runnable from a clean clone; historical workflows remain available as provenance and may require local checkpoint/result roots, datasets, evaluator/metric assets, or CUDA.
 
 ## 2. Frozen scientific evidence
 
