@@ -1,5 +1,7 @@
 # Tiny Avatar Diffusion
 
+[![Public release verification](https://github.com/BartoloMorgigno11/tiny-avatar-diffusion/actions/workflows/public-release.yml/badge.svg)](https://github.com/BartoloMorgigno11/tiny-avatar-diffusion/actions/workflows/public-release.yml)
+
 Course project for the **Deep Learning 2026** exam. This repository implements pixel-space denoising diffusion models from scratch for CartoonSet-style avatar generation. The examination question is whether a compact model can generate avatars that follow a structured four-attribute text prompt, while making the limits of the evaluation explicit.
 
 The exam submission is preserved by the immutable Git tag [`exam-submission-d8a0cdf`](../../tree/exam-submission-d8a0cdf). The public release provides four authenticated inference checkpoints, a compact verification suite, professor-facing notebooks, and a Streamlit demonstration.
@@ -80,6 +82,9 @@ estimands, so neither table supports a cross-mode or cross-resolution ranking. S
 and the final notebooks.
 
 ## Install
+
+> **Security notice — historical dependency:** The current release pins `torch==2.5.1`, which is affected by [CVE-2025-32434](https://github.com/pytorch/pytorch/security/advisories/GHSA-53q9-r3pm-6pq6), including when `weights_only=True` is used. Do not load untrusted checkpoints. Verify the SHA-256 hashes of the distributed artifacts against a trusted copy of the manifest and use an isolated environment without sensitive data or credentials. Hash verification establishes integrity against that manifest, not absolute safety. Migration to a patched, supported PyTorch version requires separate compatibility and regression checks; this notice is not a vulnerability fix.
+
 
 Use CPython 3.11 or 3.12 for the verified installation path. The pinned `torch==2.5.1` dependency does not provide
 an installation path for every newer Python release. Minimal public inference needs only the core dependencies:
