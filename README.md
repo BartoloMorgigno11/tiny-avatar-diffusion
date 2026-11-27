@@ -6,6 +6,8 @@ Course project for the **Deep Learning 2026** exam. This repository implements p
 
 The exam submission is preserved by the immutable Git tag [`exam-submission-d8a0cdf`](../../tree/exam-submission-d8a0cdf). The public release provides four authenticated inference checkpoints, a compact verification suite, professor-facing notebooks, and a Streamlit demonstration.
 
+**Project authorship:** Independent course project by Bartolo Morgigno.
+
 ## Visual snapshots
 
 <table>
